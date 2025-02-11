@@ -1,0 +1,1635 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "DEIMS-SDR API",
+    "description": "This is an API for automated data export from the site and dataset registry DEIMS-SDR",
+    "termsOfService": "https://deims.org/terms",
+    "contact": {
+      "name": "DEIMS-SDR Support",
+      "url": "https://deims.org/contact"
+    },
+    "license": {
+      "name": "CC-BY-NC International 4.0",
+      "url": "https://creativecommons.org/licenses/by-nc/4.0/"
+    },
+    "version": "1.1"
+  },
+  "paths": {
+    "/sites": {
+      "get": {
+        "description": "Returns sites published on DEIMS-SDR",
+        "responses": {
+          "200": {
+            "description": "A list of sites",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/siteList"
+                  }
+                },
+                "examples": {
+                  "site": {
+                    "summary": "A site example of the site list",
+                    "value": {
+                      "title": "LTER Zöbelboden - Austria",
+                      "id": {
+                        "prefix": "https://deims.org/",
+                        "suffix": "8eda49e9-1f4e-4f3e-b58e-e0bb25dc32a6"
+                      },
+                      "coordinates": "POINT(14.444136161386 47.842246069311)",
+                      "changed": "2019-10-03T09:40:57+0200"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sites/{resource_id}": {
+      "get": {
+        "description": "Returns a single site record",
+        "parameters": [
+          {
+            "name": "resource_id",
+            "in": "path",
+            "description": "The DEIMS.ID of the site record",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "8eda49e9-1f4e-4f3e-b58e-e0bb25dc32a6"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "JSON object containing a complete site record",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/completeSiteRecord"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "error payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/resourceNotFound"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/datasets": {
+      "get": {
+        "description": "Returns datasets published on DEIMS-SDR",
+        "responses": {
+          "200": {
+            "description": "A list of datasets",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/recordList"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/datasets/{resource_id}": {
+      "get": {
+        "description": "Returns a single dataset record",
+        "parameters": [
+          {
+            "name": "resource_id",
+            "in": "path",
+            "description": "The uuid of the dataset record",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "63b2325e-4eca-11e4-a597-005056ab003f"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "JSON object containing all dataset information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/completeDatasetRecord"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "error payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/resourceNotFound"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/activities": {
+      "get": {
+        "description": "Returns activities published on DEIMS-SDR",
+        "responses": {
+          "200": {
+            "description": "A list of activites",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/recordList"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/activities/{resource_id}": {
+      "get": {
+        "description": "Returns an activity record",
+        "parameters": [
+          {
+            "name": "resource_id",
+            "in": "path",
+            "description": "The uuid of the activity record",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "8689b125-ee46-4d09-9e46-640f9c5c6eab"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "JSON object containing all activity information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/completeActivityRecord"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "error payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/resourceNotFound"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sensors": {
+      "get": {
+        "description": "Returns sensors published on DEIMS-SDR",
+        "responses": {
+          "200": {
+            "description": "A list of sensors",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/recordList"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sensors/{resource_id}": {
+      "get": {
+        "description": "Returns a single sensor record",
+        "parameters": [
+          {
+            "name": "resource_id",
+            "in": "path",
+            "description": "The uuid of the sensor record",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "fb583610-fe71-4793-b1a9-43097ed5c3e3"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "JSON object containing all sensor information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/completeSensorRecord"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "error payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/resourceNotFound"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/locations/{resource_id}": {
+      "get": {
+        "description": "Returns a single location record",
+        "parameters": [
+          {
+            "name": "resource_id",
+            "in": "path",
+            "description": "The uuid of the location record",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "85dc6019-9654-4ba0-8338-08c4ffe8fe47"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "JSON object containing all location information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/completeLocationRecord"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "error payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/resourceNotFound"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "resourceNotFound": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "source": {
+            "type": "object",
+            "properties": {
+              "pointer": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "siteList": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "id": {
+            "type": "object",
+            "properties": {
+              "prefix": {
+                "type": "string"
+              },
+              "suffix": {
+                "type": "string"
+              }
+            }
+          },
+          "coordinates": {
+            "type": "string"
+          },
+          "changed": {
+            "type": "string"
+          }
+        }
+      },
+      "affiliationItem": {
+        "type": "object",
+        "properties": {
+          "network": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "id": {
+                "type": "object",
+                "properties": {
+                  "prefix": {
+                    "type": "string"
+                  },
+                  "suffix": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "siteCode": {
+            "type": "string"
+          },
+          "verified": {
+            "type": "boolean"
+          }
+        }
+      },
+      "recordList": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "id": {
+            "type": "object",
+            "properties": {
+              "prefix": {
+                "type": "string"
+              },
+              "suffix": {
+                "type": "string"
+              }
+            }
+          },
+          "changed": {
+            "type": "string"
+          }
+        }
+      },
+      "completeSiteRecord": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "id": {
+            "type": "object",
+            "properties": {
+              "prefix": {
+                "type": "string"
+              },
+              "suffix": {
+                "type": "string"
+              }
+            }
+          },
+          "type": {
+            "type": "string"
+          },
+          "created": {
+            "type": "string"
+          },
+          "changed": {
+            "type": "string"
+          },
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "affiliation": {
+                "type": "object",
+                "properties": {
+                  "networks": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/affiliationItem"
+                    }
+                  },
+                  "projects": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "label": {
+                          "type": "string"
+                        },
+                        "uri": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "contact": {
+                "type": "object",
+                "properties": {
+                  "siteManager": {
+                    "type": "array",
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/personRecord"
+                      }
+                    }
+                  },
+                  "operatingOrganisation": {
+                    "type": "array",
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/organisationRecord"
+                      }
+                    }
+                  },
+                  "metadataProvider": {
+                    "type": "array",
+                    "items": {
+                      "oneOf": [
+                        {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/personRecord"
+                          }
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/organisationRecord"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "fundingAgency": {
+                    "type": "array",
+                    "items": {
+                      "oneOf": [
+                        {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/personRecord"
+                          }
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/organisationRecord"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "siteUrl": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/urlObject"
+                    }
+                  }
+                }
+              },
+              "general": {
+                "type": "object",
+                "properties": {
+                  "abstract": {
+                    "type": "string"
+                  },
+                  "keywords": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/taxonomyTerm"
+                    }
+                  },
+                  "status": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/taxonomyTerm"
+                    }
+                  },
+                  "yearEstablished": {
+                    "type": "integer"
+                  },
+                  "yearClosed": {
+                    "type": "integer"
+                  },
+                  "hierarchy": {
+                    "type": "object",
+                    "properties": {
+                      "parent": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/recordList"
+                        }
+                      },
+                      "children": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/recordList"
+                        }
+                      }
+                    }
+                  },
+                  "siteName": {
+                    "type": "string"
+                  },
+                  "shortName": {
+                    "type": "string"
+                  },
+                  "siteType": {
+                    "type": "string"
+                  },
+                  "protectionLevel": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/taxonomyTerm"
+                    }
+                  },
+                  "landUse": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/taxonomyTerm"
+                    }
+                  },
+                  "images": {
+                    "type": "string"
+                  }
+                }
+              },
+              "environmentalCharacteristics": {
+                "type": "object",
+                "properties": {
+                  "airTemperature": {
+                    "type": "object",
+                    "properties": {
+                      "avg": {
+                        "type": "integer",
+                        "minimum": -100,
+                        "maximum": 100
+                      },
+                      "min": {
+                        "type": "integer",
+                        "minimum": -100,
+                        "maximum": 100
+                      },
+                      "max": {
+                        "type": "integer",
+                        "minimum": -100,
+                        "maximum": 100
+                      },
+                      "unit": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "precipitation": {
+                    "type": "object",
+                    "properties": {
+                      "annual": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 99999999
+                      },
+                      "min": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 99999999
+                      },
+                      "max": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 99999999
+                      },
+                      "unit": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "biogeographicalRegion": {
+                    "type": "string"
+                  },
+                  "biome": {
+                    "type": "string"
+                  },
+                  "ecosystemType": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/taxonomyTerm"
+                    }
+                  },
+                  "landforms": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/taxonomyTerm"
+                    }
+                  },
+                  "geoBonBiome": {
+                    "type": "string"
+                  },
+                  "geology": {
+                    "type": "string"
+                  },
+                  "hydrology": {
+                    "type": "string"
+                  },
+                  "soils": {
+                    "type": "string"
+                  },
+                  "vegetation": {
+                    "type": "string"
+                  }
+                }
+              },
+              "geographic": {
+                "type": "object",
+                "properties": {
+                  "boundaries": {
+                    "type": "string"
+                  },
+                  "coordinates": {
+                    "type": "string"
+                  },
+                  "country": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "elevation": {
+                    "type": "object",
+                    "properties": {
+                      "avg": {
+                        "type": "integer",
+                        "minimum": -10000,
+                        "maximum": 10000
+                      },
+                      "min": {
+                        "type": "integer",
+                        "minimum": -10000,
+                        "maximum": 10000
+                      },
+                      "max": {
+                        "type": "integer",
+                        "minimum": -10000,
+                        "maximum": 10000
+                      },
+                      "unit": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "size": {
+                    "type": "object",
+                    "properties": {
+                      "size": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "unit": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "relatedLocations": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/referencedRecord"
+                    }
+                  }
+                }
+              },
+              "focusDesignScale": {
+                "type": "object",
+                "properties": {
+                  "experiments": {
+                    "type": "object",
+                    "properties": {
+                      "design": {
+                        "type": "string"
+                      },
+                      "scale": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "observations": {
+                    "type": "object",
+                    "properties": {
+                      "design": {
+                        "type": "string"
+                      },
+                      "scale": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "parameters": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/taxonomyTerm"
+                    }
+                  },
+                  "researchTopics": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/taxonomyTerm"
+                    }
+                  }
+                }
+              },
+              "infrastructure": {
+                "type": "object",
+                "properties": {
+                  "accessibleAllYear": {
+                    "type": "boolean"
+                  },
+                  "accessType": {
+                    "type": "string"
+                  },
+                  "allPartsAccessible": {
+                    "type": "boolean"
+                  },
+                  "maintenanceInterval": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "permanentPowerSupply": {
+                    "type": "boolean"
+                  },
+                  "operation": {
+                    "type": "object",
+                    "properties": {
+                      "permanent": {
+                        "type": "boolean"
+                      },
+                      "notes": {
+                        "type": "string"
+                      },
+                      "siteVisitInterval": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "notes": {
+                    "type": "string"
+                  },
+                  "collection": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/taxonomyTerm"
+                    }
+                  },
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "policy": {
+                        "type": "object",
+                        "properties": {
+                          "url": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/components/schemas/urlObject"
+                            }
+                          },
+                          "rights": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "notes": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "relatedResources": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/referencedRecord"
+                }
+              }
+            }
+          }
+        }
+      },
+      "completeDatasetRecord": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "id": {
+            "type": "object",
+            "properties": {
+              "prefix": {
+                "type": "string"
+              },
+              "suffix": {
+                "type": "string"
+              }
+            }
+          },
+          "type": {
+            "type": "string"
+          },
+          "created": {
+            "type": "string"
+          },
+          "changed": {
+            "type": "string"
+          },
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "general": {
+                "type": "object",
+                "properties": {
+                  "abstract": {
+                    "type": "string"
+                  },
+                  "keywords": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/taxonomyTerm"
+                    }
+                  },
+                  "inspire": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/taxonomyTerm"
+                    }
+                  },
+                  "dateRange": {
+                    "type": "object",
+                    "properties": {
+                      "from": {
+                        "type": "string"
+                      },
+                      "to": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "language": {
+                    "type": "string"
+                  },
+                  "relatedSite": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/referencedRecord"
+                    }
+                  }
+                }
+              },
+              "contact": {
+                "type": "object",
+                "properties": {
+                  "corresponding": {
+                    "type": "array",
+                    "items": {
+                      "oneOf": [
+                        {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/personRecord"
+                          }
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/organisationRecord"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "creator": {
+                    "type": "array",
+                    "items": {
+                      "oneOf": [
+                        {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/personRecord"
+                          }
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/organisationRecord"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "metadata": {
+                    "type": "array",
+                    "items": {
+                      "oneOf": [
+                        {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/personRecord"
+                          }
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/organisationRecord"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              },
+              "observations": {
+                "type": "object",
+                "properties": {
+                  "parameters": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/taxonomyTerm"
+                    }
+                  },
+                  "speciesGroup": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/taxonomyTerm"
+                    }
+                  }
+                }
+              },
+              "geographic": {
+                "type": "object",
+                "properties": {
+                  "boundaries": {
+                    "type": "string"
+                  },
+                  "abstract": {
+                    "type": "string"
+                  },
+                  "elevation": {
+                    "type": "object",
+                    "properties": {
+                      "min": {
+                        "type": "integer",
+                        "minimum": -10000,
+                        "maximum": 10000
+                      },
+                      "max": {
+                        "type": "integer",
+                        "minimum": -10000,
+                        "maximum": 10000
+                      },
+                      "unit": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              },
+              "onlineDistribution": {
+                "type": "object",
+                "properties": {
+                  "dataPolicyUrl": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/urlObject"
+                    }
+                  },
+                  "doi": {
+                    "type": "string"
+                  },
+                  "onlineLocation": {
+                    "type": "array",
+                    "items": {
+                      "properties": {
+                        "function": {
+                          "type": "string"
+                        },
+                        "url": {
+                          "type": "object",
+                          "properties": {
+                            "title": {
+                              "type": "string"
+                            },
+                            "value": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "email": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "legal": {
+                "type": "object",
+                "properties": {
+                  "accesUse": {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "uri": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "rights": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "legalAct": {
+                    "type": "string"
+                  },
+                  "citation": {
+                    "type": "string"
+                  }
+                }
+              },
+              "method": {
+                "type": "object",
+                "properties": {
+                  "instrumentation": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "qualityAssurance": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "methodUrl": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/urlObject"
+                    }
+                  },
+                  "methodDescription": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "samplingTimeUnit": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/taxonomyTerm"
+                    }
+                  },
+                  "spatialDesign": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/taxonomyTerm"
+                    }
+                  },
+                  "spatialScale": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/taxonomyTerm"
+                    }
+                  },
+                  "temporalResolution": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/taxonomyTerm"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "completeActivityRecord": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "id": {
+            "type": "object",
+            "properties": {
+              "prefix": {
+                "type": "string"
+              },
+              "suffix": {
+                "type": "string"
+              }
+            }
+          },
+          "type": {
+            "type": "string"
+          },
+          "created": {
+            "type": "string"
+          },
+          "changed": {
+            "type": "string"
+          },
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "general": {
+                "type": "object",
+                "properties": {
+                  "relatedSite": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/referencedRecord"
+                    }
+                  },
+                  "abstract": {
+                    "type": "string"
+                  },
+                  "keywords": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/taxonomyTerm"
+                    }
+                  },
+                  "dateRange": {
+                    "type": "object",
+                    "properties": {
+                      "from": {
+                        "type": "string"
+                      },
+                      "to": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              },
+              "contact": {
+                "type": "object",
+                "properties": {
+                  "corresponding": {
+                    "type": "array",
+                    "items": {
+                      "oneOf": [
+                        {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/personRecord"
+                          }
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/organisationRecord"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "metadataProvider": {
+                    "type": "array",
+                    "items": {
+                      "oneOf": [
+                        {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/personRecord"
+                          }
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/organisationRecord"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              },
+              "geographic": {
+                "type": "object",
+                "properties": {
+                  "boundaries": {
+                    "type": "string"
+                  }
+                }
+              },
+              "availability": {
+                "type": "object",
+                "properties": {
+                  "digitally": {
+                    "type": "boolean"
+                  },
+                  "forEcopotential": {
+                    "type": "boolean"
+                  },
+                  "openData": {
+                    "type": "boolean"
+                  },
+                  "notes": {
+                    "type": "string"
+                  },
+                  "source": {
+                    "type": "object",
+                    "properties": {
+                      "url": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/urlObject"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "observation": {
+                "type": "object",
+                "properties": {
+                  "parameter": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/taxonomyTerm"
+                    }
+                  }
+                }
+              },
+              "resolution": {
+                "type": "object",
+                "properties": {
+                  "spatial": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/taxonomyTerm"
+                    }
+                  },
+                  "temporal": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/taxonomyTerm"
+                    }
+                  }
+                }
+              },
+              "relatedResources": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/referencedRecord"
+                }
+              }
+            }
+          }
+        }
+      },
+      "completeSensorRecord": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "id": {
+            "type": "object",
+            "properties": {
+              "prefix": {
+                "type": "string"
+              },
+              "suffix": {
+                "type": "string"
+              }
+            }
+          },
+          "type": {
+            "type": "string"
+          },
+          "created": {
+            "type": "string"
+          },
+          "changed": {
+            "type": "string"
+          },
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "general": {
+                "type": "object",
+                "properties": {
+                  "relatedSite": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/referencedRecord"
+                    }
+                  },
+                  "abstract": {
+                    "type": "string"
+                  },
+                  "contact": {
+                    "type": "array",
+                    "items": {
+                      "oneOf": [
+                        {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/personRecord"
+                          }
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/organisationRecord"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "dateRange": {
+                    "type": "object",
+                    "properties": {
+                      "from": {
+                        "type": "string"
+                      },
+                      "to": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "keywords": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/taxonomyTerm"
+                    }
+                  }
+                }
+              },
+              "geographic": {
+                "type": "object",
+                "properties": {
+                  "coordinates": {
+                    "type": "string"
+                  },
+                  "trajectory": {
+                    "type": "string"
+                  },
+                  "elevation": {
+                    "type": "object",
+                    "properties": {
+                      "value": {
+                        "type": "string"
+                      },
+                      "unit": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              },
+              "observation": {
+                "type": "object",
+                "properties": {
+                  "sensorType": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/taxonomyTerm"
+                    }
+                  },
+                  "resultAcquisitionSource": {
+                    "type": "string"
+                  },
+                  "observedProperty": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "property": {
+                          "type": "string"
+                        },
+                        "unitofMeasurement": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "completeLocationRecord": {
+        "type": "object",
+        "properties": {
+          "geometry": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string"
+              },
+              "coordinates": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              }
+            }
+          },
+          "properties": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "id": {
+                "type": "object",
+                "properties": {
+                  "prefix": {
+                    "type": "string"
+                  },
+                  "suffix": {
+                    "type": "string"
+                  }
+                }
+              },
+              "created": {
+                "type": "string"
+              },
+              "changed": {
+                "type": "string"
+              },
+              "locationType": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/taxonomyTerm"
+                }
+              },
+              "relatedSite": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/referencedRecord"
+                }
+              },
+              "abstract": {
+                "type": "string"
+              },
+              "elevation": {
+                "type": "object",
+                "properties": {
+                  "avg": {
+                    "type": "integer",
+                    "minimum": -10000,
+                    "maximum": 10000
+                  },
+                  "min": {
+                    "type": "integer",
+                    "minimum": -10000,
+                    "maximum": 10000
+                  },
+                  "max": {
+                    "type": "integer",
+                    "minimum": -10000,
+                    "maximum": 10000
+                  },
+                  "unit": {
+                    "type": "string"
+                  }
+                }
+              },
+              "images": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "personRecord": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "orcid": {
+            "type": "string"
+          }
+        }
+      },
+      "organisationRecord": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        }
+      },
+      "taxonomyTerm": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "uri": {
+            "type": "string"
+          }
+        }
+      },
+      "referencedRecord": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "id": {
+            "type": "object",
+            "properties": {
+              "prefix": {
+                "type": "string"
+              },
+              "suffix": {
+                "type": "string"
+              }
+            }
+          },
+          "changed": {
+            "type": "string"
+          }
+        }
+      },
+      "urlObject": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
