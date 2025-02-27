@@ -45,8 +45,9 @@ export type AlternateIdentifier = {
 export type RelatedIdentifier = Type1;
 
 export type Title = {
-    titleLanguage: string;
-    titleText: string;  
+    titleLanguage?: string | undefined;
+    titleText: string;
+    titleType?: string | undefined;
 }
 
 export type Creator = {
@@ -67,7 +68,10 @@ export const mapB2ShareToCommonDatasetMetadata = (
     // datasetType: "",
     alternateIdentifiers: [],
     relatedIdentifiers: [],
-    titles: [],
+    titles: b2share.titles.map((t) => ({
+      titleText: t.title,
+      titleType: t.type,
+    })),
     creators: creators ? creators : undefined,
     responsibleOrganizations: [],
     contactPoints:  [],
@@ -100,7 +104,12 @@ export const mapDeimsToCommonDatasetMetadata = (
   return {
     alternateIdentifiers: [],
     relatedIdentifiers: [],
-    titles: [],
+    titles: [
+      {
+        titleText: deims.title || "",
+        titleLanguage: deims.attributes?.general?.language,
+      },
+    ],
     creators: [],
     responsibleOrganizations: [],
     contactPoints:  [],
