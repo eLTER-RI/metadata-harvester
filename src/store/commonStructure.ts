@@ -60,7 +60,7 @@ export const mapB2ShareToCommonDatasetMetadata = (
   b2share: B2ShareExtractedSchema
 ): CommonDatasetMetadata => {
   const creators: Creator[] | undefined = b2share.creators?.map((c) => ({
-    name: c.given_name || "" + c.family_name || "",
+    name: c.creator_name ? c.creator_name : c.given_name || "" + ", " + c.family_name || "",
     type: "Person",
   }));
   
