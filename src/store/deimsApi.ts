@@ -291,9 +291,9 @@ export type CompleteDatasetRecord = {
       relatedSite?: ReferencedRecord[];
     };
     contact?: {
-      corresponding?: (PersonRecord[] | OrganisationRecord[])[];
-      creator?: (PersonRecord[] | OrganisationRecord[])[];
-      metadata?: (PersonRecord[] | OrganisationRecord[])[];
+      corresponding?: (PersonRecord[] | OrganisationRecord[]);
+      creator?: (PersonRecord[] | OrganisationRecord[]);
+      metadata?: (PersonRecord[] | OrganisationRecord[]);
     };
     observations?: {
       parameters?: TaxonomyTerm[];

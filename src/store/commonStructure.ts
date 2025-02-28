@@ -1,5 +1,5 @@
 import { B2ShareExtractedSchema, RelatedIdentifiers, Type1, Type2, Type3, Type4 } from "./b2shareApi";
-import { CompleteDatasetRecord } from "./deimsApi";
+import { CompleteDatasetRecord, OrganisationRecord, PersonRecord } from "./deimsApi";
 
 // There was already an attempt to create a common schema
 // https://gitlab.ics.muni.cz/dataraptors/elter/elter-invenio/-/blob/master/models/datasets-metadata.yaml?ref_type=heads
@@ -52,7 +52,7 @@ export type Title = {
 
 export type Creator = {
   name?: string;
-  type?: "Person" | "Organization";  
+  type?: "Person" | "Organization" | "Unknown";  
   email?: string;
 }
 
@@ -98,6 +98,28 @@ export const mapB2ShareToCommonDatasetMetadata = (
   }
 }
 
+function parseDeimsCreator(c: PersonRecord | OrganisationRecord): Creator {
+  if (c.type === "person") {
+    const creator: PersonRecord = c as PersonRecord
+    return {
+      type: "Person",
+      name: creator.name,
+      email: creator.email,
+    };
+  } else if (c.type === "organisation"){
+    const creator: OrganisationRecord = c as OrganisationRecord
+    return {
+      type: "Organization",
+      name: creator.name,
+    };
+  } else {
+    return {
+      type: "Unknown",
+      name: c.name,
+    }
+  }
+}
+
 export const mapDeimsToCommonDatasetMetadata = (
   deims: CompleteDatasetRecord
 ): CommonDatasetMetadata => {
@@ -110,7 +132,8 @@ export const mapDeimsToCommonDatasetMetadata = (
         titleLanguage: deims.attributes?.general?.language,
       },
     ],
-    creators: [],
+    creators: deims.attributes?.contact?.creator?.map((c) => parseDeimsCreator(c)) ||
+    deims.attributes?.contact?.corresponding?.map((c) => parseDeimsCreator(c)) || [],  
     responsibleOrganizations: [],
     contactPoints:  [],
     contributors: [],
