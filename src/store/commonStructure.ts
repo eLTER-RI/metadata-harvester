@@ -1,4 +1,4 @@
-import { B2ShareExtractedSchema, RelatedIdentifiers, Type1, Type2, Type3, Type4 } from "./b2shareApi";
+import { B2ShareExtractedSchema } from "./b2shareApi";
 import { CompleteDatasetRecord, OrganisationRecord, PersonRecord } from "./deimsApi";
 
 // There was already an attempt to create a common schema
@@ -8,8 +8,8 @@ import { CompleteDatasetRecord, OrganisationRecord, PersonRecord } from "./deims
 
 export type CommonDatasetMetadata = {
     datasetType?: string;
-    alternateIdentifiers?: AlternateIdentifier[]; 
-    relatedIdentifiers?: RelatedIdentifiers[];
+    alternateIdentifiers?: Identifier[]; 
+    relatedIdentifiers?: Identifier[];
     titles?: Title[];
     creators?: Creator[];
     responsibleOrganizations?: string[];
@@ -35,14 +35,58 @@ export type CommonDatasetMetadata = {
 /**
  * The type of the identifier.
  */
-export type AlternateIdentifierType = Type2 | Type3 | Type4
+export type IdentifierType = "Audiovisual"
+| "Book"
+| "BookChapter"
+| "Collection"
+| "ComputationalNotebook"
+| "ConferencePaper"
+| "ConferenceProceeding"
+| "DataPaper"
+| "Dataset"
+| "Dissertation"
+| "Event"
+| "Image"
+| "InteractiveResource"
+| "Journal"
+| "JournalArticle"
+| "Model"
+| "OutputManagementPlan"
+| "PeerReview"
+| "PhysicalObject"
+| "Preprint"
+| "Report"
+| "Service"
+| "Software"
+| "Sound"
+| "Standard"
+| "Text"
+| "Workflow"
+| "Other"
+| "ARK"
+| "arXiv"
+| "bibcode"
+| "DOI"
+| "EAN13"
+| "EISSN"
+| "Handle"
+| "ISBN"
+| "ISSN"
+| "ISTC"
+| "LISSN"
+| "LSID"
+| "ORCID"
+| "PMID"
+| "PURL"
+| "UPC"
+| "URL"
+| "URN"
+| "w3id";
 
-export type AlternateIdentifier = {
-  alternateIdentifier: string;
-  alternateIdentifier_type: AlternateIdentifierType;
-}[];
-
-export type RelatedIdentifier = Type1;
+export type Identifier = {
+  identifier: string;
+  identifierType: IdentifierType;
+};
 
 export type Title = {
     titleLanguage?: string | undefined;
@@ -66,7 +110,10 @@ export const mapB2ShareToCommonDatasetMetadata = (
   
   return {
     // datasetType: "",
-    alternateIdentifiers: [],
+    alternateIdentifiers: b2share.alternate_identifiers?.map((i) => ({
+      identifier: i.alternate_identifier,
+      identifierType: i.alternate_identifier_type as IdentifierType,
+    })) || [],
     relatedIdentifiers: [],
     titles: b2share.titles.map((t) => ({
       titleText: t.title,
@@ -123,8 +170,15 @@ function parseDeimsCreator(c: PersonRecord | OrganisationRecord): Creator {
 export const mapDeimsToCommonDatasetMetadata = (
   deims: CompleteDatasetRecord
 ): CommonDatasetMetadata => {
+  const alternateIdentifiers: Identifier[] = []
+  if (deims.attributes?.onlineDistribution?.doi !== undefined) {
+    alternateIdentifiers.push({
+      identifier: deims.attributes?.onlineDistribution?.doi,
+      identifierType: "DOI"
+  })};
+
   return {
-    alternateIdentifiers: [],
+    alternateIdentifiers: alternateIdentifiers,
     relatedIdentifiers: [],
     titles: [
       {
