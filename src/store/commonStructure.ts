@@ -1,4 +1,4 @@
-import { B2ShareExtractedSchema } from "./b2shareApi";
+import { AlternateIdentifier, B2ShareExtractedSchema } from "./b2shareApi";
 import { CompleteDatasetRecord, OrganisationRecord, PersonRecord } from "./deimsApi";
 
 // There was already an attempt to create a common schema
@@ -83,6 +83,10 @@ export type IdentifierType = "Audiovisual"
 | "URN"
 | "w3id";
 
+const identifierTypesMap = new Map<string, IdentifierType>([
+  "ARK", "arXiv", "bibcode", "DOI", "EAN13", "EISSN", "Handle", "ISBN", "ISSN", "ISTC", "LISSN", "LSID", "ORCID", "PMID", "PURL", "UPC", "URL", "URN", "w3id"
+].map(type => [type.toLowerCase(), type as IdentifierType]));
+
 export type Identifier = {
   identifier: string;
   identifierType: IdentifierType;
@@ -100,6 +104,15 @@ export type Creator = {
   email?: string;
 }
 
+function extractIdentifiers(input: any): Identifier[] {
+  return Object.entries(input.metadata || {})
+  .filter(([key]) => identifierTypesMap.has(key.toLowerCase()))
+  .map(([key, value]) => ({
+    identifier: value as string,
+    identifierType: identifierTypesMap.get(key.toLowerCase()) as IdentifierType
+  }));
+}
+
 export const mapB2ShareToCommonDatasetMetadata = (
   b2share: B2ShareExtractedSchema
 ): CommonDatasetMetadata => {
@@ -110,10 +123,7 @@ export const mapB2ShareToCommonDatasetMetadata = (
   
   return {
     // datasetType: "",
-    alternateIdentifiers: b2share.alternate_identifiers?.map((i) => ({
-      identifier: i.alternate_identifier,
-      identifierType: i.alternate_identifier_type as IdentifierType,
-    })) || [],
+    alternateIdentifiers: extractIdentifiers(b2share.metadata) || [],
     relatedIdentifiers: [],
     titles: b2share.titles.map((t) => ({
       titleText: t.title,
@@ -170,15 +180,9 @@ function parseDeimsCreator(c: PersonRecord | OrganisationRecord): Creator {
 export const mapDeimsToCommonDatasetMetadata = (
   deims: CompleteDatasetRecord
 ): CommonDatasetMetadata => {
-  const alternateIdentifiers: Identifier[] = []
-  if (deims.attributes?.onlineDistribution?.doi !== undefined) {
-    alternateIdentifiers.push({
-      identifier: deims.attributes?.onlineDistribution?.doi,
-      identifierType: "DOI"
-  })};
 
   return {
-    alternateIdentifiers: alternateIdentifiers,
+    alternateIdentifiers: extractIdentifiers(deims.attributes?.onlineDistribution),
     relatedIdentifiers: [],
     titles: [
       {
