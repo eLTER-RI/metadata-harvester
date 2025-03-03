@@ -1,5 +1,9 @@
-import { AlternateIdentifier, B2ShareExtractedSchema } from "./b2shareApi";
-import { CompleteDatasetRecord, OrganisationRecord, PersonRecord } from "./deimsApi";
+import { B2ShareExtractedSchema } from './b2shareApi';
+import {
+  CompleteDatasetRecord,
+  OrganisationRecord,
+  PersonRecord,
+} from './deimsApi';
 
 // There was already an attempt to create a common schema
 // https://gitlab.ics.muni.cz/dataraptors/elter/elter-invenio/-/blob/master/models/datasets-metadata.yaml?ref_type=heads
@@ -7,85 +11,106 @@ import { CompleteDatasetRecord, OrganisationRecord, PersonRecord } from "./deims
 // https://gitlab.ics.muni.cz/dataraptors/elter/elter-invenio/-/blob/master/models/datasets-datatypes.yaml?ref_type=heads
 
 export type CommonDatasetMetadata = {
-    datasetType?: string;
-    alternateIdentifiers?: Identifier[]; 
-    relatedIdentifiers?: Identifier[];
-    titles?: Title[];
-    creators?: Creator[];
-    responsibleOrganizations?: string[];
-    contactPoints?:  string[];
-    contributors?: string[];
-    publicationDate?: string[];
-    language?: string[];
-    descriptions?: string[];
-    keywords?: string[];
-    licenses?: string[];
-    geoLocations?: string[];
-    temporalCoverages?: string[];
-    temporalResolution?: string[];
-    taxonomicCoverages?: string[];
-    methods?: string[];
-    projects?: string[];
-    siteReferences?: string[];
-    habitatReferences?: string[];
-    dataLevel?: string;
-    additionalMetadata?: string[];
-}
+  datasetType?: string;
+  alternateIdentifiers?: Identifier[];
+  relatedIdentifiers?: Identifier[];
+  titles?: Title[];
+  creators?: Creator[];
+  responsibleOrganizations?: string[];
+  contactPoints?: string[];
+  contributors?: string[];
+  publicationDate?: string[];
+  language?: string[];
+  descriptions?: string[];
+  keywords?: string[];
+  licenses?: string[];
+  geoLocations?: string[];
+  temporalCoverages?: string[];
+  temporalResolution?: string[];
+  taxonomicCoverages?: string[];
+  methods?: string[];
+  projects?: string[];
+  siteReferences?: string[];
+  habitatReferences?: string[];
+  dataLevel?: string;
+  additionalMetadata?: string[];
+};
 
 /**
  * The type of the identifier.
  */
-export type IdentifierType = "Audiovisual"
-| "Book"
-| "BookChapter"
-| "Collection"
-| "ComputationalNotebook"
-| "ConferencePaper"
-| "ConferenceProceeding"
-| "DataPaper"
-| "Dataset"
-| "Dissertation"
-| "Event"
-| "Image"
-| "InteractiveResource"
-| "Journal"
-| "JournalArticle"
-| "Model"
-| "OutputManagementPlan"
-| "PeerReview"
-| "PhysicalObject"
-| "Preprint"
-| "Report"
-| "Service"
-| "Software"
-| "Sound"
-| "Standard"
-| "Text"
-| "Workflow"
-| "Other"
-| "ARK"
-| "arXiv"
-| "bibcode"
-| "DOI"
-| "EAN13"
-| "EISSN"
-| "Handle"
-| "ISBN"
-| "ISSN"
-| "ISTC"
-| "LISSN"
-| "LSID"
-| "ORCID"
-| "PMID"
-| "PURL"
-| "UPC"
-| "URL"
-| "URN"
-| "w3id";
+export type IdentifierType =
+  | 'Audiovisual'
+  | 'Book'
+  | 'BookChapter'
+  | 'Collection'
+  | 'ComputationalNotebook'
+  | 'ConferencePaper'
+  | 'ConferenceProceeding'
+  | 'DataPaper'
+  | 'Dataset'
+  | 'Dissertation'
+  | 'Event'
+  | 'Image'
+  | 'InteractiveResource'
+  | 'Journal'
+  | 'JournalArticle'
+  | 'Model'
+  | 'OutputManagementPlan'
+  | 'PeerReview'
+  | 'PhysicalObject'
+  | 'Preprint'
+  | 'Report'
+  | 'Service'
+  | 'Software'
+  | 'Sound'
+  | 'Standard'
+  | 'Text'
+  | 'Workflow'
+  | 'Other'
+  | 'ARK'
+  | 'arXiv'
+  | 'bibcode'
+  | 'DOI'
+  | 'EAN13'
+  | 'EISSN'
+  | 'Handle'
+  | 'ISBN'
+  | 'ISSN'
+  | 'ISTC'
+  | 'LISSN'
+  | 'LSID'
+  | 'ORCID'
+  | 'PMID'
+  | 'PURL'
+  | 'UPC'
+  | 'URL'
+  | 'URN'
+  | 'w3id';
 
-const identifierTypesMap = new Map<string, IdentifierType>([
-  "ARK", "arXiv", "bibcode", "DOI", "EAN13", "EISSN", "Handle", "ISBN", "ISSN", "ISTC", "LISSN", "LSID", "ORCID", "PMID", "PURL", "UPC", "URL", "URN", "w3id"
-].map(type => [type.toLowerCase(), type as IdentifierType]));
+const identifierTypesMap = new Map<string, IdentifierType>(
+  [
+    'ARK',
+    'arXiv',
+    'bibcode',
+    'DOI',
+    'EAN13',
+    'EISSN',
+    'Handle',
+    'ISBN',
+    'ISSN',
+    'ISTC',
+    'LISSN',
+    'LSID',
+    'ORCID',
+    'PMID',
+    'PURL',
+    'UPC',
+    'URL',
+    'URN',
+    'w3id',
+  ].map((type) => [type.toLowerCase(), type as IdentifierType]),
+);
 
 export type Identifier = {
   identifier: string;
@@ -93,34 +118,39 @@ export type Identifier = {
 };
 
 export type Title = {
-    titleLanguage?: string | undefined;
-    titleText: string;
-    titleType?: string | undefined;
-}
+  titleLanguage?: string | undefined;
+  titleText: string;
+  titleType?: string | undefined;
+};
 
 export type Creator = {
   name?: string;
-  type?: "Person" | "Organization" | "Unknown";  
+  type?: 'Person' | 'Organization' | 'Unknown';
   email?: string;
-}
+};
 
+// eslint-disable-next-line
 function extractIdentifiers(input: any): Identifier[] {
-  return Object.entries(input.metadata || {})
-  .filter(([key]) => identifierTypesMap.has(key.toLowerCase()))
-  .map(([key, value]) => ({
-    identifier: value as string,
-    identifierType: identifierTypesMap.get(key.toLowerCase()) as IdentifierType
-  }));
+  return Object.entries(input || {})
+    .filter(([key]) => identifierTypesMap.has(key.toLowerCase()))
+    .map(([key, value]) => ({
+      identifier: value as string,
+      identifierType: identifierTypesMap.get(
+        key.toLowerCase(),
+      ) as IdentifierType,
+    }));
 }
 
 export const mapB2ShareToCommonDatasetMetadata = (
-  b2share: B2ShareExtractedSchema
+  b2share: B2ShareExtractedSchema,
 ): CommonDatasetMetadata => {
   const creators: Creator[] | undefined = b2share.creators?.map((c) => ({
-    name: c.creator_name ? c.creator_name : c.given_name || "" + ", " + c.family_name || "",
-    type: "Person",
+    name: c.creator_name
+      ? c.creator_name
+      : c.given_name || '' + ', ' + c.family_name || '',
+    type: 'Person',
   }));
-  
+
   return {
     // datasetType: "",
     alternateIdentifiers: extractIdentifiers(b2share.metadata) || [],
@@ -131,7 +161,7 @@ export const mapB2ShareToCommonDatasetMetadata = (
     })),
     creators: creators ? creators : undefined,
     responsibleOrganizations: [],
-    contactPoints:  [],
+    contactPoints: [],
     contributors: b2share.contributors?.map((c) => {
       return c.contributor_name;
     }),
@@ -150,53 +180,60 @@ export const mapB2ShareToCommonDatasetMetadata = (
     projects: [],
     siteReferences: [],
     habitatReferences: [],
-    dataLevel: "",
-    additionalMetadata: []
-  }
-}
+    dataLevel: '',
+    additionalMetadata: [],
+  };
+};
 
 function parseDeimsCreator(c: PersonRecord | OrganisationRecord): Creator {
-  if (c.type === "person") {
-    const creator: PersonRecord = c as PersonRecord
+  if (c.type === 'person') {
+    const creator: PersonRecord = c as PersonRecord;
     return {
-      type: "Person",
+      type: 'Person',
       name: creator.name,
       email: creator.email,
     };
-  } else if (c.type === "organisation"){
-    const creator: OrganisationRecord = c as OrganisationRecord
+  } else if (c.type === 'organisation') {
+    const creator: OrganisationRecord = c as OrganisationRecord;
     return {
-      type: "Organization",
+      type: 'Organization',
       name: creator.name,
     };
   } else {
     return {
-      type: "Unknown",
+      type: 'Unknown',
       name: c.name,
-    }
+    };
   }
 }
 
 export const mapDeimsToCommonDatasetMetadata = (
-  deims: CompleteDatasetRecord
+  deims: CompleteDatasetRecord,
 ): CommonDatasetMetadata => {
-
   return {
-    alternateIdentifiers: extractIdentifiers(deims.attributes?.onlineDistribution),
+    alternateIdentifiers: extractIdentifiers(
+      deims.attributes?.onlineDistribution,
+    ),
     relatedIdentifiers: [],
     titles: [
       {
-        titleText: deims.title || "",
+        titleText: deims.title || '',
         titleLanguage: deims.attributes?.general?.language,
       },
     ],
-    creators: deims.attributes?.contact?.creator?.map((c) => parseDeimsCreator(c)) ||
-    deims.attributes?.contact?.corresponding?.map((c) => parseDeimsCreator(c)) || [],  
+    creators:
+      deims.attributes?.contact?.creator?.map((c) => parseDeimsCreator(c)) ||
+      deims.attributes?.contact?.corresponding?.map((c) =>
+        parseDeimsCreator(c),
+      ) ||
+      [],
     responsibleOrganizations: [],
-    contactPoints:  [],
+    contactPoints: [],
     contributors: [],
     publicationDate: [],
-    language: deims.attributes?.general?.language ? [deims.attributes?.general?.language] : [],
+    language: deims.attributes?.general?.language
+      ? [deims.attributes?.general?.language]
+      : [],
     descriptions: [],
     keywords: [],
     licenses: [],
@@ -208,7 +245,7 @@ export const mapDeimsToCommonDatasetMetadata = (
     projects: [],
     siteReferences: [],
     habitatReferences: [],
-    dataLevel: "",
-    additionalMetadata: []
-  }
-}
+    dataLevel: '',
+    additionalMetadata: [],
+  };
+};

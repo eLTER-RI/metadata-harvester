@@ -1,4 +1,4 @@
-import { emptyDeimsApi as api } from "./emptyDeimsApi";
+import { emptyDeimsApi as api } from './emptyDeimsApi';
 const injectedRtkApi = api.injectEndpoints({
   endpoints: (build) => ({
     getSites: build.query<GetSitesApiResponse, GetSitesApiArg>({
@@ -291,9 +291,9 @@ export type CompleteDatasetRecord = {
       relatedSite?: ReferencedRecord[];
     };
     contact?: {
-      corresponding?: (PersonRecord[] | OrganisationRecord[]);
-      creator?: (PersonRecord[] | OrganisationRecord[]);
-      metadata?: (PersonRecord[] | OrganisationRecord[]);
+      corresponding?: PersonRecord[] | OrganisationRecord[];
+      creator?: PersonRecord[] | OrganisationRecord[];
+      metadata?: PersonRecord[] | OrganisationRecord[];
     };
     observations?: {
       parameters?: TaxonomyTerm[];
