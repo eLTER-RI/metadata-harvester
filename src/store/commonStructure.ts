@@ -13,15 +13,14 @@ import {
 export type CommonDatasetMetadata = {
   datasetType?: string;
   alternateIdentifiers?: Identifier[];
-  relatedIdentifiers?: Identifier[];
   titles?: Title[];
   creators?: Creator[];
+  descriptions?: Description[];
   responsibleOrganizations?: string[];
   contactPoints?: string[];
   contributors?: string[];
   publicationDate?: string[];
   language?: string[];
-  descriptions?: string[];
   keywords?: string[];
   licenses?: string[];
   geoLocations?: string[];
@@ -34,6 +33,7 @@ export type CommonDatasetMetadata = {
   habitatReferences?: string[];
   dataLevel?: string;
   additionalMetadata?: string[];
+  relatedIdentifiers?: Identifier[];
 };
 
 /**
@@ -123,6 +123,11 @@ export type Title = {
   titleType?: string | undefined;
 };
 
+export type Description = {
+  descriptionText: string;
+  descriptionType?: string | undefined;
+};
+
 export type Creator = {
   name?: string;
   type?: 'Person' | 'Organization' | 'Unknown';
@@ -160,6 +165,10 @@ export const mapB2ShareToCommonDatasetMetadata = (
       titleType: t.type,
     })),
     creators: creators ? creators : undefined,
+    descriptions: b2share.descriptions?.map((d) => ({
+      descriptionText: d.description,
+      descriptionType: d.description_type,
+    })),
     responsibleOrganizations: [],
     contactPoints: [],
     contributors: b2share.contributors?.map((c) => {
@@ -169,7 +178,6 @@ export const mapB2ShareToCommonDatasetMetadata = (
     language: b2share.languages?.map((c) => {
       return c.language_name;
     }),
-    descriptions: [],
     keywords: [],
     licenses: [],
     geoLocations: [],
@@ -210,6 +218,20 @@ function parseDeimsCreator(c: PersonRecord | OrganisationRecord): Creator {
 export const mapDeimsToCommonDatasetMetadata = (
   deims: CompleteDatasetRecord,
 ): CommonDatasetMetadata => {
+  const descriptions: Description[] = [];
+  if (deims.attributes?.general?.abstract) {
+    descriptions.push({
+      descriptionText: deims.attributes?.general?.abstract,
+      descriptionType: 'Abstract',
+    });
+  }
+  if (deims.attributes?.method) {
+    descriptions.push({
+      descriptionText: deims.attributes?.method?.toString(),
+      descriptionType: 'Methods',
+    });
+  }
+
   return {
     alternateIdentifiers: extractIdentifiers(
       deims.attributes?.onlineDistribution,
@@ -227,6 +249,7 @@ export const mapDeimsToCommonDatasetMetadata = (
         parseDeimsCreator(c),
       ) ||
       [],
+    descriptions: descriptions,
     responsibleOrganizations: [],
     contactPoints: [],
     contributors: [],
@@ -234,7 +257,6 @@ export const mapDeimsToCommonDatasetMetadata = (
     language: deims.attributes?.general?.language
       ? [deims.attributes?.general?.language]
       : [],
-    descriptions: [],
     keywords: [],
     licenses: [],
     geoLocations: [],
