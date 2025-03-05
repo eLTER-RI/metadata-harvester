@@ -16,12 +16,12 @@ export type CommonDatasetMetadata = {
   titles?: Title[];
   creators?: Creator[];
   descriptions?: Description[];
+  keywords?: string[];
   responsibleOrganizations?: string[];
   contactPoints?: string[];
   contributors?: string[];
   publicationDate?: string[];
   language?: string[];
-  keywords?: string[];
   licenses?: string[];
   geoLocations?: string[];
   temporalCoverages?: string[];
@@ -169,6 +169,9 @@ export const mapB2ShareToCommonDatasetMetadata = (
       descriptionText: d.description,
       descriptionType: d.description_type,
     })),
+    keywords: b2share.keywords?.map((k) => {
+      return k.keyword;
+    }),
     responsibleOrganizations: [],
     contactPoints: [],
     contributors: b2share.contributors?.map((c) => {
@@ -178,7 +181,6 @@ export const mapB2ShareToCommonDatasetMetadata = (
     language: b2share.languages?.map((c) => {
       return c.language_name;
     }),
-    keywords: [],
     licenses: [],
     geoLocations: [],
     temporalCoverages: [],
@@ -250,6 +252,9 @@ export const mapDeimsToCommonDatasetMetadata = (
       ) ||
       [],
     descriptions: descriptions,
+    keywords: deims.attributes?.general?.keywords
+      ?.filter((k) => k && k.label)
+      .map((k) => k.label as string),
     responsibleOrganizations: [],
     contactPoints: [],
     contributors: [],
@@ -257,7 +262,6 @@ export const mapDeimsToCommonDatasetMetadata = (
     language: deims.attributes?.general?.language
       ? [deims.attributes?.general?.language]
       : [],
-    keywords: [],
     licenses: [],
     geoLocations: [],
     temporalCoverages: [],
