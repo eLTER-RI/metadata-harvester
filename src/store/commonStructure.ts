@@ -18,6 +18,7 @@ export type CommonDatasetMetadata = {
   descriptions?: Description[];
   keywords?: string[];
   access: string;
+  temporalCoverages?: TemporalCoverage;
   responsibleOrganizations?: string[];
   contactPoints?: string[];
   contributors?: string[];
@@ -25,7 +26,6 @@ export type CommonDatasetMetadata = {
   language?: string[];
   licenses?: string[];
   geoLocations?: string[];
-  temporalCoverages?: string[];
   temporalResolution?: string[];
   taxonomicCoverages?: string[];
   methods?: string[];
@@ -135,6 +135,11 @@ export type Creator = {
   email?: string;
 };
 
+export type TemporalCoverage = {
+  startDate?: string;
+  endDate?: string;
+};
+
 // eslint-disable-next-line
 function extractIdentifiers(input: any): Identifier[] {
   return Object.entries(input || {})
@@ -185,7 +190,6 @@ export const mapB2ShareToCommonDatasetMetadata = (
     }),
     licenses: [],
     geoLocations: [],
-    temporalCoverages: [],
     temporalResolution: [],
     taxonomicCoverages: [],
     methods: [],
@@ -258,6 +262,10 @@ export const mapDeimsToCommonDatasetMetadata = (
       ?.filter((k) => k && k.label)
       .map((k) => k.label as string),
     access: deims.attributes?.legal?.accessUse?.map((entry: any) => entry.label).join("; ") || "unknown",
+    temporalCoverages: {
+      startDate: deims.attributes?.general?.dateRange?.from,
+      endDate: deims.attributes?.general?.dateRange?.to,
+    },
     responsibleOrganizations: [],
     contactPoints: [],
     contributors: [],
@@ -267,7 +275,6 @@ export const mapDeimsToCommonDatasetMetadata = (
       : [],
     licenses: [],
     geoLocations: [],
-    temporalCoverages: [],
     temporalResolution: [],
     taxonomicCoverages: [],
     methods: [],
