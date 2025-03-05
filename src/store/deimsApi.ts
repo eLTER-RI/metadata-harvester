@@ -321,10 +321,10 @@ export type CompleteDatasetRecord = {
       }[];
     };
     legal?: {
-      accesUse?: {
+      accessUse?: {
         label?: string;
         uri?: string;
-      };
+      }[];
       rights?: string[];
       legalAct?: string;
       citation?: string;

@@ -17,6 +17,7 @@ export type CommonDatasetMetadata = {
   creators?: Creator[];
   descriptions?: Description[];
   keywords?: string[];
+  access: string;
   responsibleOrganizations?: string[];
   contactPoints?: string[];
   contributors?: string[];
@@ -172,6 +173,7 @@ export const mapB2ShareToCommonDatasetMetadata = (
     keywords: b2share.keywords?.map((k) => {
       return k.keyword;
     }),
+    access: b2share.open_access === undefined ? "unknown" : b2share.open_access ? "open" : "restricted",
     responsibleOrganizations: [],
     contactPoints: [],
     contributors: b2share.contributors?.map((c) => {
@@ -255,6 +257,7 @@ export const mapDeimsToCommonDatasetMetadata = (
     keywords: deims.attributes?.general?.keywords
       ?.filter((k) => k && k.label)
       .map((k) => k.label as string),
+    access: deims.attributes?.legal?.accessUse?.map((entry: any) => entry.label).join("; ") || "unknown",
     responsibleOrganizations: [],
     contactPoints: [],
     contributors: [],
