@@ -307,7 +307,7 @@ export type CompleteDatasetRecord = {
         max?: number;
         unit?: string;
       };
-    };
+    }[];
     onlineDistribution?: {
       dataPolicyUrl?: UrlObject[];
       doi?: string;

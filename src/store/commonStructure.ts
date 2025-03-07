@@ -18,14 +18,14 @@ export type CommonDatasetMetadata = {
   descriptions?: Description[];
   keywords?: string[];
   access: string;
-  temporalCoverages?: TemporalCoverage;
+  temporalCoverages?: TemporalCoverage[];
+  spatialCoverages?: SpatialCoverage[];
   responsibleOrganizations?: string[];
   contactPoints?: string[];
   contributors?: string[];
   publicationDate?: string[];
   language?: string[];
   licenses?: string[];
-  geoLocations?: string[];
   temporalResolution?: string[];
   taxonomicCoverages?: string[];
   methods?: string[];
@@ -140,6 +140,34 @@ export type TemporalCoverage = {
   endDate?: string;
 };
 
+export type SpatialCoverage = {
+  place?: string;
+  type: "point" | "polygon" | "box" | "unknown";
+  coordinates?: Coordinates[];
+  elevation?: Elevation;
+  box?: Box[];
+};
+
+export type Coordinates = {
+  latitude?: number;
+  longitude?: number;
+};
+
+export type Elevation = {
+  min?: number;
+  max?: number;
+  avg?: number;
+  unit?: string;
+};
+
+export type Box = {
+  west?: number;
+  east?: number;
+  north?: number;
+  south?: number;
+};
+
+
 // eslint-disable-next-line
 function extractIdentifiers(input: any): Identifier[] {
   return Object.entries(input || {})
@@ -150,6 +178,62 @@ function extractIdentifiers(input: any): Identifier[] {
         key.toLowerCase(),
       ) as IdentifierType,
     }));
+}
+
+function extractSpatialCoverage(input: any): SpatialCoverage[] {
+  const coverages: SpatialCoverage[] = input.spatial_coverages?.map((spatCoverage: any) => {
+    if (spatCoverage.point) {
+      return {
+        place: spatCoverage.place,
+        type: "point",
+        coordinates: [{
+          latitude: spatCoverage.point.point_latitude, 
+          longitude: spatCoverage.point.point_longitude
+        }],
+        elevation: null,
+        box: null
+      };
+    }
+
+    if (spatCoverage.box) {
+      return {
+        place: spatCoverage.place,
+        type: "box",
+        coordinates: null,
+        elevation: null,
+        box: {
+          west: spatCoverage.box.westbound_longitude,
+          east: spatCoverage.box.eastbound_longitude,
+          north: spatCoverage.box.northbound_latitude,
+          south: spatCoverage.box.southbound_latitude
+        }
+      };
+    }
+
+    if (spatCoverage.polygons && spatCoverage.polygons.length > 0) {
+      return {
+        place: spatCoverage.place,
+        type: "polygon",
+        coordinates: spatCoverage.polygons.flatMap((p: any) =>
+          p.polygon?.map((p: any) => ({
+            latitude: p.point_latitude,
+            longitude: p.point_longitude
+          })) || []
+        ),
+        elevation: null,
+        box: null
+      };
+    }
+
+    return {
+      place: spatCoverage.place,
+      type: "unknown",
+      coordinates: null,
+      elevation: null,
+      box: null
+    };
+  });
+  return coverages || [];
 }
 
 export const mapB2ShareToCommonDatasetMetadata = (
@@ -188,8 +272,12 @@ export const mapB2ShareToCommonDatasetMetadata = (
     language: b2share.languages?.map((c) => {
       return c.language_name;
     }),
+    temporalCoverages: b2share.temporal_coverages?.ranges?.map((t) => ({
+      startDate: t.start_date,
+      endDate: t.end_date,
+    })),
+    spatialCoverages: extractSpatialCoverage(b2share),
     licenses: [],
-    geoLocations: [],
     temporalResolution: [],
     taxonomicCoverages: [],
     methods: [],
@@ -262,10 +350,17 @@ export const mapDeimsToCommonDatasetMetadata = (
       ?.filter((k) => k && k.label)
       .map((k) => k.label as string),
     access: deims.attributes?.legal?.accessUse?.map((entry: any) => entry.label).join("; ") || "unknown",
-    temporalCoverages: {
+    temporalCoverages: [{
       startDate: deims.attributes?.general?.dateRange?.from,
       endDate: deims.attributes?.general?.dateRange?.to,
-    },
+    }],
+    // spatialCoverages: deims.attributes?.geographic?.map((g) => ({
+    //   coordinates: {
+    //     latitude: s.boundaries?.,
+    //     longitude: s.point?.point_longitude,
+    //   },
+    //   place: s.place,
+    // })),
     responsibleOrganizations: [],
     contactPoints: [],
     contributors: [],
@@ -274,7 +369,6 @@ export const mapDeimsToCommonDatasetMetadata = (
       ? [deims.attributes?.general?.language]
       : [],
     licenses: [],
-    geoLocations: [],
     temporalResolution: [],
     taxonomicCoverages: [],
     methods: [],
