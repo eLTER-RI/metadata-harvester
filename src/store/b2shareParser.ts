@@ -1,7 +1,7 @@
 import { B2ShareExtractedSchema } from './b2shareApi';
 import { CommonDatasetMetadata, Creator, extractIdentifiers, SpatialCoverage } from './commonStructure';
 
-function extractSpatialCoverage(input: any): SpatialCoverage[] {
+function extractB2ShareSpatialCoverage(input: any): SpatialCoverage[] {
   const coverages: SpatialCoverage[] = input.spatial_coverages?.map((spatCoverage: any) => {
     if (spatCoverage.point) {
       return {
@@ -97,7 +97,7 @@ export const mapB2ShareToCommonDatasetMetadata = (
       startDate: t.start_date,
       endDate: t.end_date,
     })),
-    spatialCoverages: extractSpatialCoverage(b2share),
+    spatialCoverages: extractB2ShareSpatialCoverage(b2share),
     licenses: [],
     temporalResolution: [],
     taxonomicCoverages: [],

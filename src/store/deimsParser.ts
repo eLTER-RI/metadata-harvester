@@ -1,4 +1,4 @@
-import { CommonDatasetMetadata, Creator, Description, extractIdentifiers } from './commonStructure';
+import { CommonDatasetMetadata, Coordinates, Creator, Description, extractIdentifiers, SpatialCoverage } from './commonStructure';
 import {
   CompleteDatasetRecord,
   OrganisationRecord,
@@ -26,7 +26,59 @@ function parseDeimsCreator(c: PersonRecord | OrganisationRecord): Creator {
     };
   }
 }
-  
+
+function extractDeimsSpatialCoverage(input: any): SpatialCoverage[] {
+  return input.geographic?.map((entry: any) => {
+    let coordinates: Coordinates[] | null = null;
+    let type: "point" | "polygon" | "box" | "unknown" = "unknown";
+
+    if (entry.boundaries.startsWith("POINT")) {
+      const match = entry.boundaries.match(/POINT \(([^ ]+) ([^ ]+)\)/);
+      if (match) {
+        coordinates = [{
+          latitude: parseFloat(match[2]),
+          longitude: parseFloat(match[1])
+        }];
+        type = "point";
+      }
+    } else if (entry.boundaries.startsWith("POLYGON")) {
+      const match = entry.boundaries.match(/POLYGON \(\((.+?)\)\)/);
+      if (match) {
+        coordinates = match[1].split(", ").map((coord: any) => {
+          const [lon, lat] = coord.split(" ").map(parseFloat);
+          return { latitude: lat, longitude: lon };
+        });
+        type = "polygon";
+      }
+    } else if (entry.boundaries.startsWith("MULTIPOLYGON")) {
+      const match = entry.boundaries.match(/MULTIPOLYGON \(\(\((.+?)\)\)\)/);
+      if (match) {
+        coordinates = match[1].split(")), ((").flatMap((polygon: any) =>
+            polygon.split(", ").map((coord: any) => {
+              const [lon, lat] = coord.split(" ").map(parseFloat);
+              return { latitude: lat, longitude: lon };
+            })
+          );
+        type = "polygon";
+      }
+    }
+
+    return {
+      place: entry.abstract || undefined,
+      type,
+      coordinates,
+      elevation: entry.elevation
+        ? {
+            min: entry.elevation.min ? parseFloat(entry.elevation.min) : null,
+            max: entry.elevation.max ? parseFloat(entry.elevation.max) : null,
+            unit: entry.elevation.unit || null,
+          }
+        : null,
+      box: null,
+    };
+  }) || [];
+}
+
 export const mapDeimsToCommonDatasetMetadata = (
   deims: CompleteDatasetRecord,
 ): CommonDatasetMetadata => {
@@ -70,13 +122,7 @@ export const mapDeimsToCommonDatasetMetadata = (
       startDate: deims.attributes?.general?.dateRange?.from,
       endDate: deims.attributes?.general?.dateRange?.to,
     }],
-    // spatialCoverages: deims.attributes?.geographic?.map((g) => ({
-    //   coordinates: {
-    //     latitude: s.boundaries?.,
-    //     longitude: s.point?.point_longitude,
-    //   },
-    //   place: s.place,
-    // })),
+    spatialCoverages: extractDeimsSpatialCoverage(deims.attributes?.geographic),
     responsibleOrganizations: [],
     contactPoints: [],
     contributors: [],

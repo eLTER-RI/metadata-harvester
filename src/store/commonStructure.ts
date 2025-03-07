@@ -135,7 +135,7 @@ export type TemporalCoverage = {
 
 export type SpatialCoverage = {
   place?: string;
-  type: "point" | "polygon" | "box" | "unknown";
+  type: "point" | "polygon" | "multipolygon" | "box" | "unknown";
   coordinates?: Coordinates[];
   elevation?: Elevation;
   box?: Box[];
