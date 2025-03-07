@@ -1,65 +1,79 @@
 import { B2ShareExtractedSchema } from './b2shareApi';
-import { CommonDatasetMetadata, Creator, extractIdentifiers, SpatialCoverage } from './commonStructure';
+import {
+  CommonDatasetMetadata,
+  Creator,
+  extractIdentifiers,
+  SpatialCoverage,
+} from './commonStructure';
 
+// eslint-disable-next-line
 function extractB2ShareSpatialCoverage(input: any): SpatialCoverage[] {
-  const coverages: SpatialCoverage[] = input.spatial_coverages?.map((spatCoverage: any) => {
-    if (spatCoverage.point) {
-      return {
-        place: spatCoverage.place,
-        type: "point",
-        coordinates: [{
-          latitude: spatCoverage.point.point_latitude, 
-          longitude: spatCoverage.point.point_longitude
-        }],
-        elevation: null,
-        box: null
-      };
-    }
+  const coverages: SpatialCoverage[] = input.spatial_coverages?.map(
+    // eslint-disable-next-line
+    (spatCoverage: any) => {
+      if (spatCoverage.point) {
+        return {
+          place: spatCoverage.place,
+          type: 'point',
+          coordinates: [
+            {
+              latitude: spatCoverage.point.point_latitude,
+              longitude: spatCoverage.point.point_longitude,
+            },
+          ],
+          elevation: null,
+          box: null,
+        };
+      }
 
-    if (spatCoverage.box) {
+      if (spatCoverage.box) {
+        return {
+          place: spatCoverage.place,
+          type: 'box',
+          coordinates: null,
+          elevation: null,
+          box: {
+            west: spatCoverage.box.westbound_longitude,
+            east: spatCoverage.box.eastbound_longitude,
+            north: spatCoverage.box.northbound_latitude,
+            south: spatCoverage.box.southbound_latitude,
+          },
+        };
+      }
+
+      if (spatCoverage.polygons && spatCoverage.polygons.length > 0) {
+        return {
+          place: spatCoverage.place,
+          type: 'polygon',
+          coordinates: spatCoverage.polygons.flatMap(
+            // eslint-disable-next-line
+            (p: any) =>
+              // eslint-disable-next-line
+              p.polygon?.map((p: any) => ({
+                latitude: p.point_latitude,
+                longitude: p.point_longitude,
+              })) || [],
+          ),
+          elevation: null,
+          box: null,
+        };
+      }
+
       return {
         place: spatCoverage.place,
-        type: "box",
+        type: 'unknown',
         coordinates: null,
         elevation: null,
-        box: {
-          west: spatCoverage.box.westbound_longitude,
-          east: spatCoverage.box.eastbound_longitude,
-          north: spatCoverage.box.northbound_latitude,
-          south: spatCoverage.box.southbound_latitude
-        }
+        box: null,
       };
-    }
-
-    if (spatCoverage.polygons && spatCoverage.polygons.length > 0) {
-      return {
-        place: spatCoverage.place,
-        type: "polygon",
-        coordinates: spatCoverage.polygons.flatMap((p: any) =>
-          p.polygon?.map((p: any) => ({
-            latitude: p.point_latitude,
-            longitude: p.point_longitude
-          })) || []
-        ),
-        elevation: null,
-        box: null
-      };
-    }
-
-    return {
-      place: spatCoverage.place,
-      type: "unknown",
-      coordinates: null,
-      elevation: null,
-      box: null
-    };
-  });
+    },
+  );
   return coverages || [];
 }
-  
+
 export const mapB2ShareToCommonDatasetMetadata = (
-    b2share: B2ShareExtractedSchema,
-  ): CommonDatasetMetadata => {
+  b2share: B2ShareExtractedSchema,
+): CommonDatasetMetadata => {
   const creators: Creator[] | undefined = b2share.creators?.map((c) => ({
     name: c.creator_name
       ? c.creator_name
@@ -83,7 +97,12 @@ export const mapB2ShareToCommonDatasetMetadata = (
     keywords: b2share.keywords?.map((k) => {
       return k.keyword;
     }),
-    access: b2share.open_access === undefined ? "unknown" : b2share.open_access ? "open" : "restricted",
+    access:
+      b2share.open_access === undefined
+        ? 'unknown'
+        : b2share.open_access
+          ? 'open'
+          : 'restricted',
     responsibleOrganizations: [],
     contactPoints: [],
     contributors: b2share.contributors?.map((c) => {

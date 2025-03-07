@@ -135,7 +135,7 @@ export type TemporalCoverage = {
 
 export type SpatialCoverage = {
   place?: string;
-  type: "point" | "polygon" | "multipolygon" | "box" | "unknown";
+  type: 'point' | 'polygon' | 'multipolygon' | 'box' | 'unknown';
   coordinates?: Coordinates[];
   elevation?: Elevation;
   box?: Box[];
@@ -159,7 +159,6 @@ export type Box = {
   north?: number;
   south?: number;
 };
-
 
 // eslint-disable-next-line
 export function extractIdentifiers(input: any): Identifier[] {
