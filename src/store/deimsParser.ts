@@ -149,10 +149,10 @@ export const mapDeimsToCommonDatasetMetadata = (
     contactPoints: [],
     contributors: [],
     publicationDate: [],
-    language: deims.attributes?.general?.language
+    languages: deims.attributes?.general?.language
       ? [deims.attributes?.general?.language]
       : [],
-    licenses: [],
+    licenses: undefined,
     temporalResolution: [],
     taxonomicCoverages: [],
     methods: [],

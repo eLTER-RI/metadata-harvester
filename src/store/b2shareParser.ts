@@ -109,7 +109,7 @@ export const mapB2ShareToCommonDatasetMetadata = (
       return c.contributor_name;
     }),
     publicationDate: [],
-    language: b2share.languages?.map((c) => {
+    languages: b2share.languages?.map((c) => {
       return c.language_name;
     }),
     temporalCoverages: b2share.temporal_coverages?.ranges?.map((t) => ({
@@ -117,7 +117,10 @@ export const mapB2ShareToCommonDatasetMetadata = (
       endDate: t.end_date,
     })),
     spatialCoverages: extractB2ShareSpatialCoverage(b2share),
-    licenses: [],
+    licenses: b2share.license ? [{
+      id: b2share.license.license_identifier,
+      url: b2share.license.license_uri,
+    }] : undefined,
     temporalResolution: [],
     taxonomicCoverages: [],
     methods: [],

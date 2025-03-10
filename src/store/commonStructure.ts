@@ -13,12 +13,12 @@ export type CommonDatasetMetadata = {
   access: string;
   temporalCoverages?: TemporalCoverage[];
   spatialCoverages?: SpatialCoverage[];
+  licenses?: License[];
+  languages?: string[];
   responsibleOrganizations?: string[];
   contactPoints?: string[];
   contributors?: string[];
   publicationDate?: string[];
-  language?: string[];
-  licenses?: string[];
   temporalResolution?: string[];
   taxonomicCoverages?: string[];
   methods?: string[];
@@ -158,6 +158,11 @@ export type Box = {
   east?: number;
   north?: number;
   south?: number;
+};
+
+export type License = {
+  id?: string;
+  url?: string;
 };
 
 // eslint-disable-next-line
