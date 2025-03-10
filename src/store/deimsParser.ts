@@ -124,7 +124,8 @@ export const mapDeimsToCommonDatasetMetadata = (
       },
     ],
     creators:
-      deims.attributes?.contact?.creator?.map((c) => parseDeimsCreator(c)) ||
+      deims.attributes?.contact?.creator?.map((c) => parseDeimsCreator(c)) || [],
+    contact:
       deims.attributes?.contact?.corresponding?.map((c) =>
         parseDeimsCreator(c),
       ) ||

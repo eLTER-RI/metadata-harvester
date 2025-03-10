@@ -1,7 +1,7 @@
 import { B2ShareExtractedSchema } from './b2shareApi';
 import {
   CommonDatasetMetadata,
-  Creator,
+  Contact,
   extractIdentifiers,
   SpatialCoverage,
 } from './commonStructure';
@@ -86,7 +86,7 @@ export const mapB2ShareToCommonDatasetMetadata = (
   b2share: B2ShareExtractedSchema,
 ): CommonDatasetMetadata => {
   const normalizedEmail = b2share.contact_email?.toLowerCase() ?? '';
-  const creators: Creator[] | undefined = b2share.creators?.map((c) => {
+  const creators: Contact[] | undefined = b2share.creators?.map((c) => {
     const name = c.creator_name ??
       (c.given_name || '' + ', ' + c.family_name || '');
     let email: string | undefined;
@@ -107,6 +107,9 @@ export const mapB2ShareToCommonDatasetMetadata = (
       titleType: t.type,
     })),
     creators: creators ? creators : undefined,
+    contact: b2share.contact_email ? [{
+      email: b2share.contact_email,
+    }] : undefined,
     descriptions: b2share.descriptions?.map((d) => ({
       descriptionText: d.description,
       descriptionType: d.description_type,

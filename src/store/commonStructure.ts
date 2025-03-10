@@ -7,7 +7,8 @@ export type CommonDatasetMetadata = {
   datasetType?: string;
   alternateIdentifiers?: Identifier[];
   titles?: Title[];
-  creators?: Creator[];
+  creators?: Contact[];
+  contact?: Contact[];
   descriptions?: Description[];
   keywords?: string[];
   access: string;
@@ -122,7 +123,7 @@ export type Description = {
   descriptionType?: string | undefined;
 };
 
-export type Creator = {
+export type Contact = {
   name?: string;
   type?: 'Person' | 'Organization' | 'Unknown';
   email?: string;
