@@ -71,15 +71,32 @@ function extractB2ShareSpatialCoverage(input: any): SpatialCoverage[] {
   return coverages || [];
 }
 
+const addB2ShareEmailForCreator = (email: string, creator: any): string | undefined => {
+  if (!creator.family_name) { return undefined };
+  const familyName: string = creator.family_name?.toLowerCase();
+  const givenNames: string[] = creator.given_name?.toLowerCase().split(/[\s,]+/) ?? [];  
+  const fullNameMatch = givenNames.some((given) =>
+    email.includes(given) && email.includes(familyName)
+  );
+
+  return fullNameMatch ? email : undefined;
+}
+
 export const mapB2ShareToCommonDatasetMetadata = (
   b2share: B2ShareExtractedSchema,
 ): CommonDatasetMetadata => {
-  const creators: Creator[] | undefined = b2share.creators?.map((c) => ({
-    name: c.creator_name
-      ? c.creator_name
-      : c.given_name || '' + ', ' + c.family_name || '',
-    type: 'Person',
-  }));
+  const normalizedEmail = b2share.contact_email?.toLowerCase() ?? '';
+  const creators: Creator[] | undefined = b2share.creators?.map((c) => {
+    const name = c.creator_name ??
+      (c.given_name || '' + ', ' + c.family_name || '');
+    let email: string | undefined;
+   
+    return {
+      name,
+      type: 'Person',
+      email: addB2ShareEmailForCreator(normalizedEmail, c),
+    }
+  });
 
   return {
     // datasetType: "",
