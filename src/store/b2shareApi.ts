@@ -6,6 +6,17 @@
  */
 
 export type B2ShareExtractedSchema = {
+  links: Links[];
+  metadata: Metadata;
+};
+
+type Links = {
+  files?: string;
+  self?: string;
+  versions?: string;
+};
+
+export type Metadata = {
   $schema?: string;
   creators?: Creators;
   titles: Titles;

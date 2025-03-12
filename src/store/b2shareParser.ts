@@ -85,8 +85,8 @@ const addB2ShareEmailForCreator = (email: string, creator: any): string | undefi
 export const mapB2ShareToCommonDatasetMetadata = (
   b2share: B2ShareExtractedSchema,
 ): CommonDatasetMetadata => {
-  const normalizedEmail = b2share.contact_email?.toLowerCase() ?? '';
-  const creators: Contact[] | undefined = b2share.creators?.map((c) => {
+  const normalizedEmail = b2share.metadata.contact_email?.toLowerCase() ?? '';
+  const creators: Contact[] | undefined = b2share.metadata.creators?.map((c) => {
     const name = c.creator_name ??
       (c.given_name || '' + ', ' + c.family_name || '');
     let email: string | undefined;
@@ -102,48 +102,48 @@ export const mapB2ShareToCommonDatasetMetadata = (
     // datasetType: "",
     alternateIdentifiers: extractIdentifiers(b2share.metadata) || [],
     relatedIdentifiers: [],
-    titles: b2share.titles.map((t) => ({
+    titles: b2share.metadata.titles.map((t) => ({
       titleText: t.title,
       titleType: t.type,
     })),
     creators: creators ? creators : undefined,
-    contact: b2share.contact_email ? [{
-      email: b2share.contact_email,
+    contact: b2share.metadata.contact_email ? [{
+      email: b2share.metadata.contact_email,
     }] : undefined,
-    descriptions: b2share.descriptions?.map((d) => ({
+    descriptions: b2share.metadata.descriptions?.map((d) => ({
       descriptionText: d.description,
       descriptionType: d.description_type,
     })),
-    keywords: b2share.keywords?.map((k) => {
+    keywords: b2share.metadata.keywords?.map((k) => {
       return k.keyword;
     }),
     access:
-      b2share.open_access === undefined
+      b2share.metadata.open_access === undefined
         ? 'unknown'
-        : b2share.open_access
+        : b2share.metadata.open_access
           ? 'open'
           : 'restricted',
-    responsibleOrganizations: [],
     contactPoints: [],
-    contributors: b2share.contributors?.map((c) => {
+    contributors: b2share.metadata.contributors?.map((c) => {
       return c.contributor_name;
     }),
     publicationDate: [],
-    languages: b2share.languages?.map((c) => {
+    languages: b2share.metadata.languages?.map((c) => {
       return c.language_name;
     }),
-    temporalCoverages: b2share.temporal_coverages?.ranges?.map((t) => ({
+    temporalCoverages: b2share.metadata.temporal_coverages?.ranges?.map((t) => ({
       startDate: t.start_date,
       endDate: t.end_date,
     })),
     spatialCoverages: extractB2ShareSpatialCoverage(b2share),
-    licenses: b2share.license ? [{
-      id: b2share.license.license_identifier,
-      url: b2share.license.license_uri,
+    licenses: b2share.metadata.license ? [{
+      id: b2share.metadata.license.license_identifier,
+      url: b2share.metadata.license.license_uri,
     }] : undefined,
     temporalResolution: [],
     taxonomicCoverages: [],
     methods: [],
+    responsibleOrganizations: [],
     projects: [],
     siteReferences: [],
     habitatReferences: [],
