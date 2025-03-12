@@ -16,6 +16,7 @@ export type CommonDatasetMetadata = {
   spatialCoverages?: SpatialCoverage[];
   licenses?: License[];
   languages?: string[];
+  files?: string[];
   responsibleOrganizations?: string[];
   contactPoints?: string[];
   contributors?: string[];

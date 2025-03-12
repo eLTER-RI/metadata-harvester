@@ -140,6 +140,7 @@ export const mapB2ShareToCommonDatasetMetadata = (
       id: b2share.metadata.license.license_identifier,
       url: b2share.metadata.license.license_uri,
     }] : undefined,
+    files: b2share.links?.map((l) => !!l ? l?.files : undefined).filter((f) => f !== undefined),
     temporalResolution: [],
     taxonomicCoverages: [],
     methods: [],
