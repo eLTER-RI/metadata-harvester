@@ -17,7 +17,7 @@ export type CommonDatasetMetadata = {
   geolocation?: Geolocation[];
   licenses?: License[];
   languages?: string[];
-  files?: string;
+  files?: File[];
   responsibleOrganizations?: string[];
   contactPoints?: string[];
   contributors?: string[];
@@ -166,6 +166,15 @@ export type Box = {
 export type License = {
   id?: string;
   url?: string;
+};
+
+export type File = {
+  name?: string;
+  sourceUrl?: string;
+  format?: string;
+  md5?: string;
+  size?: string;
+  sizeMeasureType?: "GB" | "MB" | "kB";
 };
 
 // eslint-disable-next-line

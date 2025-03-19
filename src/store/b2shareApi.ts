@@ -7,7 +7,17 @@
 
 export type B2ShareExtractedSchema = {
   links: Links;
+  files: Files[];
   metadata: Metadata;
+};
+
+type Files = {
+  bucket?: string;
+  checksum?: string;
+  ePIC_PID?: string;
+  key?: string; 
+  size?: number; 
+  version_id?: string;
 };
 
 type Links = {
