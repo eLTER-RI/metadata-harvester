@@ -5,6 +5,7 @@
 
 export type CommonDatasetMetadata = {
   datasetType?: string;
+  source: string;
   alternateIdentifiers?: Identifier[];
   titles?: Title[];
   creators?: Contact[];
@@ -13,10 +14,10 @@ export type CommonDatasetMetadata = {
   keywords?: string[];
   access: string;
   temporalCoverages?: TemporalCoverage[];
-  spatialCoverages?: SpatialCoverage[];
+  geolocation?: Geolocation[];
   licenses?: License[];
   languages?: string[];
-  files?: string[];
+  files?: string;
   responsibleOrganizations?: string[];
   contactPoints?: string[];
   contributors?: string[];
@@ -135,7 +136,7 @@ export type TemporalCoverage = {
   endDate?: string;
 };
 
-export type SpatialCoverage = {
+export type Geolocation = {
   place?: string;
   type: 'point' | 'polygon' | 'multipolygon' | 'box' | 'unknown';
   coordinates?: Coordinates[];

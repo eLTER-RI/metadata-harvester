@@ -6,7 +6,7 @@
  */
 
 export type B2ShareExtractedSchema = {
-  links: Links[];
+  links: Links;
   metadata: Metadata;
 };
 

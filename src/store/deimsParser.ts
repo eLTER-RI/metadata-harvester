@@ -1,10 +1,10 @@
 import {
   CommonDatasetMetadata,
+  Contact,
   Coordinates,
-  Creator,
   Description,
   extractIdentifiers,
-  SpatialCoverage,
+  Geolocation,
 } from './commonStructure';
 import {
   CompleteDatasetRecord,
@@ -12,7 +12,7 @@ import {
   PersonRecord,
 } from './deimsApi';
 
-function parseDeimsCreator(c: PersonRecord | OrganisationRecord): Creator {
+function parseDeimsCreator(c: PersonRecord | OrganisationRecord): Contact {
   if (c.type === 'person') {
     const creator: PersonRecord = c as PersonRecord;
     return {
@@ -35,7 +35,7 @@ function parseDeimsCreator(c: PersonRecord | OrganisationRecord): Creator {
 }
 
 // eslint-disable-next-line
-function extractDeimsSpatialCoverage(input: any): SpatialCoverage[] {
+function extractDeimsSpatialCoverage(input: any): Geolocation[] {
   return (
     // eslint-disable-next-line
     input.geographic?.map((entry: any) => {
@@ -96,6 +96,7 @@ function extractDeimsSpatialCoverage(input: any): SpatialCoverage[] {
 }
 
 export const mapDeimsToCommonDatasetMetadata = (
+  url: string,
   deims: CompleteDatasetRecord,
 ): CommonDatasetMetadata => {
   const descriptions: Description[] = [];
@@ -113,6 +114,7 @@ export const mapDeimsToCommonDatasetMetadata = (
   }
 
   return {
+    source: url,
     alternateIdentifiers: extractIdentifiers(
       deims.attributes?.onlineDistribution,
     ),
@@ -145,7 +147,7 @@ export const mapDeimsToCommonDatasetMetadata = (
         endDate: deims.attributes?.general?.dateRange?.to,
       },
     ],
-    spatialCoverages: extractDeimsSpatialCoverage(deims.attributes?.geographic),
+    geolocation: extractDeimsSpatialCoverage(deims.attributes?.geographic),
     responsibleOrganizations: [],
     contactPoints: [],
     contributors: [],

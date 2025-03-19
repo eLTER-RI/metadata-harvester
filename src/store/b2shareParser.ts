@@ -3,12 +3,12 @@ import {
   CommonDatasetMetadata,
   Contact,
   extractIdentifiers,
-  SpatialCoverage,
+  Geolocation,
 } from './commonStructure';
 
 // eslint-disable-next-line
-function extractB2ShareSpatialCoverage(input: any): SpatialCoverage[] {
-  const coverages: SpatialCoverage[] = input.spatial_coverages?.map(
+function extractB2ShareSpatialCoverage(input: any): Geolocation[] {
+  const coverages: Geolocation[] = input.spatial_coverages?.map(
     // eslint-disable-next-line
     (spatCoverage: any) => {
       if (spatCoverage.point) {
@@ -83,6 +83,7 @@ const addB2ShareEmailForCreator = (email: string, creator: any): string | undefi
 }
 
 export const mapB2ShareToCommonDatasetMetadata = (
+  url: string,
   b2share: B2ShareExtractedSchema,
 ): CommonDatasetMetadata => {
   const normalizedEmail = b2share.metadata.contact_email?.toLowerCase() ?? '';
@@ -99,7 +100,7 @@ export const mapB2ShareToCommonDatasetMetadata = (
   });
 
   return {
-    // datasetType: "",
+    source: url,
     alternateIdentifiers: extractIdentifiers(b2share.metadata) || [],
     relatedIdentifiers: [],
     titles: b2share.metadata.titles.map((t) => ({
@@ -135,12 +136,12 @@ export const mapB2ShareToCommonDatasetMetadata = (
       startDate: t.start_date,
       endDate: t.end_date,
     })),
-    spatialCoverages: extractB2ShareSpatialCoverage(b2share),
+    geolocation: extractB2ShareSpatialCoverage(b2share),
     licenses: b2share.metadata.license ? [{
       id: b2share.metadata.license.license_identifier,
       url: b2share.metadata.license.license_uri,
     }] : undefined,
-    files: b2share.links?.map((l) => !!l ? l?.files : undefined).filter((f) => f !== undefined),
+    files: b2share.links?.files,
     temporalResolution: [],
     taxonomicCoverages: [],
     methods: [],
