@@ -144,10 +144,10 @@ export const mapB2ShareToCommonDatasetMetadata = (
     files: b2share.files?.map((f) => ({
       name: f.key,
       sourceUrl: b2share.links.files,
-      md5: f.checksum?.split(":")[-1],
+      md5: f.checksum?.split(":").pop(),
       size: f.size?.toString(),
       sizeMeasureType: "kB",
-      format: f.key?.split(".")[-1],
+      format: f.key?.split(".").pop(),
     })),
     temporalResolution: [],
     taxonomicCoverages: [],
