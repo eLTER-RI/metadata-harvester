@@ -110,8 +110,8 @@ const identifierTypesMap = new Map<string, IdentifierType>(
 );
 
 export type Identifier = {
-  identifier: string;
-  identifierType: IdentifierType;
+  alternateID: string;
+  alternateIDType: IdentifierType;
 };
 
 export type Title = {
@@ -187,8 +187,8 @@ export function extractIdentifiers(input: any): Identifier[] {
   return Object.entries(input || {})
     .filter(([key]) => identifierTypesMap.has(key.toLowerCase()))
     .map(([key, value]) => ({
-      identifier: value as string,
-      identifierType: identifierTypesMap.get(
+      alternateID: value as string,
+      alternateIDType: identifierTypesMap.get(
         key.toLowerCase(),
       ) as IdentifierType,
     }));
