@@ -11,7 +11,7 @@ export type CommonDatasetMetadata = {
   creators?: Contact[];
   contact?: Contact[];
   descriptions?: Description[];
-  keywords?: string[];
+  keywords?: Keywords[];
   access: string;
   temporalCoverages?: TemporalCoverage[];
   geolocation?: Geolocation[];
@@ -21,7 +21,7 @@ export type CommonDatasetMetadata = {
   responsibleOrganizations?: string[];
   contactPoints?: string[];
   contributors?: string[];
-  publicationDate?: string[];
+  publicationDate?: string;
   temporalResolution?: string[];
   taxonomicCoverages?: string[];
   methods?: string[];
@@ -123,6 +123,11 @@ export type Title = {
 export type Description = {
   descriptionText: string;
   descriptionType?: string | undefined;
+};
+
+export type Keywords = {
+  keywordLabel: string;
+  keywordURI?: string;
 };
 
 export type Contact = {

@@ -115,9 +115,10 @@ export const mapB2ShareToCommonDatasetMetadata = (
       descriptionText: d.description,
       descriptionType: d.description_type,
     })),
-    keywords: b2share.metadata.keywords?.map((k) => {
-      return k.keyword;
-    }),
+    keywords: b2share.metadata.keywords?.map((k) => ({
+      keywordLabel: k.keyword,
+      keywordURI: k.scheme_uri,
+    })),
     access:
       b2share.metadata.open_access === undefined
         ? 'unknown'
@@ -128,7 +129,7 @@ export const mapB2ShareToCommonDatasetMetadata = (
     contributors: b2share.metadata.contributors?.map((c) => {
       return c.contributor_name;
     }),
-    publicationDate: [],
+    publicationDate: b2share.metadata.publication_date,
     languages: b2share.metadata.languages?.map((c) => {
       return c.language_name;
     }),
