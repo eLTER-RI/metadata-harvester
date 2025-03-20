@@ -139,8 +139,8 @@ export const mapB2ShareToCommonDatasetMetadata = (
     })),
     geolocation: extractB2ShareSpatialCoverage(b2share),
     licenses: b2share.metadata.license ? [{
-      id: b2share.metadata.license.license_identifier,
-      url: b2share.metadata.license.license_uri,
+      licenseCode: b2share.metadata.license.license_identifier,
+      licenseURI: b2share.metadata.license.license_uri,
     }] : undefined,
     files: b2share.files?.map((f) => ({
       name: f.key,

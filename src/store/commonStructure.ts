@@ -169,8 +169,8 @@ export type Box = {
 };
 
 export type License = {
-  id?: string;
-  url?: string;
+  licenseCode?: string;
+  licenseURI?: string;
 };
 
 export type File = {
