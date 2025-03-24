@@ -8,7 +8,7 @@ export type CommonDatasetMetadata = {
   source: string;
   alternateIdentifiers?: Identifier[];
   titles?: Title[];
-  creators?: Contact[];
+  creators?: Creator[];
   contact?: Contact[];
   descriptions?: Description[];
   keywords?: Keywords[];
@@ -20,7 +20,7 @@ export type CommonDatasetMetadata = {
   files?: File[];
   responsibleOrganizations?: string[];
   contactPoints?: string[];
-  contributors?: string[];
+  contributors?: Contributor[];
   publicationDate?: string;
   temporalResolution?: string[];
   taxonomicCoverages?: string[];
@@ -134,6 +134,26 @@ export type Contact = {
   name?: string;
   type?: 'Person' | 'Organization' | 'Unknown';
   email?: string;
+};
+
+export type Contributor = {
+  contributorFamilyName?: string;
+  contributorGivenName?: string;
+  contributorEmail?: string;
+  contributorAffiliation?: Affiliation;
+  contributorIDs?: {
+    entityID?: string;
+    entityIDSchema?: string;
+  }[];
+  contributorType?: string;
+};
+
+export type Affiliation = {
+  entityName?: string;
+  entityID?: {
+    entityID?: string;
+    entityIDSchema?: string;
+  }
 };
 
 export type TemporalCoverage = {

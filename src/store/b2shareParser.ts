@@ -126,9 +126,22 @@ export const mapB2ShareToCommonDatasetMetadata = (
           ? 'open'
           : 'restricted',
     contactPoints: [],
-    contributors: b2share.metadata.contributors?.map((c) => {
-      return c.contributor_name;
-    }),
+    contributors: b2share.metadata.contributors?.map((c) => ({
+      contributorFamilyName: c.family_name ?? c.contributor_name,
+      contributorGivenName: c.given_name,
+      contributorAffiliation: c.affiliations?.length != undefined && c.affiliations?.length > 0 ? ({
+        entityName: c.affiliations[0].affiliation_name,
+        entityID: {
+          entityID: c.affiliations[0].affiliation_identifier,
+          entityIDSchema: c.affiliations[0].scheme,
+        },
+      }) : undefined,
+      contributorIDs: c.name_identifiers?.map((i) => ({
+        entityID: i.name_identifier,
+        entityIDSchema: i.scheme ?? i.scheme_uri,
+      })),
+      contributorType: c.contributor_type,
+    })),
     publicationDate: b2share.metadata.publication_date,
     languages: b2share.metadata.languages?.map((c) => {
       return c.language_name;
