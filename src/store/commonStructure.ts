@@ -136,6 +136,17 @@ export type Contact = {
   email?: string;
 };
 
+export type Creator = {
+  creatorFamilyName?: string;
+  creatorGivenName?: string;
+  creatorEmail?: string;
+  creatorAffiliation?: Affiliation;
+  creatorIDs?: {
+    entityID?: string;
+    entityIDSchema?: string;
+  }[];
+};
+
 export type Contributor = {
   contributorFamilyName?: string;
   contributorGivenName?: string;

@@ -71,33 +71,11 @@ function extractB2ShareSpatialCoverage(input: any): Geolocation[] {
   return coverages || [];
 }
 
-const addB2ShareEmailForCreator = (email: string, creator: any): string | undefined => {
-  if (!creator.family_name) { return undefined };
-  const familyName: string = creator.family_name?.toLowerCase();
-  const givenNames: string[] = creator.given_name?.toLowerCase().split(/[\s,]+/) ?? [];  
-  const fullNameMatch = givenNames.some((given) =>
-    email.includes(given) && email.includes(familyName)
-  );
-
-  return fullNameMatch ? email : undefined;
-}
-
 export const mapB2ShareToCommonDatasetMetadata = (
   url: string,
   b2share: B2ShareExtractedSchema,
 ): CommonDatasetMetadata => {
   const normalizedEmail = b2share.metadata.contact_email?.toLowerCase() ?? '';
-  const creators: Contact[] | undefined = b2share.metadata.creators?.map((c) => {
-    const name = c.creator_name ??
-      (c.given_name || '' + ', ' + c.family_name || '');
-    let email: string | undefined;
-   
-    return {
-      name,
-      type: 'Person',
-      email: addB2ShareEmailForCreator(normalizedEmail, c),
-    }
-  });
 
   return {
     source: url,
@@ -107,7 +85,22 @@ export const mapB2ShareToCommonDatasetMetadata = (
       titleText: t.title,
       titleType: t.type,
     })),
-    creators: creators ? creators : undefined,
+    creators: b2share.metadata.creators?.map((c) => ({
+      creatorFamilyName: c.family_name ?? c.creator_name,
+      creatorGivenName: c.given_name,
+      creatorEmail: "",
+      creatorAffiliation: c.affiliations?.length != undefined && c.affiliations?.length > 0 ? ({
+        entityName: c.affiliations[0].affiliation_name,
+        entityID: {
+          entityID: c.affiliations[0].affiliation_identifier,
+          entityIDSchema: c.affiliations[0].scheme,
+        },
+      }) : undefined,
+      creatorIDs: c.name_identifiers?.map((i) => ({
+        entityID: i.name_identifier,
+        entityIDSchema: i.scheme ?? i.scheme_uri,
+      })),
+    })),
     contact: b2share.metadata.contact_email ? [{
       email: b2share.metadata.contact_email,
     }] : undefined,
