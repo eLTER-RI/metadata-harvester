@@ -4,6 +4,7 @@ import {
   Contact,
   extractIdentifiers,
   Geolocation,
+  License
 } from './commonStructure';
 
 // eslint-disable-next-line
@@ -71,19 +72,36 @@ function extractB2ShareSpatialCoverage(input: any): Geolocation[] {
   return coverages || [];
 }
 
+function formatDate(isoString: string) {
+  return new Date(isoString).toISOString().split('T')[0];
+}
+
 export const mapB2ShareToCommonDatasetMetadata = (
   url: string,
   b2share: B2ShareExtractedSchema,
 ): CommonDatasetMetadata => {
-  const normalizedEmail = b2share.metadata.contact_email?.toLowerCase() ?? '';
+  const licenses: License[] = []
+  if (b2share.metadata.license) {
+    licenses.push({
+      licenseCode: b2share.metadata.license.license_identifier,
+      licenseURI: b2share.metadata.license.license_uri,
+    })
+  }
 
+  if (b2share.metadata.license) {
+    licenses.push({
+      licenseCode: b2share.metadata.license.license_identifier,
+      licenseURI: b2share.metadata.license.license_uri,
+    })
+
+  }
   return {
-    source: url,
     alternateIdentifiers: extractIdentifiers(b2share.metadata) || [],
     relatedIdentifiers: [],
     titles: b2share.metadata.titles.map((t) => ({
       titleText: t.title,
       titleType: t.type,
+      titleLanguage: "",
     })),
     creators: b2share.metadata.creators?.map((c) => ({
       creatorFamilyName: c.family_name ?? c.creator_name,
@@ -93,16 +111,17 @@ export const mapB2ShareToCommonDatasetMetadata = (
         entityName: c.affiliations[0].affiliation_name,
         entityID: {
           entityID: c.affiliations[0].affiliation_identifier,
-          entityIDSchema: c.affiliations[0].scheme,
+          entityIDSchema: c.affiliations[0].scheme?.toLowerCase(),
         },
       }) : undefined,
       creatorIDs: c.name_identifiers?.map((i) => ({
         entityID: i.name_identifier,
-        entityIDSchema: i.scheme ?? i.scheme_uri,
+        entityIDSchema: i.scheme ? i.scheme.toLowerCase() : i.scheme_uri?.toLowerCase(),
       })),
     })),
-    contact: b2share.metadata.contact_email ? [{
-      email: b2share.metadata.contact_email,
+    contactPoints: b2share.metadata.contact_email ? [{
+      contactEmail: b2share.metadata.contact_email,
+      contactName: "",
     }] : undefined,
     descriptions: b2share.metadata.descriptions?.map((d) => ({
       descriptionText: d.description,
@@ -112,13 +131,6 @@ export const mapB2ShareToCommonDatasetMetadata = (
       keywordLabel: k.keyword,
       keywordURI: k.scheme_uri,
     })),
-    access:
-      b2share.metadata.open_access === undefined
-        ? 'unknown'
-        : b2share.metadata.open_access
-          ? 'open'
-          : 'restricted',
-    contactPoints: [],
     contributors: b2share.metadata.contributors?.map((c) => ({
       contributorFamilyName: c.family_name ?? c.contributor_name,
       contributorGivenName: c.given_name,
@@ -126,16 +138,16 @@ export const mapB2ShareToCommonDatasetMetadata = (
         entityName: c.affiliations[0].affiliation_name,
         entityID: {
           entityID: c.affiliations[0].affiliation_identifier,
-          entityIDSchema: c.affiliations[0].scheme,
+          entityIDSchema: c.affiliations[0].scheme?.toLowerCase(),
         },
       }) : undefined,
       contributorIDs: c.name_identifiers?.map((i) => ({
         entityID: i.name_identifier,
-        entityIDSchema: i.scheme ?? i.scheme_uri,
+        entityIDSchema: i.scheme ? i.scheme?.toLowerCase() : i.scheme_uri?.toLowerCase(),
       })),
       contributorType: c.contributor_type,
     })),
-    publicationDate: b2share.metadata.publication_date,
+    publicationDate: b2share.metadata.publication_date ? formatDate(b2share.metadata.publication_date) : undefined,
     languages: b2share.metadata.languages?.map((c) => {
       return c.language_name;
     }),
@@ -144,10 +156,7 @@ export const mapB2ShareToCommonDatasetMetadata = (
       endDate: t.end_date,
     })),
     geolocation: extractB2ShareSpatialCoverage(b2share),
-    licenses: b2share.metadata.license ? [{
-      licenseCode: b2share.metadata.license.license_identifier,
-      licenseURI: b2share.metadata.license.license_uri,
-    }] : undefined,
+    licenses: licenses.length > 0 ? licenses : undefined,
     files: b2share.files?.map((f) => ({
       name: f.key,
       sourceUrl: b2share.links.files,
@@ -156,10 +165,14 @@ export const mapB2ShareToCommonDatasetMetadata = (
       sizeMeasureType: "kB",
       format: f.key?.split(".").pop(),
     })),
+    externalSourceInformation: {
+      externalSourceName: "b2share",
+      externalSourceURI: url,
+    },
+    responsibleOrganizations: [],
     temporalResolution: [],
     taxonomicCoverages: [],
     methods: [],
-    responsibleOrganizations: [],
     projects: [],
     siteReferences: [],
     habitatReferences: [],

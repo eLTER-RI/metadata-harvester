@@ -5,21 +5,18 @@
 
 export type CommonDatasetMetadata = {
   datasetType?: string;
-  source: string;
   alternateIdentifiers?: Identifier[];
   titles?: Title[];
   creators?: Creator[];
-  contact?: Contact[];
+  contactPoints?: Contact[];
   descriptions?: Description[];
   keywords?: Keywords[];
-  access: string;
   temporalCoverages?: TemporalCoverage[];
   geolocation?: Geolocation[];
   licenses?: License[];
   languages?: string[];
   files?: File[];
   responsibleOrganizations?: string[];
-  contactPoints?: string[];
   contributors?: Contributor[];
   publicationDate?: string;
   temporalResolution?: string[];
@@ -31,6 +28,7 @@ export type CommonDatasetMetadata = {
   dataLevel?: string;
   additionalMetadata?: string[];
   relatedIdentifiers?: Identifier[];
+  externalSourceInformation: ExternalSource;
 };
 
 /**
@@ -131,9 +129,23 @@ export type Keywords = {
 };
 
 export type Contact = {
-  name?: string;
-  type?: 'Person' | 'Organization' | 'Unknown';
-  email?: string;
+  contactName?: string;
+  contactEmail?: string;
+};
+
+export type Organization = {
+  organizationName?: string;
+  organizationEmail?: string;
+  organizationIDs?: {
+    entityID?: string;
+    entityIDSchema?: string;
+  }[];
+};
+
+export type ExternalSource = {
+  externalSourceName?: string;
+  externalSourceURI?: string;
+  externalSourceInfo?: string;
 };
 
 export type Creator = {
