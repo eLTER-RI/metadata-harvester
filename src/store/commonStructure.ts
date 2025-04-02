@@ -12,9 +12,8 @@ export type CommonDatasetMetadata = {
   descriptions?: Description[];
   keywords?: Keywords[];
   temporalCoverages?: TemporalCoverage[];
-  geolocation?: Geolocation[];
+  geoLocations?: Geolocation[];
   licenses?: License[];
-  languages?: string[];
   files?: File[];
   responsibleOrganizations?: string[];
   contributors?: Contributor[];
@@ -185,16 +184,31 @@ export type TemporalCoverage = {
 };
 
 export type Geolocation = {
-  place?: string;
-  type: 'point' | 'polygon' | 'multipolygon' | 'box' | 'unknown';
-  coordinates?: Coordinates[];
-  elevation?: Elevation;
-  box?: Box[];
+  observationLocation?: ObservationLocation;
+  geographicDescription?: string;
+  boundingBox?: BoundingBox;
+  boundingPolygon?: {
+    points: Coordinates[];
+    inPolygonPoint: Coordinates;
+  }[];
+  point?: Coordinates;
 };
 
 export type Coordinates = {
   latitude?: number;
   longitude?: number;
+};
+
+export type ObservationLocation = {
+  deimsLocationID: string;
+  deimsLocationName: string;
+}
+
+export type BoundingBox = {
+  westBoundLongitude: number;
+  eastBoundLongitude: number;
+  southBoundLatitude: number;
+  northBoundLatitude: number;
 };
 
 export type Elevation = {

@@ -1,63 +1,55 @@
 import { B2ShareExtractedSchema } from './b2shareApi';
 import {
   CommonDatasetMetadata,
-  Contact,
   extractIdentifiers,
   Geolocation,
   License
 } from './commonStructure';
 
 // eslint-disable-next-line
-function extractB2ShareSpatialCoverage(input: any): Geolocation[] {
-  const coverages: Geolocation[] = input.spatial_coverages?.map(
+function extractB2ShareGeolocation(input: any): Geolocation[] {
+  const coverages: Geolocation[] = []
+  input.spatial_coverages?.map(
     // eslint-disable-next-line
     (spatCoverage: any) => {
       if (spatCoverage.point) {
-        return {
-          place: spatCoverage.place,
-          type: 'point',
-          coordinates: [
-            {
+        coverages.push({
+          geographicDescription: spatCoverage.place,
+          point: {
               latitude: spatCoverage.point.point_latitude,
               longitude: spatCoverage.point.point_longitude,
-            },
-          ],
-          elevation: null,
-          box: null,
-        };
-      }
+            }
+        });
+      };
 
       if (spatCoverage.box) {
-        return {
-          place: spatCoverage.place,
-          type: 'box',
-          coordinates: null,
-          elevation: null,
-          box: {
-            west: spatCoverage.box.westbound_longitude,
-            east: spatCoverage.box.eastbound_longitude,
-            north: spatCoverage.box.northbound_latitude,
-            south: spatCoverage.box.southbound_latitude,
+        coverages.push({
+          geographicDescription: spatCoverage.place ?? "",
+          boundingBox: {
+            westBoundLongitude: spatCoverage.box.westbound_longitude,
+            eastBoundLongitude: spatCoverage.box.eastbound_longitude,
+            northBoundLatitude: spatCoverage.box.northbound_latitude,
+            southBoundLatitude: spatCoverage.box.southbound_latitude,
           },
-        };
+        });
       }
 
       if (spatCoverage.polygons && spatCoverage.polygons.length > 0) {
-        return {
-          place: spatCoverage.place,
-          type: 'polygon',
-          coordinates: spatCoverage.polygons.flatMap(
-            // eslint-disable-next-line
-            (p: any) =>
-              // eslint-disable-next-line
-              p.polygon?.map((p: any) => ({
-                latitude: p.point_latitude,
-                longitude: p.point_longitude,
-              })) || [],
-          ),
-          elevation: null,
-          box: null,
-        };
+        coverages.push({
+          geographicDescription: spatCoverage.place,
+          boundingPolygon: spatCoverage.polygons.map((polygon: any) => ({
+            points: polygon.polygon?.map((point: any) => ({
+              longitude: point.point_longitude,
+              latitude: point.point_latitude,
+            })) || [],
+            inPolygonPoint: polygon.inpoint
+              ? {
+                  longitude: polygon.inpoint.point_longitude,
+                  latitude: polygon.inpoint.point_latitude,
+                }
+              : { longitude: 0, latitude: 0 },
+          })),
+        });
       }
 
       return {
@@ -148,14 +140,11 @@ export const mapB2ShareToCommonDatasetMetadata = (
       contributorType: c.contributor_type,
     })),
     publicationDate: b2share.metadata.publication_date ? formatDate(b2share.metadata.publication_date) : undefined,
-    languages: b2share.metadata.languages?.map((c) => {
-      return c.language_name;
-    }),
     temporalCoverages: b2share.metadata.temporal_coverages?.ranges?.map((t) => ({
       startDate: t.start_date,
       endDate: t.end_date,
     })),
-    geolocation: extractB2ShareSpatialCoverage(b2share),
+    geoLocations: extractB2ShareGeolocation(b2share.metadata),
     licenses: licenses.length > 0 ? licenses : undefined,
     files: b2share.files?.map((f) => ({
       name: f.key,
