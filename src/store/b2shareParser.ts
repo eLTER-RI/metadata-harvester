@@ -73,20 +73,13 @@ export const mapB2ShareToCommonDatasetMetadata = (
   b2share: B2ShareExtractedSchema,
 ): CommonDatasetMetadata => {
   const licenses: License[] = []
-  if (b2share.metadata.license) {
+  if (b2share.metadata.license && (b2share.metadata.license.license_identifier || b2share.metadata.license.license)) {
     licenses.push({
-      licenseCode: b2share.metadata.license.license_identifier,
+      licenseCode: b2share.metadata.license.license_identifier || b2share.metadata.license.license,
       licenseURI: b2share.metadata.license.license_uri,
     })
   }
 
-  if (b2share.metadata.license) {
-    licenses.push({
-      licenseCode: b2share.metadata.license.license_identifier,
-      licenseURI: b2share.metadata.license.license_uri,
-    })
-
-  }
   return {
     assetType: "Dataset",
     alternateIdentifiers: extractIdentifiers(b2share.metadata) || [],
