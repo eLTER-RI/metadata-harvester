@@ -88,6 +88,7 @@ export const mapB2ShareToCommonDatasetMetadata = (
 
   }
   return {
+    assetType: "Dataset",
     alternateIdentifiers: extractIdentifiers(b2share.metadata) || [],
     relatedIdentifiers: [],
     titles: b2share.metadata.titles.map((t) => ({
@@ -119,10 +120,15 @@ export const mapB2ShareToCommonDatasetMetadata = (
       descriptionText: d.description,
       descriptionType: d.description_type,
     })),
-    keywords: b2share.metadata.keywords?.map((k) => ({
-      keywordLabel: k.keyword,
-      keywordURI: k.scheme_uri,
-    })),
+    keywords: b2share.metadata.keywords?.map((k) => {
+      if (typeof k === "string") {
+        return { keywordLabel: k };
+      }
+      return {
+        keywordLabel: k.keyword,
+        keywordURI: k.scheme_uri,
+      };
+    }) || undefined,
     contributors: b2share.metadata.contributors?.map((c) => ({
       contributorFamilyName: c.family_name ?? c.contributor_name,
       contributorGivenName: c.given_name,
@@ -159,13 +165,13 @@ export const mapB2ShareToCommonDatasetMetadata = (
       externalSourceURI: url,
     },
     responsibleOrganizations: [],
-    temporalResolution: [],
     taxonomicCoverages: [],
     methods: [],
     projects: [],
     siteReferences: [],
     habitatReferences: [],
-    dataLevel: '',
     additionalMetadata: [],
   };
 };
+
+// TODO: figure out methods - in b2share as a part of descriptions
