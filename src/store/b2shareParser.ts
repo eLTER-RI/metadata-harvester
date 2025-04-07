@@ -140,8 +140,8 @@ export const mapB2ShareToCommonDatasetMetadata = (
     })),
     publicationDate: b2share.metadata.publication_date ? formatDate(b2share.metadata.publication_date) : undefined,
     temporalCoverages: b2share.metadata.temporal_coverages?.ranges?.map((t) => ({
-      startDate: t.start_date,
-      endDate: t.end_date,
+      startDate: t.start_date ? formatDate(t.start_date) : undefined,
+      endDate: t.end_date ? formatDate(t.end_date) : undefined,
     })),
     geoLocations: extractB2ShareGeolocation(b2share.metadata),
     licenses: licenses.length > 0 ? licenses : undefined,
