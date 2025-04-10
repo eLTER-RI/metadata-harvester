@@ -92,6 +92,13 @@ function formatDate(isoString: string) {
   return new Date(isoString).toISOString().split('T')[0];
 }
 
+function convertHttpToHttps(url: string): string {
+  if (url.startsWith("http://")) {
+    return "https://" + url.slice(7);
+  }
+  return url;
+}
+
 export const mapB2ShareToCommonDatasetMetadata = (
   url: string,
   b2share: B2ShareExtractedSchema,
@@ -163,7 +170,7 @@ export const mapB2ShareToCommonDatasetMetadata = (
     licenses: licenses.length > 0 ? licenses : undefined,
     files: b2share.files?.map((f) => ({
       name: f.key,
-      sourceUrl: b2share.links.files,
+      sourceUrl: f.ePIC_PID ? convertHttpToHttps(f.ePIC_PID) : undefined,
       md5: f.checksum?.split(":").pop(),
       size: f.size?.toString(),
       sizeMeasureType: "kB",
