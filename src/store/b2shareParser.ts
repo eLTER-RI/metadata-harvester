@@ -3,7 +3,8 @@ import {
   CommonDatasetMetadata,
   extractIdentifiers,
   Geolocation,
-  License
+  License,
+  Keywords
 } from './commonStructure';
 
 // eslint-disable-next-line
@@ -64,6 +65,29 @@ function extractB2ShareGeolocation(input: any): Geolocation[] {
   return coverages || [];
 }
 
+function extractB2ShareKeywords(input: any): Keywords[] {
+  const keywords: Keywords[] = [];
+  input.keywords?.forEach((k: any) => {
+    if (typeof k === "string") {
+      const splitKeywords = k.split(/\s*[;,]\s*/);
+      splitKeywords.forEach((keyword) => {
+        keywords.push({
+          keywordLabel: keyword,
+        });
+      });
+    } else if (k?.keyword) {
+      const splitKeywords = k.keyword.split(/\s*[;,]\s*/);
+      splitKeywords.forEach((keyword: string) => {
+        keywords.push({
+          keywordLabel: keyword, 
+          keywordURI: k.scheme_uri,
+        });
+      });
+    }
+
+  });
+  return keywords;
+}
 function formatDate(isoString: string) {
   return new Date(isoString).toISOString().split('T')[0];
 }
@@ -113,15 +137,7 @@ export const mapB2ShareToCommonDatasetMetadata = (
       descriptionText: d.description,
       descriptionType: d.description_type,
     })),
-    keywords: b2share.metadata.keywords?.map((k) => {
-      if (typeof k === "string") {
-        return { keywordLabel: k };
-      }
-      return {
-        keywordLabel: k.keyword,
-        keywordURI: k.scheme_uri,
-      };
-    }) || undefined,
+    keywords: extractB2ShareKeywords(b2share.metadata) || undefined,
     contributors: b2share.metadata.contributors?.map((c) => ({
       contributorFamilyName: c.family_name ?? c.contributor_name,
       contributorGivenName: c.given_name,
