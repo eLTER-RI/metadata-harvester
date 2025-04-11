@@ -4,6 +4,7 @@
 // https://gitlab.ics.muni.cz/dataraptors/elter/elter-invenio/-/blob/master/models/datasets-datatypes.yaml?ref_type=heads
 
 export type CommonDatasetMetadata = {
+  assetType: string;
   datasetType?: string;
   alternateIdentifiers?: Identifier[];
   titles?: Title[];
@@ -18,13 +19,11 @@ export type CommonDatasetMetadata = {
   responsibleOrganizations?: string[];
   contributors?: Contributor[];
   publicationDate?: string;
-  temporalResolution?: string[];
   taxonomicCoverages?: string[];
-  methods?: string[];
+  methods?: Method[];
   projects?: string[];
   siteReferences?: string[];
   habitatReferences?: string[];
-  dataLevel?: string;
   additionalMetadata?: string[];
   relatedIdentifiers?: Identifier[];
   externalSourceInformation: ExternalSource;
@@ -237,6 +236,24 @@ export type File = {
   md5?: string;
   size?: string;
   sizeMeasureType?: "GB" | "MB" | "kB";
+};
+
+export type Method = {
+  methodID?: string;
+  steps?: Steps[];
+  sampling?: Sampling;
+  qualityControlDescription?: string;
+  instrumentationDescription?: string;
+};
+
+export type Sampling = {
+  studyDescription?: string;
+  samplingDescription?: string;
+};
+
+export type Steps = {
+  stepTitle?: string;
+  stepDescription?: string;
 };
 
 // eslint-disable-next-line
