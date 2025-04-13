@@ -135,8 +135,7 @@ export const mapB2ShareToCommonDatasetMetadata = (
     alternateIdentifiers: extractIdentifiers(b2share.metadata) || [],
     relatedIdentifiers: [],
     titles: b2share.metadata.titles.map((t) => ({
-      titleText: t.title,
-      titleType: t.type,
+      titleText: t.type + '\n' + t.title,
       titleLanguage: '',
     })),
     creators: b2share.metadata.creators?.map((c) => ({
