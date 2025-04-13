@@ -22,7 +22,7 @@ export type CommonDatasetMetadata = {
   taxonomicCoverages?: string[];
   methods?: Method[];
   projects?: string[];
-  siteReferences?: string[];
+  siteReferences?: SiteReference[];
   habitatReferences?: string[];
   additionalMetadata?: string[];
   relatedIdentifiers?: Identifier[];
@@ -174,7 +174,7 @@ export type Affiliation = {
   entityID?: {
     entityID?: string;
     entityIDSchema?: string;
-  }
+  };
 };
 
 export type TemporalCoverage = {
@@ -201,7 +201,7 @@ export type Coordinates = {
 export type ObservationLocation = {
   deimsLocationID: string;
   deimsLocationName: string;
-}
+};
 
 export type BoundingBox = {
   westBoundLongitude: number;
@@ -235,7 +235,7 @@ export type File = {
   format?: string;
   md5?: string;
   size?: string;
-  sizeMeasureType?: "GB" | "MB" | "kB";
+  sizeMeasureType?: 'GB' | 'MB' | 'kB';
 };
 
 export type Method = {
@@ -254,6 +254,11 @@ export type Sampling = {
 export type Steps = {
   stepTitle?: string;
   stepDescription?: string;
+};
+
+export type SiteReference = {
+  siteID?: string;
+  siteName?: string;
 };
 
 // eslint-disable-next-line
