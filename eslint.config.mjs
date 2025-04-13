@@ -8,24 +8,25 @@ import prettierPlugin from 'eslint-plugin-prettier';
 export default [
   eslint.configs.recommended,
   {
-    files: ["**/*.ts", "**/*.tsx"],
+    files: ['**/*.ts', '**/*.tsx'],
     languageOptions: {
       parser: tseslintParser,
       parserOptions: {
         ecmaVersion: 2021,
-        sourceType: "module",
+        sourceType: 'module',
         ecmaFeatures: {
           jsx: true,
         },
       },
     },
     plugins: {
-      "@typescript-eslint": tseslintPlugin,
+      '@typescript-eslint': tseslintPlugin,
       prettier: prettierPlugin,
     },
     rules: {
       ...tseslintPlugin.configs.recommended.rules,
-      "prettier/prettier": "error",
+      'prettier/prettier': 'error',
+      'no-console': 'off',
     },
   },
 ];
