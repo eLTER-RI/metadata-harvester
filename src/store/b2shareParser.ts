@@ -141,7 +141,7 @@ export const mapB2ShareToCommonDatasetMetadata = (
     })),
     creators: b2share.metadata.creators?.map((c) => ({
       creatorFamilyName: c.family_name ?? c.creator_name,
-      creatorGivenName: c.given_name,
+      creatorGivenName: c.given_name ?? '',
       creatorEmail: '',
       creatorAffiliation:
         c.affiliations?.length != undefined && c.affiliations?.length > 0
