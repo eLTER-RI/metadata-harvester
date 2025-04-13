@@ -4,12 +4,14 @@ import {
   extractIdentifiers,
   Geolocation,
   License,
-  Keywords
+  Keywords,
+  SiteReference
 } from './commonStructure';
 
 // eslint-disable-next-line
-function extractB2ShareGeolocation(input: any): Geolocation[] {
+function extractB2ShareGeolocation(input: any): (Geolocation[]) {
   const coverages: Geolocation[] = []
+
   input.spatial_coverages?.map(
     // eslint-disable-next-line
     (spatCoverage: any) => {
@@ -89,7 +91,12 @@ function extractB2ShareKeywords(input: any): Keywords[] {
   return keywords;
 }
 function formatDate(isoString: string) {
-  return new Date(isoString).toISOString().split('T')[0];
+  try {
+    return new Date(isoString)?.toISOString().split('T')[0];
+  } catch (error) {
+    console.error(`Error parsing ${isoString}:`, error);
+  }
+  return undefined
 }
 
 function convertHttpToHttps(url: string): string {
@@ -102,6 +109,7 @@ function convertHttpToHttps(url: string): string {
 export const mapB2ShareToCommonDatasetMetadata = (
   url: string,
   b2share: B2ShareExtractedSchema,
+  siteReferences?: SiteReference[],
 ): CommonDatasetMetadata => {
   const licenses: License[] = []
   if (b2share.metadata.license && (b2share.metadata.license.license_identifier || b2share.metadata.license.license)) {
@@ -184,7 +192,7 @@ export const mapB2ShareToCommonDatasetMetadata = (
     taxonomicCoverages: [],
     methods: [],
     projects: [],
-    siteReferences: [],
+    siteReferences: siteReferences,
     habitatReferences: [],
     additionalMetadata: [],
   };
