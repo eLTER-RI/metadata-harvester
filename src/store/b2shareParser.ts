@@ -145,13 +145,15 @@ export const mapB2ShareToCommonDatasetMetadata = (
       licenseURI: b2share.metadata.license.license_uri,
     });
   }
-  const alternateIdentifiers = extractIdentifiers(b2share.metadata);
+  const alternateIdentifiers = extractIdentifiers(b2share.metadata.alternate_identifiers);
+  const related_identifiers = extractIdentifiers(b2share.metadata.related_identifiers);
+  const pids = toPID(alternateIdentifiers) || toPID(related_identifiers);
   return {
-    pids: toPID(alternateIdentifiers),
+    pids: pids,
     metadata: {
       assetType: 'Dataset',
-      alternateIdentifiers: alternateIdentifiers.filter((i) => i.alternateIDType.toLowerCase() != 'doi') || [],
-      relatedIdentifiers: [],
+      alternateIdentifiers: alternateIdentifiers,
+      relatedIdentifiers: related_identifiers,
       titles: b2share.metadata.titles.map((t) => ({
         // incorporate title type?
         titleText: t.title,
@@ -178,14 +180,12 @@ export const mapB2ShareToCommonDatasetMetadata = (
             : i.scheme_uri?.toLowerCase(),
         })),
       })),
-      contactPoints: b2share.metadata.contact_email
-        ? [
-            {
-              contactEmail: b2share.metadata.contact_email,
-              contactName: '',
-            },
-          ]
-        : undefined,
+      contactPoints: b2share.metadata.contact_email?.split(/[;, ]+/).map((e) => {
+        return {
+          contactEmail: e,
+          contactName: '',
+        }
+      }).filter((e) => e.contactEmail !== "") || undefined,
       descriptions: b2share.metadata.descriptions?.map((d) => ({
         descriptionText: d.description,
         descriptionType: d.description_type,
