@@ -95,13 +95,28 @@ function extractB2ShareKeywords(input: any): Keywords[] {
   });
   return keywords;
 }
-function formatDate(isoString: string) {
+function formatDate(isoString: string): string | undefined {
   try {
-    return new Date(isoString)?.toISOString().split('T')[0];
+    let normalized: string;
+
+    const match = isoString.match(/^(\d{2})[./](\d{2})[./](\d{4})$/);
+    if (match) {
+      const [, day, month, year] = match;
+      normalized = `${year}-${month}-${day}`;
+    } else {
+      normalized = isoString;
+    }
+
+    const date = new Date(normalized);
+    if (isNaN(date.getTime())) {
+      throw new RangeError('Invalid time value');
+    }
+
+    return date.toISOString().split('T')[0];
   } catch (error) {
     console.error(`Error parsing ${isoString}:`, error);
+    return undefined;
   }
-  return undefined;
 }
 
 function convertHttpToHttps(url: string): string {
@@ -135,7 +150,8 @@ export const mapB2ShareToCommonDatasetMetadata = (
     alternateIdentifiers: extractIdentifiers(b2share.metadata) || [],
     relatedIdentifiers: [],
     titles: b2share.metadata.titles.map((t) => ({
-      titleText: t.type + '\n' + t.title,
+      // incorporate title type?
+      titleText: t.title,
       titleLanguage: '',
     })),
     creators: b2share.metadata.creators?.map((c) => ({
@@ -216,6 +232,7 @@ export const mapB2ShareToCommonDatasetMetadata = (
       externalSourceName: 'b2share',
       externalSourceURI: url,
     },
+    language: b2share.metadata.languages?.map((l) => l.language_name).join(),
     responsibleOrganizations: [],
     taxonomicCoverages: [],
     methods: [],

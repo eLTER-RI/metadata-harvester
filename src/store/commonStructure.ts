@@ -21,6 +21,7 @@ export type CommonDatasetMetadata = {
   publicationDate?: string;
   taxonomicCoverages?: string[];
   methods?: Method[];
+  language?: string;
   projects?: string[];
   siteReferences?: SiteReference[];
   habitatReferences?: string[];
@@ -113,7 +114,6 @@ export type Identifier = {
 export type Title = {
   titleLanguage?: string | undefined;
   titleText: string;
-  titleType?: string | undefined;
 };
 
 export type Description = {
