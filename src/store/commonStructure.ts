@@ -3,6 +3,12 @@
 // https://gitlab.ics.muni.cz/dataraptors/elter/elter-invenio/-/blob/master/models/dataset-type.yaml?ref_type=heads
 // https://gitlab.ics.muni.cz/dataraptors/elter/elter-invenio/-/blob/master/models/datasets-datatypes.yaml?ref_type=heads
 
+export type CommonDataset = {
+  pids?: PID;
+  metadata: CommonDatasetMetadata;
+};
+
+
 export type CommonDatasetMetadata = {
   assetType: string;
   datasetType?: string;
@@ -28,6 +34,15 @@ export type CommonDatasetMetadata = {
   additionalMetadata?: string[];
   relatedIdentifiers?: Identifier[];
   externalSourceInformation: ExternalSource;
+};
+
+export type DOI = {
+  identifier: string;
+  provider: string;
+};
+
+export type PID = {
+  doi: DOI;
 };
 
 /**
@@ -272,3 +287,29 @@ export function extractIdentifiers(input: any): Identifier[] {
       ) as IdentifierType,
     }));
 }
+
+const parseDOIUrl = (url: string): { provider: string; identifier: string } | null => {
+  const match = url.match(/^https?:\/\/([^\/]+)\/(.+)$/i);
+  if (!match) return null;
+
+  return {
+    provider: match[1],
+    identifier: match[2],
+  };
+};
+
+export function toPID(identifiers: Identifier[]): PID | undefined {
+  const doiEntry = identifiers.find(id => id.alternateIDType.toLowerCase() === 'doi');
+  if (!doiEntry) return undefined;
+
+  const parsed = parseDOIUrl(doiEntry.alternateID);
+  if (!parsed) return undefined;
+
+  return {
+    doi: {
+      identifier: parsed.identifier,
+      provider: parsed.provider,
+    },
+  };
+};
+

@@ -1,11 +1,12 @@
 import { B2ShareExtractedSchema } from './b2shareApi';
 import {
-  CommonDatasetMetadata,
   extractIdentifiers,
   Geolocation,
   License,
   Keywords,
   SiteReference,
+  CommonDataset,
+  toPID,
 } from './commonStructure';
 
 // eslint-disable-next-line
@@ -130,7 +131,7 @@ export const mapB2ShareToCommonDatasetMetadata = (
   url: string,
   b2share: B2ShareExtractedSchema,
   siteReferences?: SiteReference[],
-): CommonDatasetMetadata => {
+): CommonDataset => {
   const licenses: License[] = [];
   if (
     b2share.metadata.license &&
@@ -144,101 +145,105 @@ export const mapB2ShareToCommonDatasetMetadata = (
       licenseURI: b2share.metadata.license.license_uri,
     });
   }
-
+  const alternateIdentifiers = extractIdentifiers(b2share.metadata);
   return {
-    assetType: 'Dataset',
-    alternateIdentifiers: extractIdentifiers(b2share.metadata) || [],
-    relatedIdentifiers: [],
-    titles: b2share.metadata.titles.map((t) => ({
-      // incorporate title type?
-      titleText: t.title,
-      titleLanguage: '',
-    })),
-    creators: b2share.metadata.creators?.map((c) => ({
-      creatorFamilyName: c.family_name ?? c.creator_name,
-      creatorGivenName: c.given_name ?? '',
-      creatorEmail: '',
-      creatorAffiliation:
-        c.affiliations?.length != undefined && c.affiliations?.length > 0
-          ? {
-              entityName: c.affiliations[0].affiliation_name,
-              entityID: {
-                entityID: c.affiliations[0].affiliation_identifier,
-                entityIDSchema: c.affiliations[0].scheme?.toLowerCase(),
-              },
-            }
-          : undefined,
-      creatorIDs: c.name_identifiers?.map((i) => ({
-        entityID: i.name_identifier,
-        entityIDSchema: i.scheme
-          ? i.scheme.toLowerCase()
-          : i.scheme_uri?.toLowerCase(),
+    pids: toPID(alternateIdentifiers),
+    metadata: {
+      assetType: 'Dataset',
+      alternateIdentifiers: alternateIdentifiers.filter((i) => i.alternateIDType.toLowerCase() != 'doi') || [],
+      relatedIdentifiers: [],
+      titles: b2share.metadata.titles.map((t) => ({
+        // incorporate title type?
+        titleText: t.title,
+        titleLanguage: '',
       })),
-    })),
-    contactPoints: b2share.metadata.contact_email
-      ? [
-          {
-            contactEmail: b2share.metadata.contact_email,
-            contactName: '',
-          },
-        ]
-      : undefined,
-    descriptions: b2share.metadata.descriptions?.map((d) => ({
-      descriptionText: d.description,
-      descriptionType: d.description_type,
-    })),
-    keywords: extractB2ShareKeywords(b2share.metadata) || undefined,
-    contributors: b2share.metadata.contributors?.map((c) => ({
-      contributorFamilyName: c.family_name ?? c.contributor_name,
-      contributorGivenName: c.given_name,
-      contributorAffiliation:
-        c.affiliations?.length != undefined && c.affiliations?.length > 0
-          ? {
-              entityName: c.affiliations[0].affiliation_name,
-              entityID: {
-                entityID: c.affiliations[0].affiliation_identifier,
-                entityIDSchema: c.affiliations[0].scheme?.toLowerCase(),
-              },
-            }
-          : undefined,
-      contributorIDs: c.name_identifiers?.map((i) => ({
-        entityID: i.name_identifier,
-        entityIDSchema: i.scheme
-          ? i.scheme?.toLowerCase()
-          : i.scheme_uri?.toLowerCase(),
+      creators: b2share.metadata.creators?.map((c) => ({
+        creatorFamilyName: c.family_name ?? c.creator_name,
+        creatorGivenName: c.given_name ?? '',
+        creatorEmail: '',
+        creatorAffiliation:
+          c.affiliations?.length != undefined && c.affiliations?.length > 0
+            ? {
+                entityName: c.affiliations[0].affiliation_name,
+                entityID: {
+                  entityID: c.affiliations[0].affiliation_identifier,
+                  entityIDSchema: c.affiliations[0].scheme?.toLowerCase(),
+                },
+              }
+            : undefined,
+        creatorIDs: c.name_identifiers?.map((i) => ({
+          entityID: i.name_identifier,
+          entityIDSchema: i.scheme
+            ? i.scheme.toLowerCase()
+            : i.scheme_uri?.toLowerCase(),
+        })),
       })),
-      contributorType: c.contributor_type,
-    })),
-    publicationDate: b2share.metadata.publication_date
-      ? formatDate(b2share.metadata.publication_date)
-      : undefined,
-    temporalCoverages: b2share.metadata.temporal_coverages?.ranges?.map(
-      (t) => ({
-        startDate: t.start_date ? formatDate(t.start_date) : undefined,
-        endDate: t.end_date ? formatDate(t.end_date) : undefined,
-      }),
-    ),
-    geoLocations: extractB2ShareGeolocation(b2share.metadata),
-    licenses: licenses.length > 0 ? licenses : undefined,
-    files: b2share.files?.map((f) => ({
-      name: f.key,
-      sourceUrl: f.ePIC_PID ? convertHttpToHttps(f.ePIC_PID) : undefined,
-      md5: f.checksum?.split(':').pop(),
-      size: f.size?.toString(),
-      sizeMeasureType: 'kB',
-      format: f.key?.split('.').pop(),
-    })),
-    externalSourceInformation: {
-      externalSourceName: 'b2share',
-      externalSourceURI: url,
-    },
-    language: b2share.metadata.languages?.map((l) => l.language_name).join(),
-    responsibleOrganizations: [],
-    taxonomicCoverages: [],
-    methods: [],
-    projects: [],
-    siteReferences: siteReferences,
-    habitatReferences: [],
-    additionalMetadata: [],
+      contactPoints: b2share.metadata.contact_email
+        ? [
+            {
+              contactEmail: b2share.metadata.contact_email,
+              contactName: '',
+            },
+          ]
+        : undefined,
+      descriptions: b2share.metadata.descriptions?.map((d) => ({
+        descriptionText: d.description,
+        descriptionType: d.description_type,
+      })),
+      keywords: extractB2ShareKeywords(b2share.metadata) || undefined,
+      contributors: b2share.metadata.contributors?.map((c) => ({
+        contributorFamilyName: c.family_name ?? c.contributor_name,
+        contributorGivenName: c.given_name,
+        contributorAffiliation:
+          c.affiliations?.length != undefined && c.affiliations?.length > 0
+            ? {
+                entityName: c.affiliations[0].affiliation_name,
+                entityID: {
+                  entityID: c.affiliations[0].affiliation_identifier,
+                  entityIDSchema: c.affiliations[0].scheme?.toLowerCase(),
+                },
+              }
+            : undefined,
+        contributorIDs: c.name_identifiers?.map((i) => ({
+          entityID: i.name_identifier,
+          entityIDSchema: i.scheme
+            ? i.scheme?.toLowerCase()
+            : i.scheme_uri?.toLowerCase(),
+        })),
+        contributorType: c.contributor_type,
+      })),
+      publicationDate: b2share.metadata.publication_date
+        ? formatDate(b2share.metadata.publication_date)
+        : undefined,
+      temporalCoverages: b2share.metadata.temporal_coverages?.ranges?.map(
+        (t) => ({
+          startDate: t.start_date ? formatDate(t.start_date) : undefined,
+          endDate: t.end_date ? formatDate(t.end_date) : undefined,
+        }),
+      ),
+      geoLocations: extractB2ShareGeolocation(b2share.metadata),
+      licenses: licenses.length > 0 ? licenses : undefined,
+      files: b2share.files?.map((f) => ({
+        name: f.key,
+        sourceUrl: f.ePIC_PID ? convertHttpToHttps(f.ePIC_PID) : undefined,
+        md5: f.checksum?.split(':').pop(),
+        size: f.size?.toString(),
+        sizeMeasureType: 'kB',
+        format: f.key?.split('.').pop(),
+      })),
+      externalSourceInformation: {
+        externalSourceName: 'b2share',
+        externalSourceURI: url,
+      },
+      language: b2share.metadata.languages?.map((l) => l.language_name).join(),
+      responsibleOrganizations: [],
+      taxonomicCoverages: [],
+      methods: [],
+      projects: [],
+      siteReferences: siteReferences,
+      habitatReferences: [],
+      additionalMetadata: [],
+  
+    }
   };
 };
