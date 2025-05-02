@@ -7,6 +7,7 @@ import {
   SiteReference,
   CommonDataset,
   toPID,
+  AdditionalMetadata,
 } from './commonStructure';
 
 // eslint-disable-next-line
@@ -145,6 +146,26 @@ export const mapB2ShareToCommonDatasetMetadata = (
       licenseURI: b2share.metadata.license.license_uri,
     });
   }
+  const additional_metadata: AdditionalMetadata[] = [];
+  if (b2share.metadata.version) {
+    additional_metadata.push({
+      name: 'version',
+      value: b2share.metadata.version,
+    });
+  }
+  if (b2share.metadata.publication_state) {
+    additional_metadata.push({
+      name: 'publication_state',
+      value: b2share.metadata.publication_state,
+    });
+  }
+  if (b2share.metadata.community) {
+    additional_metadata.push({
+      name: 'community',
+      value: b2share.metadata.community,
+    });
+  }
+
   const alternateIdentifiers = extractIdentifiers(b2share.metadata.alternate_identifiers);
   const related_identifiers = extractIdentifiers(b2share.metadata.related_identifiers);
   const pids = toPID(alternateIdentifiers) || toPID(related_identifiers);
@@ -180,12 +201,15 @@ export const mapB2ShareToCommonDatasetMetadata = (
             : i.scheme_uri?.toLowerCase(),
         })),
       })),
-      contactPoints: b2share.metadata.contact_email?.split(/[;, ]+/).map((e) => {
-        return {
-          contactEmail: e,
-          contactName: '',
-        }
-      }).filter((e) => e.contactEmail !== "") || undefined,
+      contactPoints:
+        b2share.metadata.contact_email
+          ?.split(/[;, ]+/).map((e) => {
+            return {
+              contactEmail: e,
+              contactName: '',
+            }
+        })
+      .filter((e) => e.contactEmail !== "") || undefined,
       descriptions: b2share.metadata.descriptions?.map((d) => ({
         descriptionText: d.description,
         descriptionType: d.description_type,
@@ -242,8 +266,7 @@ export const mapB2ShareToCommonDatasetMetadata = (
       projects: [],
       siteReferences: siteReferences,
       habitatReferences: [],
-      additionalMetadata: [],
-  
-    }
+      additionalMetadata: additional_metadata,
+    },
   };
 };
