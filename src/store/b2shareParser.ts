@@ -115,8 +115,7 @@ function formatDate(isoString: string): string | undefined {
     }
 
     return date.toISOString().split('T')[0];
-  } catch (error) {
-    console.error(`Error parsing ${isoString}:`, error);
+  } catch {
     return undefined;
   }
 }
@@ -166,8 +165,12 @@ export const mapB2ShareToCommonDatasetMetadata = (
     });
   }
 
-  const alternateIdentifiers = extractIdentifiers(b2share.metadata.alternate_identifiers);
-  const related_identifiers = extractIdentifiers(b2share.metadata.related_identifiers);
+  const alternateIdentifiers = extractIdentifiers(
+    b2share.metadata.alternate_identifiers,
+  );
+  const related_identifiers = extractIdentifiers(
+    b2share.metadata.related_identifiers,
+  );
   const pids = toPID(alternateIdentifiers) || toPID(related_identifiers);
   return {
     pids: pids,
@@ -203,13 +206,14 @@ export const mapB2ShareToCommonDatasetMetadata = (
       })),
       contactPoints:
         b2share.metadata.contact_email
-          ?.split(/[;, ]+/).map((e) => {
+          ?.split(/[;, ]+/)
+          .map((e) => {
             return {
               contactEmail: e,
               contactName: '',
-            }
-        })
-      .filter((e) => e.contactEmail !== "") || undefined,
+            };
+          })
+          .filter((e) => e.contactEmail !== '') || undefined,
       descriptions: b2share.metadata.descriptions?.map((d) => ({
         descriptionText: d.description,
         descriptionType: d.description_type,
