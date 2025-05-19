@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import * as fs from 'fs';
-import fetch from 'node-fetch';
+import fetch, { Response, RequestInit } from 'node-fetch';
 
 // Configurations
 const INPUT_FILE = 'mapped_records.json';
@@ -26,35 +26,48 @@ if (!API_URL || !AUTH_TOKEN) {
 
 // Load JSON records
 const records = JSON.parse(fs.readFileSync(INPUT_FILE, 'utf-8'));
-const failedResponses: { index: number; payload: string; response: string }[] =
-  [];
+const failedResponses: FailedResponseInfo[] = [];
+
+interface FailedResponseInfo {
+  index: number;
+  payload: string;
+  response: string;
+  attemptedAction: 'POST' | 'PUT' | 'SEARCH';
+  recordIdentifier?: string;
+}
+
+async function performFetch(
+  url: string,
+  options: RequestInit,
+  actionName: string
+): Promise<Response | null> {
+  try {
+    process.stdout.write(`Starting ${actionName} request to: ${url}`);
+    const response = await fetch(url, options);
+    return response;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    process.stderr.write(`Error during ${actionName} to ${url}: ${errorMessage}`);
+    return null;
+  }
+}
+
 
 const sendRequests = async () => {
   for (const [index, record] of records.entries()) {
     process.stdout.write(`Iteration: ${index}`);
     const payload = JSON.stringify(record, null, 2);
 
-    try {
-      const response = await fetch(API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: AUTH_TOKEN,
-        },
-        body: payload,
-      });
-
-      if (!response.ok) {
-        const responseText = await response.text();
-        process.stderr.write('Failed: ' + responseText);
-        failedResponses.push({ index, payload, response: responseText });
-      }
-    } catch (error) {
-      if (error instanceof Error) {
-        process.stderr.write('Failed: ' + error.message);
-      }
-      failedResponses.push({ index, payload, response: `Error: ${error}` });
-    }
+    const apiResponse = await performFetch(
+      API_URL,
+      {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: AUTH_TOKEN },
+          body: payload,
+      },
+      'POST'
+  );
+    
   }
 
   // Logging failed reponses into failed_responses.json
