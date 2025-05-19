@@ -36,10 +36,15 @@ interface FailedResponseInfo {
   recordIdentifier?: string;
 }
 
+interface SearchOperationOutcome {
+  existingId: string | null;
+  action: 'POST' | 'PUT';
+}
+
 async function performFetch(
   url: string,
   options: RequestInit,
-  actionName: string
+  actionName: string,
 ): Promise<Response | null> {
   try {
     process.stdout.write(`Starting ${actionName} request to: ${url}`);
@@ -47,27 +52,99 @@ async function performFetch(
     return response;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    process.stderr.write(`Error during ${actionName} to ${url}: ${errorMessage}`);
+    process.stderr.write(
+      `Error during ${actionName} to ${url}: ${errorMessage}`,
+    );
     return null;
   }
 }
 
+async function dataSubmissionHandler(
+  action: 'POST' | 'PUT',
+  payload: string,
+  existingId: string | null,
+  index: number,
+  failedResponsesRef: FailedResponseInfo[],
+  externalSourceURI?: string,
+): Promise<void> {
+  if (action === 'PUT' && !existingId) {
+    process.stderr.write(
+      `Error: PUT for record index ${index}, record does not exist in DAR. Skipping.`,
+    );
+    failedResponsesRef.push({
+      index,
+      payload,
+      response: 'PUT intended, record does not exist in DAR.',
+      attemptedAction: 'PUT',
+      recordIdentifier: externalSourceURI,
+    });
+    return;
+  }
+
+  const httpMethod = action === 'POST' ? API_URL || '' : `${API_URL}/${existingId}`;
+  const apiResponse = await performFetch(
+    httpMethod,
+    {
+      method: action,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: AUTH_TOKEN,
+      },
+      body: payload,
+    },
+    action,
+  );
+
+  if (!apiResponse) {
+    process.stderr.write(`Error during ${action} for record index ${index}.`);
+    failedResponsesRef.push({
+      index,
+      payload,
+      response: `${action} fetch call failed`,
+      attemptedAction: action,
+      recordIdentifier:
+        action === 'PUT' && existingId ? existingId : externalSourceURI,
+    });
+    return;
+  }
+
+  if (!apiResponse.ok) {
+    const responseText = await apiResponse
+      .text()
+      .catch(() => 'Could not read error response.');
+    process.stderr.write(`
+      ${action} request for record index ${index} failed: ${apiResponse.status}: ${responseText}
+    `);
+    failedResponsesRef.push({
+      index,
+      payload,
+      response: `${action} Failed (HTTP ${apiResponse.status}): ${responseText}`,
+      attemptedAction: action,
+      recordIdentifier:
+        action === 'PUT' && existingId ? existingId : externalSourceURI,
+    });
+    return;
+  }
+
+  process.stdout.write(`
+    ${action} request for record index ${index} succeeded.\n`);
+}
 
 const sendRequests = async () => {
   for (const [index, record] of records.entries()) {
     process.stdout.write(`Iteration: ${index}`);
     const payload = JSON.stringify(record, null, 2);
+    const externalSourceURI =
+      record?.metadata?.externalSourceInformation?.externalSourceURI;
 
-    const apiResponse = await performFetch(
-      API_URL,
-      {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: AUTH_TOKEN },
-          body: payload,
-      },
-      'POST'
-  );
-    
+    await dataSubmissionHandler(
+      'POST',
+      payload,
+      null,
+      index,
+      failedResponses,
+      externalSourceURI,
+    );
   }
 
   // Logging failed reponses into failed_responses.json
