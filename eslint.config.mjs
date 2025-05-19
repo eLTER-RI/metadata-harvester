@@ -1,16 +1,18 @@
 // @ts-check
 
 import eslint from '@eslint/js';
-import tseslintPlugin from '@typescript-eslint/eslint-plugin';
-import tseslintParser from '@typescript-eslint/parser';
-import prettierPlugin from 'eslint-plugin-prettier';
+import tseslint from 'typescript-eslint';
+import prettierRecommended from 'eslint-plugin-prettier/recommended';
+import globals from 'globals';
 
-export default [
+export default tseslint.config(
   eslint.configs.recommended,
   {
     files: ['**/*.ts', '**/*.tsx'],
+    extends: [
+      ...tseslint.configs.recommended,
+    ],
     languageOptions: {
-      parser: tseslintParser,
       parserOptions: {
         ecmaVersion: 2021,
         sourceType: 'module',
@@ -18,15 +20,13 @@ export default [
           jsx: true,
         },
       },
-    },
-    plugins: {
-      '@typescript-eslint': tseslintPlugin,
-      prettier: prettierPlugin,
+      globals: {
+        ...globals.node,
+      },
     },
     rules: {
-      ...tseslintPlugin.configs.recommended.rules,
-      'prettier/prettier': 'error',
       'no-console': 'off',
     },
   },
-];
+  prettierRecommended,
+);
