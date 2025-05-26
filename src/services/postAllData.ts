@@ -41,12 +41,12 @@ interface SearchOperationOutcome {
 
 async function performFetch(url: string, options: RequestInit, actionName: string): Promise<Response | null> {
   try {
-    process.stdout.write(`Starting ${actionName} request to: ${url}`);
+    process.stdout.write(`Starting ${actionName} request to: ${url}\n`);
     const response = await fetch(url, options);
     return response;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    process.stderr.write(`Error during ${actionName} to ${url}: ${errorMessage}`);
+    process.stderr.write(`Error during ${actionName} to ${url}: ${errorMessage}\n`);
     return null;
   }
 }
@@ -59,8 +59,8 @@ async function handleSearchApiResponse(
 ): Promise<SearchOperationOutcome> {
   if (!response.ok) {
     const responseText = await response.text().catch(() => 'Could not read error response text.');
-    console.warn(
-      `Search request for URI "${externalSourceURI}" failed with HTTP status ${response.status}: ${responseText}`,
+    process.stdout.write(
+      `Search request for URI "${externalSourceURI}" failed with HTTP status ${response.status}: ${responseText}\n`,
     );
     failedResponsesRef.push({
       index,
@@ -76,17 +76,17 @@ async function handleSearchApiResponse(
     const searchResult = (await response.json()) as any;
     if (searchResult?.hits?.hits?.length > 0 && searchResult.hits.hits[0]?.id) {
       process.stdout.write(
-        `Existing record found via search. ID: ${searchResult.hits.hits[0].id}. Action set to PUT (update).`,
+        `Existing record found via search. ID: ${searchResult.hits.hits[0].id}. Action set to PUT (update).\n`,
       );
       return { existingId: searchResult.hits.hits[0].id, action: 'PUT' };
     } else {
-      process.stdout.write('No existing record found via search. Action remains POST (create).');
+      process.stdout.write('No existing record found via search. Action remains POST (create).\n');
       return { existingId: null, action: 'POST' };
     }
   } catch (jsonError) {
     const errorMsg = jsonError instanceof Error ? jsonError.message : String(jsonError);
     process.stderr.write(
-      `Error parsing JSON from successful search response for URI "${externalSourceURI}": ${errorMsg}`,
+      `Error parsing JSON from successful search response for URI "${externalSourceURI}": ${errorMsg}\n`,
     );
     const responseText = await response.text().catch(() => 'Could not read response text after JSON parse error.');
     failedResponsesRef.push({
@@ -115,12 +115,12 @@ async function searchInDarHandler(
   const action: 'POST' | 'PUT' = 'POST';
 
   if (!externalSourceURI) {
-    process.stdout.write('No externalSourceURI found in metadata. Defaulting to POST (create).');
+    process.stdout.write('No externalSourceURI found in metadata. Defaulting to POST (create).\n');
     return { existingId, action };
   }
 
   process.stdout.write(
-    `Record has externalSourceURI: "${externalSourceURI}". Attempting to find existing record via search.`,
+    `Record has externalSourceURI: "${externalSourceURI}". Attempting to find existing record via search.\n`,
   );
   const searchUrl = getSearchUrl(externalSourceURI);
 
@@ -141,7 +141,9 @@ async function searchInDarHandler(
       attemptedAction: 'SEARCH',
       recordIdentifier: externalSourceURI,
     });
-    process.stdout.write('Due to network error during search, proceeding as if record not found (will attempt POST).');
+    process.stdout.write(
+      'Due to network error during search, proceeding as if record not found (will attempt POST).\n',
+    );
     return { existingId, action };
   }
 
@@ -157,7 +159,7 @@ async function dataSubmissionHandler(
   externalSourceURI?: string,
 ): Promise<void> {
   if (action === 'PUT' && !existingId) {
-    process.stderr.write(`Error: PUT for record index ${index}, record does not exist in DAR. Skipping.`);
+    process.stderr.write(`Error: PUT for record index ${index}, record does not exist in DAR. Skipping.\n`);
     failedResponsesRef.push({
       index,
       payload,
@@ -183,7 +185,7 @@ async function dataSubmissionHandler(
   );
 
   if (!apiResponse) {
-    process.stderr.write(`Error during ${action} for record index ${index}.`);
+    process.stderr.write(`Error during ${action} for record index ${index}.\n`);
     failedResponsesRef.push({
       index,
       payload,
@@ -197,7 +199,7 @@ async function dataSubmissionHandler(
   if (!apiResponse.ok) {
     const responseText = await apiResponse.text().catch(() => 'Could not read error response.');
     process.stderr.write(`
-      ${action} request for record index ${index} failed: ${apiResponse.status}: ${responseText}
+      ${action} request for record index ${index} failed: ${apiResponse.status}: ${responseText}\n
     `);
     failedResponsesRef.push({
       index,
