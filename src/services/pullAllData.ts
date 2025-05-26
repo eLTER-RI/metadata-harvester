@@ -22,20 +22,20 @@ async function fetchJson(url: string): Promise<any> {
     if (!response.ok) return null;
     return await response.json();
   } catch (error) {
-    process.stdout.write(`Error fetching ${url}:` + error);
+    process.stdout.write(`Error fetching ${url}:` + error + '\n');
     return null;
   }
 }
 
 // Main function
 async function processPage(url: string, sites: any): Promise<any[]> {
-  process.stdout.write(`Fetching the dataset from: ${url}...`);
+  process.stdout.write(`Fetching the dataset from: ${url}...\n`);
 
   const data = await fetchJson(url);
   const hits: string[] = data?.hits?.hits || [];
 
   process.stdout.write(
-    `Found ${hits.length} self links. Fetching individual records...`,
+    `Found ${hits.length} self links. Fetching individual records...\n`,
   );
 
   // Process individual records using the parser
@@ -72,7 +72,7 @@ async function processPage(url: string, sites: any): Promise<any[]> {
 async function processAll() {
   try {
     await fs.unlink(CONFIG.OUTPUT_FILE);
-    process.stdout.write('File deleted');
+    process.stdout.write('File deleted\n');
   } catch (err: any) {
     if (err.code !== 'ENOENT') {
       throw err;
@@ -80,7 +80,7 @@ async function processAll() {
   }
 
   const sites = await fetchSites();
-  process.stdout.write(`Found ${sites.length} sites.`);
+  process.stdout.write(`Found ${sites.length} sites.\n`);
 
   const allRecords: any[] = [];
   const size = CONFIG.PAGE_SIZE || 100;
@@ -88,19 +88,21 @@ async function processAll() {
 
   while (true) {
     const pageUrl = `${CONFIG.INITIAL_API_URL}&size=${size}&page=${page}`;
-    process.stdout.write(`Fetching page ${page}...`);
+    process.stdout.write(`Fetching page ${page}...\n`);
 
     const pageRecords = await processPage(pageUrl, sites);
     if (pageRecords.length === 0) {
-      process.stdout.write(`No records found on page ${page}. Stopping.`);
+      process.stdout.write(`No records found on page ${page}. Stopping.\n`);
       break;
     }
 
     allRecords.push(...pageRecords);
-    process.stdout.write(`Page ${page} processed (${pageRecords.length} records).`);
+    process.stdout.write(
+      `Page ${page} processed (${pageRecords.length} records).\n`,
+    );
 
     if (pageRecords.length < size) {
-      process.stdout.write('Last page reached.');
+      process.stdout.write('Last page reached.\n');
       break;
     }
 
@@ -109,7 +111,7 @@ async function processAll() {
 
   await fs.writeFile(CONFIG.OUTPUT_FILE, JSON.stringify(allRecords, null, 2));
   process.stdout.write(
-    `Done. Saved ${allRecords.length} records to ${CONFIG.OUTPUT_FILE}`,
+    `Done. Saved ${allRecords.length} records to ${CONFIG.OUTPUT_FILE}\n`,
   );
 }
 
