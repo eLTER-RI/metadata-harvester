@@ -9,9 +9,7 @@ export default tseslint.config(
   eslint.configs.recommended,
   {
     files: ['**/*.ts', '**/*.tsx'],
-    extends: [
-      ...tseslint.configs.recommended,
-    ],
+    extends: [...tseslint.configs.recommended],
     languageOptions: {
       parserOptions: {
         ecmaVersion: 2021,
@@ -26,6 +24,13 @@ export default tseslint.config(
     },
     rules: {
       'no-console': 'off',
+      'max-len': [
+        'error',
+        {
+          code: 120,
+        },
+      ],
+      'prettier/prettier': ['error', { printWidth: 120 }],
     },
   },
   prettierRecommended,

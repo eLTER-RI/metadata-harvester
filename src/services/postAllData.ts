@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import * as fs from 'fs';
 import fetch, { Response, RequestInit } from 'node-fetch';
+import { CommonDataset } from '../store/commonStructure';
 
 // Configurations
 const INPUT_FILE = 'mapped_records.json';
@@ -57,6 +58,120 @@ async function performFetch(
     );
     return null;
   }
+}
+
+async function handleSearchApiResponse(
+  response: Response,
+  externalSourceURI: string,
+  index: number,
+  failedResponsesRef: FailedResponseInfo[],
+): Promise<SearchOperationOutcome> {
+  if (!response.ok) {
+    const responseText = await response
+      .text()
+      .catch(() => 'Could not read error response text.');
+    console.warn(
+      `Search request for URI "${externalSourceURI}" failed with HTTP status ${response.status}: ${responseText}`,
+    );
+    failedResponsesRef.push({
+      index,
+      payload: `Search for: ${externalSourceURI}`,
+      response: `Search Failed (HTTP ${response.status}): ${responseText}`,
+      attemptedAction: 'SEARCH',
+      recordIdentifier: externalSourceURI,
+    });
+    return { existingId: null, action: 'POST' };
+  }
+
+  try {
+    const searchResult = (await response.json()) as any;
+    if (searchResult?.hits?.hits?.length > 0 && searchResult.hits.hits[0]?.id) {
+      process.stdout.write(
+        `Existing record found via search. ID: ${searchResult.hits.hits[0].id}. Action set to PUT (update).`,
+      );
+      return { existingId: searchResult.hits.hits[0].id, action: 'PUT' };
+    } else {
+      process.stdout.write(
+        'No existing record found via search. Action remains POST (create).',
+      );
+      return { existingId: null, action: 'POST' };
+    }
+  } catch (jsonError) {
+    const errorMsg =
+      jsonError instanceof Error ? jsonError.message : String(jsonError);
+    process.stderr.write(
+      `Error parsing JSON from successful search response for URI "${externalSourceURI}": ${errorMsg}`,
+    );
+    const responseText = await response
+      .text()
+      .catch(() => 'Could not read response text after JSON parse error.');
+    failedResponsesRef.push({
+      index,
+      payload: `Search for: ${externalSourceURI}`,
+      response: `Search JSON Parse Error: ${errorMsg}. Response Text: ${responseText}`,
+      attemptedAction: 'SEARCH',
+      recordIdentifier: externalSourceURI,
+    });
+    return { existingId: null, action: 'POST' };
+  }
+}
+
+function getSearchUrl(externalSourceURI: string): string {
+  const encodedURI = encodeURIComponent(externalSourceURI);
+  return `${API_URL}?q=&metadata_externalSourceInformation_externalSourceURI=${encodedURI}`;
+}
+
+async function searchInDarHandler(
+  record: CommonDataset,
+  index: number,
+  failedResponsesRef: FailedResponseInfo[],
+): Promise<SearchOperationOutcome> {
+  const externalSourceURI =
+    record?.metadata?.externalSourceInformation?.externalSourceURI;
+  const existingId: string | null = null;
+  const action: 'POST' | 'PUT' = 'POST';
+
+  if (!externalSourceURI) {
+    process.stdout.write(
+      'No externalSourceURI found in metadata. Defaulting to POST (create).',
+    );
+    return { existingId, action };
+  }
+
+  process.stdout.write(
+    `Record has externalSourceURI: "${externalSourceURI}". Attempting to find existing record via search.`,
+  );
+  const searchUrl = getSearchUrl(externalSourceURI);
+
+  const searchResponse = await performFetch(
+    searchUrl,
+    {
+      method: 'GET',
+      headers: { Authorization: AUTH_TOKEN, Accept: 'application/json' },
+    },
+    'SEARCH',
+  );
+
+  if (!searchResponse) {
+    failedResponsesRef.push({
+      index,
+      payload: `Search for: ${externalSourceURI}`,
+      response: `Search Network Error (fetch call failed)`,
+      attemptedAction: 'SEARCH',
+      recordIdentifier: externalSourceURI,
+    });
+    process.stdout.write(
+      'Due to network error during search, proceeding as if record not found (will attempt POST).',
+    );
+    return { existingId, action };
+  }
+
+  return handleSearchApiResponse(
+    searchResponse,
+    externalSourceURI,
+    index,
+    failedResponsesRef,
+  );
 }
 
 async function dataSubmissionHandler(
@@ -132,15 +247,20 @@ async function dataSubmissionHandler(
 
 const sendRequests = async () => {
   for (const [index, record] of records.entries()) {
-    process.stdout.write(`Iteration: ${index}`);
+    process.stdout.write(`\nIteration: ${index}\n`);
     const payload = JSON.stringify(record, null, 2);
     const externalSourceURI =
       record?.metadata?.externalSourceInformation?.externalSourceURI;
 
+    const searchOutcome = await searchInDarHandler(
+      record,
+      index,
+      failedResponses,
+    );
     await dataSubmissionHandler(
-      'POST',
+      searchOutcome.action,
       payload,
-      null,
+      searchOutcome.existingId,
       index,
       failedResponses,
       externalSourceURI,
