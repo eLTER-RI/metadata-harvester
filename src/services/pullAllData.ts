@@ -34,9 +34,7 @@ async function processPage(url: string, sites: any): Promise<any[]> {
   const data = await fetchJson(url);
   const hits: string[] = data?.hits?.hits || [];
 
-  process.stdout.write(
-    `Found ${hits.length} self links. Fetching individual records...\n`,
-  );
+  process.stdout.write(`Found ${hits.length} self links. Fetching individual records...\n`);
 
   // Process individual records using the parser
   const mappedResults = await Promise.all(
@@ -97,9 +95,7 @@ async function processAll() {
     }
 
     allRecords.push(...pageRecords);
-    process.stdout.write(
-      `Page ${page} processed (${pageRecords.length} records).\n`,
-    );
+    process.stdout.write(`Page ${page} processed (${pageRecords.length} records).\n`);
 
     if (pageRecords.length < size) {
       process.stdout.write('Last page reached.\n');
@@ -110,9 +106,7 @@ async function processAll() {
   }
 
   await fs.writeFile(CONFIG.OUTPUT_FILE, JSON.stringify(allRecords, null, 2));
-  process.stdout.write(
-    `Done. Saved ${allRecords.length} records to ${CONFIG.OUTPUT_FILE}\n`,
-  );
+  process.stdout.write(`Done. Saved ${allRecords.length} records to ${CONFIG.OUTPUT_FILE}\n`);
 }
 
 processAll();

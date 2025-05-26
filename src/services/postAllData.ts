@@ -10,13 +10,10 @@ if (currentEnv !== 'prod' && currentEnv !== 'dev') {
   throw new Error(`NODE_ENV must be set to 'prod' or 'dev'`);
 }
 
-const API_URL =
-  currentEnv === 'prod' ? process.env.PROD_API_URL : process.env.DEV_API_URL;
+const API_URL = currentEnv === 'prod' ? process.env.PROD_API_URL : process.env.DEV_API_URL;
 
 const AUTH_TOKEN =
-  currentEnv === 'prod'
-    ? 'Bearer ' + process.env.PROD_AUTH_TOKEN
-    : 'Bearer ' + process.env.DEV_AUTH_TOKEN;
+  currentEnv === 'prod' ? 'Bearer ' + process.env.PROD_AUTH_TOKEN : 'Bearer ' + process.env.DEV_AUTH_TOKEN;
 
 if (!API_URL || !AUTH_TOKEN) {
   throw new Error(
@@ -42,20 +39,14 @@ interface SearchOperationOutcome {
   action: 'POST' | 'PUT';
 }
 
-async function performFetch(
-  url: string,
-  options: RequestInit,
-  actionName: string,
-): Promise<Response | null> {
+async function performFetch(url: string, options: RequestInit, actionName: string): Promise<Response | null> {
   try {
     process.stdout.write(`Starting ${actionName} request to: ${url}`);
     const response = await fetch(url, options);
     return response;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    process.stderr.write(
-      `Error during ${actionName} to ${url}: ${errorMessage}`,
-    );
+    process.stderr.write(`Error during ${actionName} to ${url}: ${errorMessage}`);
     return null;
   }
 }
@@ -67,9 +58,7 @@ async function handleSearchApiResponse(
   failedResponsesRef: FailedResponseInfo[],
 ): Promise<SearchOperationOutcome> {
   if (!response.ok) {
-    const responseText = await response
-      .text()
-      .catch(() => 'Could not read error response text.');
+    const responseText = await response.text().catch(() => 'Could not read error response text.');
     console.warn(
       `Search request for URI "${externalSourceURI}" failed with HTTP status ${response.status}: ${responseText}`,
     );
@@ -91,20 +80,15 @@ async function handleSearchApiResponse(
       );
       return { existingId: searchResult.hits.hits[0].id, action: 'PUT' };
     } else {
-      process.stdout.write(
-        'No existing record found via search. Action remains POST (create).',
-      );
+      process.stdout.write('No existing record found via search. Action remains POST (create).');
       return { existingId: null, action: 'POST' };
     }
   } catch (jsonError) {
-    const errorMsg =
-      jsonError instanceof Error ? jsonError.message : String(jsonError);
+    const errorMsg = jsonError instanceof Error ? jsonError.message : String(jsonError);
     process.stderr.write(
       `Error parsing JSON from successful search response for URI "${externalSourceURI}": ${errorMsg}`,
     );
-    const responseText = await response
-      .text()
-      .catch(() => 'Could not read response text after JSON parse error.');
+    const responseText = await response.text().catch(() => 'Could not read response text after JSON parse error.');
     failedResponsesRef.push({
       index,
       payload: `Search for: ${externalSourceURI}`,
@@ -126,15 +110,12 @@ async function searchInDarHandler(
   index: number,
   failedResponsesRef: FailedResponseInfo[],
 ): Promise<SearchOperationOutcome> {
-  const externalSourceURI =
-    record?.metadata?.externalSourceInformation?.externalSourceURI;
+  const externalSourceURI = record?.metadata?.externalSourceInformation?.externalSourceURI;
   const existingId: string | null = null;
   const action: 'POST' | 'PUT' = 'POST';
 
   if (!externalSourceURI) {
-    process.stdout.write(
-      'No externalSourceURI found in metadata. Defaulting to POST (create).',
-    );
+    process.stdout.write('No externalSourceURI found in metadata. Defaulting to POST (create).');
     return { existingId, action };
   }
 
@@ -160,18 +141,11 @@ async function searchInDarHandler(
       attemptedAction: 'SEARCH',
       recordIdentifier: externalSourceURI,
     });
-    process.stdout.write(
-      'Due to network error during search, proceeding as if record not found (will attempt POST).',
-    );
+    process.stdout.write('Due to network error during search, proceeding as if record not found (will attempt POST).');
     return { existingId, action };
   }
 
-  return handleSearchApiResponse(
-    searchResponse,
-    externalSourceURI,
-    index,
-    failedResponsesRef,
-  );
+  return handleSearchApiResponse(searchResponse, externalSourceURI, index, failedResponsesRef);
 }
 
 async function dataSubmissionHandler(
@@ -183,9 +157,7 @@ async function dataSubmissionHandler(
   externalSourceURI?: string,
 ): Promise<void> {
   if (action === 'PUT' && !existingId) {
-    process.stderr.write(
-      `Error: PUT for record index ${index}, record does not exist in DAR. Skipping.`,
-    );
+    process.stderr.write(`Error: PUT for record index ${index}, record does not exist in DAR. Skipping.`);
     failedResponsesRef.push({
       index,
       payload,
@@ -217,16 +189,13 @@ async function dataSubmissionHandler(
       payload,
       response: `${action} fetch call failed`,
       attemptedAction: action,
-      recordIdentifier:
-        action === 'PUT' && existingId ? existingId : externalSourceURI,
+      recordIdentifier: action === 'PUT' && existingId ? existingId : externalSourceURI,
     });
     return;
   }
 
   if (!apiResponse.ok) {
-    const responseText = await apiResponse
-      .text()
-      .catch(() => 'Could not read error response.');
+    const responseText = await apiResponse.text().catch(() => 'Could not read error response.');
     process.stderr.write(`
       ${action} request for record index ${index} failed: ${apiResponse.status}: ${responseText}
     `);
@@ -235,8 +204,7 @@ async function dataSubmissionHandler(
       payload,
       response: `${action} Failed (HTTP ${apiResponse.status}): ${responseText}`,
       attemptedAction: action,
-      recordIdentifier:
-        action === 'PUT' && existingId ? existingId : externalSourceURI,
+      recordIdentifier: action === 'PUT' && existingId ? existingId : externalSourceURI,
     });
     return;
   }
@@ -249,14 +217,9 @@ const sendRequests = async () => {
   for (const [index, record] of records.entries()) {
     process.stdout.write(`\nIteration: ${index}\n`);
     const payload = JSON.stringify(record, null, 2);
-    const externalSourceURI =
-      record?.metadata?.externalSourceInformation?.externalSourceURI;
+    const externalSourceURI = record?.metadata?.externalSourceInformation?.externalSourceURI;
 
-    const searchOutcome = await searchInDarHandler(
-      record,
-      index,
-      failedResponses,
-    );
+    const searchOutcome = await searchInDarHandler(record, index, failedResponses);
     await dataSubmissionHandler(
       searchOutcome.action,
       payload,
@@ -278,10 +241,7 @@ const sendRequests = async () => {
         JSON.stringify(failedResponses, null, 2) +
         '\n',
     );
-    fs.writeFileSync(
-      'failed_responses.json',
-      JSON.stringify(failedResponses, null, 2),
-    );
+    fs.writeFileSync('failed_responses.json', JSON.stringify(failedResponses, null, 2));
   } else {
     process.stdout.write('✅ All requests succeeded!');
   }
