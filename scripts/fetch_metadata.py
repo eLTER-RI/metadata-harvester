@@ -4,25 +4,24 @@ import sys
 import os
 
 def fetch_all_links():
-    base_url = "https://b2share.eudat.eu/api/records/"
+    base_url = "https://b2share.eudat.eu/api/records/?q=community:e9b9792e-79fb-4b07-b6b4-b9c2bd06d095&sort=oldest&size=940"
     page = 1
     links = []
     
-    while page < 100:
-        response = requests.get(base_url, params={"page": page, "size": 10, "sort": "mostrecent"})
-        
-        if response.status_code != 200:
-            print(f"Error: Received status code {response.status_code}")
-            break
-        
-        data = response.json()
-        hits = data.get("hits", {}).get("hits", [])
-        
-        if not hits:
-            break  # No more data to fetch
-        
-        links.extend(record["links"]["self"] for record in hits if "links" in record and "self" in record["links"])
-        page += 1
+    response = requests.get(base_url)
+    
+    if response.status_code != 200:
+        print(f"Error: Received status code {response.status_code}")
+        return []
+    
+    data = response.json()
+    hits = data.get("hits", {}).get("hits", [])
+    
+    if not hits:
+        print(f"Error: Received status code {response.status_code}")
+        return []
+    
+    links.extend(record["links"]["self"] for record in hits if "links" in record and "self" in record["links"])
     
     return links
 
