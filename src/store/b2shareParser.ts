@@ -8,9 +8,13 @@ import {
   CommonDataset,
   toPID,
   AdditionalMetadata,
+  Contributor,
+  validContributorTypes,
+  ContributorType,
+  isValidEntityIdSchema,
+  parsePID,
 } from './commonStructure';
 
-// eslint-disable-next-line
 function extractB2ShareGeolocation(input: any): Geolocation[] {
   const coverages: Geolocation[] = [];
 
@@ -44,7 +48,6 @@ function extractB2ShareGeolocation(input: any): Geolocation[] {
           geographicDescription: spatCoverage.place,
           // eslint-disable-next-line
           boundingPolygon: spatCoverage.polygons.map((polygon: any) => ({
-            // eslint-disable-next-line
             points:
               // eslint-disable-next-line
               polygon.polygon?.map((point: any) => ({
@@ -81,17 +84,21 @@ function extractB2ShareKeywords(input: any): Keywords[] {
     if (typeof k === 'string') {
       const splitKeywords = k.split(/\s*[;,]\s*/);
       splitKeywords.forEach((keyword) => {
-        keywords.push({
-          keywordLabel: keyword,
-        });
+        if (keyword.length) {
+          keywords.push({
+            keywordLabel: keyword,
+          });
+        }
       });
     } else if (k?.keyword) {
       const splitKeywords = k.keyword.split(/\s*[;,]\s*/);
       splitKeywords.forEach((keyword: string) => {
-        keywords.push({
-          keywordLabel: keyword,
-          keywordURI: k.scheme_uri,
-        });
+        if (keyword.length) {
+          keywords.push({
+            keywordLabel: keyword,
+            keywordURI: k.scheme_uri,
+          });
+        }
       });
     }
   });
@@ -127,21 +134,25 @@ function convertHttpToHttps(url: string): string {
   return url;
 }
 
+function extractIdFromUrl(input: string): string {
+  try {
+    const url = new URL(input);
+    const segments = url.pathname.split('/').filter(Boolean);
+    return segments.length > 0 ? segments[segments.length - 1] : input;
+  } catch {
+    return input;
+  }
+}
+
 export const mapB2ShareToCommonDatasetMetadata = (
   url: string,
   b2share: B2ShareExtractedSchema,
   siteReferences?: SiteReference[],
 ): CommonDataset => {
   const licenses: License[] = [];
-  if (
-    b2share.metadata.license &&
-    (b2share.metadata.license.license_identifier ||
-      b2share.metadata.license.license)
-  ) {
+  if (b2share.metadata.license && (b2share.metadata.license.license_identifier || b2share.metadata.license.license)) {
     licenses.push({
-      licenseCode:
-        b2share.metadata.license.license_identifier ||
-        b2share.metadata.license.license,
+      licenseCode: b2share.metadata.license.license_identifier || b2share.metadata.license.license,
       licenseURI: b2share.metadata.license.license_uri,
     });
   }
@@ -165,13 +176,43 @@ export const mapB2ShareToCommonDatasetMetadata = (
     });
   }
 
-  const alternateIdentifiers = extractIdentifiers(
-    b2share.metadata.alternate_identifiers,
-  );
-  const related_identifiers = extractIdentifiers(
-    b2share.metadata.related_identifiers,
-  );
-  const pids = toPID(alternateIdentifiers) || toPID(related_identifiers);
+  const alternateIdentifiers = extractIdentifiers(b2share.metadata.alternate_identifiers);
+  const related_identifiers = extractIdentifiers(b2share.metadata.related_identifiers);
+  const parsedPID = b2share.metadata.DOI ? parsePID(b2share.metadata.DOI) : null;
+  const pids = parsedPID ?? (toPID(alternateIdentifiers) || toPID(related_identifiers));
+
+  const contributors = b2share.metadata.contributors?.map((c) => {
+    const contributor: Contributor = {
+      contributorFamilyName: c.family_name ?? c.contributor_name,
+      contributorGivenName: c.given_name,
+      contributorAffiliation:
+        c.affiliations?.length != undefined && c.affiliations?.length > 0
+          ? {
+              entityName: c.affiliations[0].affiliation_name,
+              entityID: {
+                entityID: c.affiliations[0].affiliation_identifier
+                  ? extractIdFromUrl(c.affiliations[0].affiliation_identifier)
+                  : undefined,
+                entityIDSchema: c.affiliations[0].scheme?.toLowerCase(),
+              },
+            }
+          : undefined,
+      contributorIDs: c.name_identifiers
+        ?.map((i) => ({
+          entityID: i.name_identifier ? extractIdFromUrl(i.name_identifier) : undefined,
+          entityIDSchema: i.scheme ? i.scheme?.toLowerCase() : i.scheme_uri ? i.scheme_uri?.toLowerCase() : undefined,
+        }))
+        .filter(
+          (a) =>
+            (a.entityID?.length == 0 || a.entityID == null) &&
+            (a.entityIDSchema == undefined || a.entityIDSchema?.length == 0 || a.entityIDSchema == null),
+        ),
+      contributorType: validContributorTypes.has(c.contributor_type as ContributorType)
+        ? (c.contributor_type as ContributorType)
+        : ('Other' as ContributorType),
+    };
+    return contributor;
+  });
   return {
     pids: pids,
     metadata: {
@@ -198,10 +239,12 @@ export const mapB2ShareToCommonDatasetMetadata = (
               }
             : undefined,
         creatorIDs: c.name_identifiers?.map((i) => ({
-          entityID: i.name_identifier,
-          entityIDSchema: i.scheme
+          entityID: extractIdFromUrl(i.name_identifier),
+          entityIDSchema: isValidEntityIdSchema(i.scheme)
             ? i.scheme.toLowerCase()
-            : i.scheme_uri?.toLowerCase(),
+            : i.scheme_uri && isValidEntityIdSchema(i.scheme_uri)
+              ? i.scheme_uri.toLowerCase()
+              : undefined,
         })),
       })),
       contactPoints:
@@ -219,36 +262,12 @@ export const mapB2ShareToCommonDatasetMetadata = (
         descriptionType: d.description_type,
       })),
       keywords: extractB2ShareKeywords(b2share.metadata) || undefined,
-      contributors: b2share.metadata.contributors?.map((c) => ({
-        contributorFamilyName: c.family_name ?? c.contributor_name,
-        contributorGivenName: c.given_name,
-        contributorAffiliation:
-          c.affiliations?.length != undefined && c.affiliations?.length > 0
-            ? {
-                entityName: c.affiliations[0].affiliation_name,
-                entityID: {
-                  entityID: c.affiliations[0].affiliation_identifier,
-                  entityIDSchema: c.affiliations[0].scheme?.toLowerCase(),
-                },
-              }
-            : undefined,
-        contributorIDs: c.name_identifiers?.map((i) => ({
-          entityID: i.name_identifier,
-          entityIDSchema: i.scheme
-            ? i.scheme?.toLowerCase()
-            : i.scheme_uri?.toLowerCase(),
-        })),
-        contributorType: c.contributor_type,
+      contributors: contributors as Contributor[],
+      publicationDate: b2share.metadata.publication_date ? formatDate(b2share.metadata.publication_date) : undefined,
+      temporalCoverages: b2share.metadata.temporal_coverages?.ranges?.map((t) => ({
+        startDate: t.start_date ? formatDate(t.start_date) : undefined,
+        endDate: t.end_date ? formatDate(t.end_date) : undefined,
       })),
-      publicationDate: b2share.metadata.publication_date
-        ? formatDate(b2share.metadata.publication_date)
-        : undefined,
-      temporalCoverages: b2share.metadata.temporal_coverages?.ranges?.map(
-        (t) => ({
-          startDate: t.start_date ? formatDate(t.start_date) : undefined,
-          endDate: t.end_date ? formatDate(t.end_date) : undefined,
-        }),
-      ),
       geoLocations: extractB2ShareGeolocation(b2share.metadata),
       licenses: licenses.length > 0 ? licenses : undefined,
       files: b2share.files?.map((f) => ({
@@ -260,14 +279,19 @@ export const mapB2ShareToCommonDatasetMetadata = (
         format: f.key?.split('.').pop(),
       })),
       externalSourceInformation: {
-        externalSourceName: 'b2share',
+        externalSourceName: 'B2Share',
         externalSourceURI: url,
       },
-      language: b2share.metadata.languages?.map((l) => l.language_name).join(),
+      language: b2share.metadata.language ?? b2share.metadata.languages?.map((l) => l.language_name).join(),
       responsibleOrganizations: [],
       taxonomicCoverages: [],
       methods: [],
-      projects: [],
+      projects: [
+        {
+          projectName: 'B2SHARE external record - eLTER Community',
+          projectID: 'https://elterTest.com',
+        },
+      ],
       siteReferences: siteReferences,
       habitatReferences: [],
       additionalMetadata: additional_metadata,
