@@ -69,7 +69,7 @@ async function processPage(url: string, sites: any): Promise<any[]> {
 // Run the script
 async function processAll() {
   try {
-    await fs.unlink(CONFIG.OUTPUT_FILE);
+    await fs.unlink(CONFIG.MAPPED_RECORDS);
     process.stdout.write('File deleted\n');
   } catch (err: any) {
     if (err.code !== 'ENOENT') {
@@ -105,8 +105,8 @@ async function processAll() {
     page++;
   }
 
-  await fs.writeFile(CONFIG.OUTPUT_FILE, JSON.stringify(allRecords, null, 2));
-  process.stdout.write(`Done. Saved ${allRecords.length} records to ${CONFIG.OUTPUT_FILE}\n`);
+  await fs.writeFile(CONFIG.MAPPED_RECORDS, JSON.stringify(allRecords, null, 2));
+  process.stdout.write(`Done. Saved ${allRecords.length} records to ${CONFIG.MAPPED_RECORDS}\n`);
 }
 
 processAll();

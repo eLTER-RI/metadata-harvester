@@ -2,9 +2,9 @@ import 'dotenv/config';
 import * as fs from 'fs';
 import fetch, { Response, RequestInit } from 'node-fetch';
 import { CommonDataset } from '../store/commonStructure';
+import { CONFIG } from '../../config';
 
 // Configurations
-const INPUT_FILE = 'mapped_records.json';
 const currentEnv = process.env.NODE_ENV;
 if (currentEnv !== 'prod' && currentEnv !== 'dev') {
   throw new Error(`NODE_ENV must be set to 'prod' or 'dev'`);
@@ -23,7 +23,7 @@ if (!API_URL || !AUTH_TOKEN) {
 }
 
 // Load JSON records
-const records = JSON.parse(fs.readFileSync(INPUT_FILE, 'utf-8'));
+const records = JSON.parse(fs.readFileSync(CONFIG.MAPPED_RECORDS, 'utf-8'));
 const failedResponses: FailedResponseInfo[] = [];
 
 interface FailedResponseInfo {
@@ -232,6 +232,8 @@ const sendRequests = async () => {
 
   // Logging failed reponses into failed_responses.json
   if (failedResponses.length > 0) {
+    const logFileName = `failed_responses_${Date.now()}.json`;
+    const logFilePath = `./logs/${logFileName}`;
     process.stderr.write(
       '❌ Some requests ' +
         failedResponses.length +
@@ -241,7 +243,7 @@ const sendRequests = async () => {
         JSON.stringify(failedResponses, null, 2) +
         '\n',
     );
-    fs.writeFileSync('failed_responses.json', JSON.stringify(failedResponses, null, 2));
+    fs.writeFileSync(logFilePath, JSON.stringify(failedResponses, null, 2));
   } else {
     process.stdout.write('✅ All requests succeeded!');
   }
