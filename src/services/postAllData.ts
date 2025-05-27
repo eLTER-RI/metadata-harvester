@@ -234,7 +234,7 @@ const sendRequests = async () => {
 
   // Logging failed reponses into failed_responses.json
   if (failedResponses.length > 0) {
-    const logFileName = `failed_responses_${Date.now()}.json`;
+    const logFileName = `failed_responses_${currentEnv}_${Date.now()}.json`;
     const logFilePath = `./logs/${logFileName}`;
     process.stderr.write(
       '❌ Some requests ' +
