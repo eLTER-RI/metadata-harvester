@@ -1,3 +1,4 @@
+import { getMatchedSitesForRecord } from '../utilities/matchDeimsId';
 import { B2ShareExtractedSchema } from './b2shareApi';
 import {
   extractIdentifiers,
@@ -10,7 +11,7 @@ import {
   AdditionalMetadata,
   Contributor,
   validContributorTypes,
-  ContributorType,
+  // ContributorType,
   isValidEntityIdSchema,
   parsePID,
 } from './commonStructure';
@@ -144,11 +145,10 @@ function extractIdFromUrl(input: string): string {
   }
 }
 
-export const mapB2ShareToCommonDatasetMetadata = (
+export async function mapB2ShareToCommonDatasetMetadata(
   url: string,
   b2share: B2ShareExtractedSchema,
-  siteReferences?: SiteReference[],
-): CommonDataset => {
+): Promise<CommonDataset> {
   const licenses: License[] = [];
   if (b2share.metadata.license && (b2share.metadata.license.license_identifier || b2share.metadata.license.license)) {
     licenses.push({
@@ -176,6 +176,8 @@ export const mapB2ShareToCommonDatasetMetadata = (
     });
   }
 
+  const metadataSites = await getMatchedSitesForRecord(b2share.metadata);
+  const sites = metadataSites.length > 0 ? metadataSites : await getMatchedSitesForRecord(b2share);
   const alternateIdentifiers = extractIdentifiers(b2share.metadata.alternate_identifiers);
   const related_identifiers = extractIdentifiers(b2share.metadata.related_identifiers);
   const parsedPID = b2share.metadata.DOI ? parsePID(b2share.metadata.DOI) : null;
@@ -282,19 +284,22 @@ export const mapB2ShareToCommonDatasetMetadata = (
         externalSourceName: 'B2Share',
         externalSourceURI: url,
       },
-      language: b2share.metadata.language ?? b2share.metadata.languages?.map((l) => l.language_name).join(),
+      language:
+        typeof b2share.metadata.language === 'string'
+          ? b2share.metadata.language
+          : b2share.metadata.languages?.map((l) => l.language_name).join() || '',
       responsibleOrganizations: [],
       taxonomicCoverages: [],
       methods: [],
       projects: [
         {
           projectName: 'B2SHARE external record - eLTER Community',
-          projectID: 'https://elterTest.com',
+          projectID: 'https://b2share.eudat.eu/communities/LTER',
         },
       ],
-      siteReferences: siteReferences,
+      siteReferences: sites,
       habitatReferences: [],
       additionalMetadata: additional_metadata,
     },
   };
-};
+}

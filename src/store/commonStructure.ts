@@ -8,7 +8,6 @@ export type CommonDataset = {
   metadata: CommonDatasetMetadata;
 };
 
-
 export type CommonDatasetMetadata = {
   assetType: string;
   datasetType?: string;
@@ -28,10 +27,10 @@ export type CommonDatasetMetadata = {
   taxonomicCoverages?: string[];
   methods?: Method[];
   language?: string;
-  projects?: string[];
+  projects?: Project[];
   siteReferences?: SiteReference[];
   habitatReferences?: string[];
-  additionalMetadata?: string[];
+  additionalMetadata?: AdditionalMetadata[];
   relatedIdentifiers?: Identifier[];
   externalSourceInformation: ExternalSource;
 };
@@ -121,6 +120,25 @@ const identifierTypesMap = new Map<string, IdentifierType>(
   ].map((type) => [type.toLowerCase(), type as IdentifierType]),
 );
 
+export const validContributorTypes = new Map<string, IdentifierType>(
+  [
+    'ContactPerson',
+    'DataCollector',
+    'DataCurator',
+    'DataManager',
+    'MetadataProvider',
+    'Producer',
+    'ProjectLeader',
+    'ProjectManager',
+    'ProjectMember',
+    'RegistrationAuthority',
+    'RelatedPerson',
+    'Researcher',
+    'ResearchGroup',
+    'Other',
+  ].map((type) => [type.toLowerCase(), type as IdentifierType]),
+);
+
 export type Identifier = {
   alternateID: string;
   alternateIDType: IdentifierType;
@@ -159,6 +177,16 @@ export type ExternalSource = {
   externalSourceName?: string;
   externalSourceURI?: string;
   externalSourceInfo?: string;
+};
+
+export type Project = {
+  projectName: string;
+  projectID: string;
+};
+
+export type AdditionalMetadata = {
+  name: string;
+  value: string;
 };
 
 export type Creator = {
@@ -282,9 +310,7 @@ export function extractIdentifiers(input: any): Identifier[] {
     .filter(([key]) => identifierTypesMap.has(key.toLowerCase()))
     .map(([key, value]) => ({
       alternateID: value as string,
-      alternateIDType: identifierTypesMap.get(
-        key.toLowerCase(),
-      ) as IdentifierType,
+      alternateIDType: identifierTypesMap.get(key.toLowerCase()) as IdentifierType,
     }));
 }
 
@@ -299,7 +325,7 @@ const parseDOIUrl = (url: string): { provider: string; identifier: string } | nu
 };
 
 export function toPID(identifiers: Identifier[]): PID | undefined {
-  const doiEntry = identifiers.find(id => id.alternateIDType.toLowerCase() === 'doi');
+  const doiEntry = identifiers.find((id) => id.alternateIDType.toLowerCase() === 'doi');
   if (!doiEntry) return undefined;
 
   const parsed = parseDOIUrl(doiEntry.alternateID);
@@ -311,5 +337,4 @@ export function toPID(identifiers: Identifier[]): PID | undefined {
       provider: parsed.provider,
     },
   };
-};
-
+}
