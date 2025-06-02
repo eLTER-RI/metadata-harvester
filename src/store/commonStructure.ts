@@ -29,8 +29,8 @@ export type CommonDatasetMetadata = {
   language?: string;
   projects?: Project[];
   siteReferences?: SiteReference[];
-  habitatReferences?: string[];
   additionalMetadata?: AdditionalMetadata[];
+  habitatReferences?: string[];
   relatedIdentifiers?: Identifier[];
   externalSourceInformation: ExternalSource;
 };
@@ -120,25 +120,6 @@ const identifierTypesMap = new Map<string, IdentifierType>(
   ].map((type) => [type.toLowerCase(), type as IdentifierType]),
 );
 
-export const validContributorTypes = new Map<string, IdentifierType>(
-  [
-    'ContactPerson',
-    'DataCollector',
-    'DataCurator',
-    'DataManager',
-    'MetadataProvider',
-    'Producer',
-    'ProjectLeader',
-    'ProjectManager',
-    'ProjectMember',
-    'RegistrationAuthority',
-    'RelatedPerson',
-    'Researcher',
-    'ResearchGroup',
-    'Other',
-  ].map((type) => [type.toLowerCase(), type as IdentifierType]),
-);
-
 export type Identifier = {
   alternateID: string;
   alternateIDType: IdentifierType;
@@ -179,16 +160,6 @@ export type ExternalSource = {
   externalSourceInfo?: string;
 };
 
-export type Project = {
-  projectName: string;
-  projectID: string;
-};
-
-export type AdditionalMetadata = {
-  name: string;
-  value: string;
-};
-
 export type Creator = {
   creatorFamilyName?: string;
   creatorGivenName?: string;
@@ -200,6 +171,29 @@ export type Creator = {
   }[];
 };
 
+const validContributorTypeArray = [
+  'ContactPerson',
+  'DataCollector',
+  'DataCurator',
+  'DataManager',
+  'MetadataProvider',
+  'Producer',
+  'ProjectLeader',
+  'ProjectManager',
+  'ProjectMember',
+  'RegistrationAuthority',
+  'RelatedPerson',
+  'Researcher',
+  'ResearchGroup',
+  'Other',
+] as const;
+
+const validEntityIdSchemas = new Set<string>(['ror', 'orcid', 'wos', 'scopus']);
+
+export type ContributorType = (typeof validContributorTypeArray)[number];
+
+export const validContributorTypes: Set<ContributorType> = new Set(validContributorTypeArray);
+
 export type Contributor = {
   contributorFamilyName?: string;
   contributorGivenName?: string;
@@ -209,7 +203,7 @@ export type Contributor = {
     entityID?: string;
     entityIDSchema?: string;
   }[];
-  contributorType?: string;
+  contributorType?: ContributorType;
 };
 
 export type Affiliation = {
@@ -289,6 +283,11 @@ export type Method = {
   instrumentationDescription?: string;
 };
 
+export type Project = {
+  projectName?: string;
+  projectID?: string;
+};
+
 export type Sampling = {
   studyDescription?: string;
   samplingDescription?: string;
@@ -304,6 +303,11 @@ export type SiteReference = {
   siteName?: string;
 };
 
+export type AdditionalMetadata = {
+  name: string;
+  value: string;
+};
+
 // eslint-disable-next-line
 export function extractIdentifiers(input: any): Identifier[] {
   return Object.entries(input || {})
@@ -314,15 +318,27 @@ export function extractIdentifiers(input: any): Identifier[] {
     }));
 }
 
-const parseDOIUrl = (url: string): { provider: string; identifier: string } | null => {
-  const match = url.match(/^https?:\/\/([^\/]+)\/(.+)$/i);
+export function parseDOIUrl(url: string): DOI | null {
+  const match = url.match(/^https?:\/\/([^/]+)\/(.+)$/i);
   if (!match) return null;
 
   return {
     provider: match[1],
     identifier: match[2],
   };
-};
+}
+
+export function parsePID(url: string): PID | null {
+  const match = url.match(/^https?:\/\/([^/]+)\/(.+)$/i);
+  if (!match) return null;
+
+  return {
+    doi: {
+      provider: match[1],
+      identifier: match[2],
+    },
+  };
+}
 
 export function toPID(identifiers: Identifier[]): PID | undefined {
   const doiEntry = identifiers.find((id) => id.alternateIDType.toLowerCase() === 'doi');
@@ -337,4 +353,11 @@ export function toPID(identifiers: Identifier[]): PID | undefined {
       provider: parsed.provider,
     },
   };
+}
+
+export function isValidEntityIdSchema(schema: string | undefined): boolean {
+  if (!schema) {
+    return false;
+  }
+  return validEntityIdSchemas.has(schema.toLowerCase());
 }

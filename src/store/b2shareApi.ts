@@ -28,6 +28,7 @@ type Links = {
 
 export type Metadata = {
   $schema?: string;
+  DOI?: string;
   creators?: Creators;
   titles: Titles;
   publisher?: Publisher;
@@ -46,6 +47,7 @@ export type Metadata = {
   open_access: OpenAccess;
   embargo_date?: EmbargoDate;
   license?: License;
+  language?: string;
   dates?: Dates;
   sizes?: Sizes;
   formats?: Formats;
