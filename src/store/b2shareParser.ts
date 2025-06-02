@@ -5,7 +5,6 @@ import {
   Geolocation,
   License,
   Keywords,
-  SiteReference,
   CommonDataset,
   toPID,
   AdditionalMetadata,
@@ -14,6 +13,7 @@ import {
   // ContributorType,
   isValidEntityIdSchema,
   parsePID,
+  ContributorType,
 } from './commonStructure';
 
 function extractB2ShareGeolocation(input: any): Geolocation[] {
@@ -148,6 +148,7 @@ function extractIdFromUrl(input: string): string {
 export async function mapB2ShareToCommonDatasetMetadata(
   url: string,
   b2share: B2ShareExtractedSchema,
+  sites: any,
 ): Promise<CommonDataset> {
   const licenses: License[] = [];
   if (b2share.metadata.license && (b2share.metadata.license.license_identifier || b2share.metadata.license.license)) {
@@ -176,8 +177,6 @@ export async function mapB2ShareToCommonDatasetMetadata(
     });
   }
 
-  const metadataSites = await getMatchedSitesForRecord(b2share.metadata);
-  const sites = metadataSites.length > 0 ? metadataSites : await getMatchedSitesForRecord(b2share);
   const alternateIdentifiers = extractIdentifiers(b2share.metadata.alternate_identifiers);
   const related_identifiers = extractIdentifiers(b2share.metadata.related_identifiers);
   const parsedPID = b2share.metadata.DOI ? parsePID(b2share.metadata.DOI) : null;
@@ -287,7 +286,7 @@ export async function mapB2ShareToCommonDatasetMetadata(
       language:
         typeof b2share.metadata.language === 'string'
           ? b2share.metadata.language
-          : b2share.metadata.languages?.map((l) => l.language_name).join() || '',
+          : b2share.metadata.languages?.map((l) => l.language_name).join() || undefined,
       responsibleOrganizations: [],
       taxonomicCoverages: [],
       methods: [],

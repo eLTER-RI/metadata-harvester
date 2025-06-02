@@ -2,7 +2,7 @@ import { promises as fs } from 'fs';
 import fetch from 'node-fetch';
 import { CONFIG } from '../../config';
 import { mapB2ShareToCommonDatasetMetadata } from '../store/b2shareParser';
-import { findMatchingUuid } from '../utilities/matchDeimsId';
+import { findMatchingUuid, getMatchedSitesForRecord } from '../utilities/matchDeimsId';
 import { SiteReference } from '../store/commonStructure';
 
 async function fetchSites(): Promise<any> {
@@ -45,15 +45,11 @@ async function processPage(url: string, sites: any): Promise<any[]> {
       const recordData = await fetchJson(selfLink);
 
       if (!recordData) return null;
-      const matchingUuids = findMatchingUuid(JSON.stringify(recordData), sites);
-      const matchedSites: SiteReference[] = matchingUuids
-        ? sites
-            .filter((site: any) => matchingUuids.includes(site.id.suffix))
-            .map((site: any) => ({
-              siteID: site.id.suffix,
-              siteName: site.title,
-            }))
-        : [];
+
+      const matchedSitesMetadata = await getMatchedSitesForRecord(recordData.metadata, sites);
+      const matchedSites =
+        matchedSitesMetadata.length > 0 ? matchedSitesMetadata : await getMatchedSitesForRecord(recordData, sites);
+      console.log(matchedSitesMetadata.length > 0 ? 'is in metadata' : 'is not' + selfLink);
 
       return mapB2ShareToCommonDatasetMetadata(
         recordData.metadata.ePIC_PID || recordData.links?.self,
