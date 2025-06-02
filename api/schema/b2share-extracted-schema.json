@@ -1138,9 +1138,16 @@
       "properties": {
         "community_specific": {
           "$schema": "http://json-schema.org/draft-04/schema#",
-          "properties": {},
+          "properties": {
+            "d46ea426-62e6-4f10-9abe-40686f147aad": {
+              "$ref": "https://b2share.eudat.eu/api/schemas/d46ea426-62e6-4f10-9abe-40686f147aad/versions/0#/json_schema"
+            }
+          },
           "type": "object",
-          "additionalProperties": false
+          "additionalProperties": false,
+          "required": [
+            "d46ea426-62e6-4f10-9abe-40686f147aad"
+          ]
         }
       }
     }

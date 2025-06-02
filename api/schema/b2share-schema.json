@@ -1,5 +1,5 @@
 {
-  "community": "e9b9792e-79fb-4b07-b6b4-b9c2bd06d095", 
+  "community": "d952913c-451e-4b5c-817e-d578dc8a4469", 
   "version": 2, 
   "json_schema": {
     "allOf": [
@@ -1141,9 +1141,16 @@
         "properties": {
           "community_specific": {
             "$schema": "http://json-schema.org/draft-04/schema#", 
-            "properties": {}, 
+            "properties": {
+              "d46ea426-62e6-4f10-9abe-40686f147aad": {
+                "$ref": "https://b2share.eudat.eu/api/schemas/d46ea426-62e6-4f10-9abe-40686f147aad/versions/0#/json_schema"
+              }
+            }, 
             "type": "object", 
-            "additionalProperties": false
+            "additionalProperties": false, 
+            "required": [
+              "d46ea426-62e6-4f10-9abe-40686f147aad"
+            ]
           }
         }
       }
@@ -1151,9 +1158,9 @@
   }, 
   "draft_json_schema": {
     "$schema": "http://json-schema.org/draft-04/schema#", 
-    "$ref": "https://b2share.eudat.eu/api/communities/e9b9792e-79fb-4b07-b6b4-b9c2bd06d095/schemas/2#/json_schema"
+    "$ref": "https://b2share.eudat.eu/api/communities/d952913c-451e-4b5c-817e-d578dc8a4469/schemas/2#/json_schema"
   }, 
   "links": {
-    "self": "https://b2share.eudat.eu/api/communities/e9b9792e-79fb-4b07-b6b4-b9c2bd06d095/schemas/2"
+    "self": "https://b2share.eudat.eu/api/communities/d952913c-451e-4b5c-817e-d578dc8a4469/schemas/2"
   }
 }
