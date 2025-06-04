@@ -1,4 +1,5 @@
 import { CONFIG } from '../../config';
+import { fetchJson } from '../services/pullAllData';
 import { SiteReference } from '../store/commonStructure';
 
 export async function fetchSites(): Promise<any> {
@@ -25,17 +26,88 @@ export function findMatchingUuid(text: string, sites: { id?: { suffix?: string }
   return matches.length > 0 ? matches : null;
 }
 
-export async function getMatchedSitesForRecord(recordData: any, sites: any): Promise<SiteReference[]> {
-  const matchingDeimsIds = findMatchingUuid(JSON.stringify(recordData), sites);
+export function mapUuidsToSiteReferences(matchedUuids: string[] | null, sites: any[]): SiteReference[] {
+  if (!matchedUuids || matchedUuids.length === 0) {
+    return [];
+  }
 
-  const matchedSites: SiteReference[] = matchingDeimsIds
-    ? sites
-        .filter((site: any) => matchingDeimsIds.includes(site.id.suffix))
-        .map((site: any) => ({
-          siteID: site.id.suffix,
-          siteName: site.title,
-        }))
-    : [];
+  const uniqueMatchedSites: SiteReference[] = [];
+  const seenUuids = new Set<string>();
 
-  return matchedSites;
+  for (const matchedUuid of matchedUuids) {
+    const site = sites.find((s: any) => s.id?.suffix === matchedUuid);
+    if (site && !seenUuids.has(matchedUuid)) {
+      uniqueMatchedSites.push({
+        siteID: site.id.suffix,
+        siteName: site.title,
+      });
+      seenUuids.add(matchedUuid);
+    }
+  }
+  return uniqueMatchedSites;
+}
+
+async function getDeimsSiteFromDeimsDataset(deimsDatasetUrl: string, sites: any): Promise<SiteReference[]> {
+  const deimsDatasetUrlRegex = /(https:\/\/deims\.org\/dataset\/([0-9a-fA-F-]{36}))/;
+  let deimsDatasetUrlFromMetadata: string | null = null;
+  const match = deimsDatasetUrl.match(deimsDatasetUrlRegex);
+
+  if (match && match[1]) {
+    deimsDatasetUrlFromMetadata = match[1];
+  }
+
+  if (deimsDatasetUrlFromMetadata) {
+    const deimsApiUrl = deimsDatasetUrlFromMetadata.replace('/dataset/', '/api/datasets/');
+    try {
+      const deimsApiResponse = await fetchJson(deimsApiUrl);
+      if (
+        deimsApiResponse &&
+        deimsApiResponse.attributes?.general?.relatedSite &&
+        Array.isArray(deimsApiResponse.attributes.general.relatedSite) &&
+        deimsApiResponse.attributes.general.relatedSite.length > 0
+      ) {
+        const firstRelatedSite = deimsApiResponse.attributes.general.relatedSite[0];
+        if (firstRelatedSite.id?.suffix) {
+          const externalRelatedSiteUuid = firstRelatedSite.id.suffix;
+          const siteFromExternalUuid = mapUuidsToSiteReferences([externalRelatedSiteUuid], sites);
+
+          if (siteFromExternalUuid.length > 0) {
+            return siteFromExternalUuid;
+          }
+        }
+      }
+    } catch (error) {
+      process.stdout.write(`Error fetching DEIMS API ${deimsApiUrl}: ${error}\n`);
+    }
+  }
+  return [];
+}
+
+export async function getB2ShareMatchedSites(recordData: any, sites: any): Promise<SiteReference[]> {
+  let matchedSites: SiteReference[] = [];
+
+  // We prioritize sites in metadata
+  const matchedUuidsFromMetadata = findMatchingUuid(JSON.stringify(recordData.metadata), sites);
+  if (matchedUuidsFromMetadata) {
+    matchedSites = mapUuidsToSiteReferences(matchedUuidsFromMetadata, sites);
+    if (matchedSites.length > 0) {
+      return matchedSites;
+    }
+  }
+
+  const matchedFromMetadata = await getDeimsSiteFromDeimsDataset(JSON.stringify(recordData.metadata), sites);
+  if (matchedFromMetadata.length > 0) {
+    return matchedFromMetadata;
+  }
+
+  const matchedUuidsFromFullRecord = findMatchingUuid(JSON.stringify(recordData), sites);
+  if (matchedUuidsFromFullRecord) {
+    matchedSites = mapUuidsToSiteReferences(matchedUuidsFromFullRecord, sites);
+    if (matchedSites.length > 0) {
+      console.log('Site ', matchedSites, 'found outside metadata');
+      return matchedSites;
+    }
+  }
+
+  return [];
 }

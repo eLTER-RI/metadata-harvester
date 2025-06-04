@@ -2,20 +2,10 @@ import { promises as fs } from 'fs';
 import fetch from 'node-fetch';
 import { CONFIG } from '../../config';
 import { mapB2ShareToCommonDatasetMetadata } from '../store/b2shareParser';
-import { findMatchingUuid, getMatchedSitesForRecord } from '../utilities/matchDeimsId';
-import { SiteReference } from '../store/commonStructure';
-
-async function fetchSites(): Promise<any> {
-  const response = await fetch(CONFIG.DEIMS_API_URL);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch sites: ${response.status}`);
-  }
-  const data = await response.json();
-  return data;
-}
+import { fetchSites, getB2ShareMatchedSites, getMatchedSitesForRecord } from '../utilities/matchDeimsId';
 
 // Function to fetch JSON from a URL
-async function fetchJson(url: string): Promise<any> {
+export async function fetchJson(url: string): Promise<any> {
   try {
     await new Promise((resolve) => setTimeout(resolve, 500));
     const response = await fetch(url);
@@ -46,10 +36,7 @@ async function processPage(url: string, sites: any): Promise<any[]> {
 
       if (!recordData) return null;
 
-      const matchedSitesMetadata = await getMatchedSitesForRecord(recordData.metadata, sites);
-      const matchedSites =
-        matchedSitesMetadata.length > 0 ? matchedSitesMetadata : await getMatchedSitesForRecord(recordData, sites);
-      console.log(matchedSitesMetadata.length > 0 ? 'is in metadata' : 'is not' + selfLink);
+      const matchedSites = await getB2ShareMatchedSites(recordData, sites);
 
       return mapB2ShareToCommonDatasetMetadata(
         recordData.metadata.ePIC_PID || recordData.links?.self,
