@@ -1,7 +1,6 @@
 import { B2ShareExtractedSchema } from './b2shareApi';
 import {
   AlternateIdentifier,
-  RelatedIdentifier,
   Geolocation,
   License,
   Keywords,
@@ -16,7 +15,6 @@ import {
   ContributorType,
   extractAlternateIdentifiers,
   extractRelatedIdentifiers,
-  RelatedIdentifier,
 } from './commonStructure';
 
 function extractB2ShareGeolocation(input: any): Geolocation[] {

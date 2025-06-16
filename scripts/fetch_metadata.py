@@ -4,7 +4,7 @@ import sys
 import os
 
 def fetch_all_links():
-    base_url = "https://b2share.eudat.eu/api/records/?q=community:e9b9792e-79fb-4b07-b6b4-b9c2bd06d095&sort=oldest&size=940"
+    base_url = "https://b2share.eudat.eu/api/records/?q=community:d952913c-451e-4b5c-817e-d578dc8a4469&sort=oldest&size=1123"
     page = 1
     links = []
     
