@@ -1,7 +1,7 @@
-import { getMatchedSitesForRecord } from '../utilities/matchDeimsId';
 import { B2ShareExtractedSchema } from './b2shareApi';
 import {
-  extractIdentifiers,
+  AlternateIdentifier,
+  RelatedIdentifier,
   Geolocation,
   License,
   Keywords,
@@ -14,6 +14,9 @@ import {
   isValidEntityIdSchema,
   parsePID,
   ContributorType,
+  extractAlternateIdentifiers,
+  extractRelatedIdentifiers,
+  RelatedIdentifier,
 } from './commonStructure';
 
 function extractB2ShareGeolocation(input: any): Geolocation[] {
@@ -145,18 +148,20 @@ function extractIdFromUrl(input: string): string {
   }
 }
 
-export async function mapB2ShareToCommonDatasetMetadata(
-  url: string,
+function parseB2shareAlternateIdentifiers(
   b2share: B2ShareExtractedSchema,
-  sites: any,
-): Promise<CommonDataset> {
-  const licenses: License[] = [];
-  if (b2share.metadata.license && (b2share.metadata.license.license_identifier || b2share.metadata.license.license)) {
-    licenses.push({
-      licenseCode: b2share.metadata.license.license_identifier || b2share.metadata.license.license,
-      licenseURI: b2share.metadata.license.license_uri,
+): [AlternateIdentifier[], AdditionalMetadata[]] {
+  const [identifiers, additionalMetadata] = extractAlternateIdentifiers(b2share.metadata);
+  if (b2share.metadata.ePIC_PID) {
+    identifiers.push({
+      alternateID: b2share.metadata.ePIC_PID as string,
+      alternateIDType: 'Handle',
     });
   }
+  return [identifiers, additionalMetadata];
+}
+
+function getAdditionalMetadata(b2share: B2ShareExtractedSchema): AdditionalMetadata[] {
   const additional_metadata: AdditionalMetadata[] = [];
   if (b2share.metadata.version) {
     additional_metadata.push({
@@ -176,11 +181,27 @@ export async function mapB2ShareToCommonDatasetMetadata(
       value: b2share.metadata.community,
     });
   }
+  return additional_metadata;
+}
 
-  const alternateIdentifiers = extractIdentifiers(b2share.metadata.alternate_identifiers);
-  const related_identifiers = extractIdentifiers(b2share.metadata.related_identifiers);
+export async function mapB2ShareToCommonDatasetMetadata(
+  url: string,
+  b2share: B2ShareExtractedSchema,
+  sites: any,
+): Promise<CommonDataset> {
+  const licenses: License[] = [];
+  if (b2share.metadata.license && (b2share.metadata.license.license_identifier || b2share.metadata.license.license)) {
+    licenses.push({
+      licenseCode: b2share.metadata.license.license_identifier || b2share.metadata.license.license,
+      licenseURI: b2share.metadata.license.license_uri,
+    });
+  }
+
+  const [alternateIdentifiers, metadataFromAlternate] = parseB2shareAlternateIdentifiers(b2share);
+  const [related_identifiers, metadataFromRelated] = extractRelatedIdentifiers(b2share.metadata);
+  const additional_metadata = [...metadataFromAlternate, ...metadataFromRelated, ...getAdditionalMetadata(b2share)];
   const parsedPID = b2share.metadata.DOI ? parsePID(b2share.metadata.DOI) : null;
-  const pids = parsedPID ?? (toPID(alternateIdentifiers) || toPID(related_identifiers));
+  const pids = parsedPID ?? toPID(alternateIdentifiers);
 
   const contributors = b2share.metadata.contributors?.map((c) => {
     const contributor: Contributor = {

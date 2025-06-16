@@ -3,6 +3,8 @@
 // https://gitlab.ics.muni.cz/dataraptors/elter/elter-invenio/-/blob/master/models/dataset-type.yaml?ref_type=heads
 // https://gitlab.ics.muni.cz/dataraptors/elter/elter-invenio/-/blob/master/models/datasets-datatypes.yaml?ref_type=heads
 
+import { Metadata } from './b2shareApi';
+
 export type CommonDataset = {
   pids?: PID;
   metadata: CommonDatasetMetadata;
@@ -11,7 +13,7 @@ export type CommonDataset = {
 export type CommonDatasetMetadata = {
   assetType: string;
   datasetType?: string;
-  alternateIdentifiers?: Identifier[];
+  alternateIdentifiers?: AlternateIdentifier[];
   titles?: Title[];
   creators?: Creator[];
   contactPoints?: Contact[];
@@ -31,7 +33,7 @@ export type CommonDatasetMetadata = {
   siteReferences?: SiteReference[];
   additionalMetadata?: AdditionalMetadata[];
   habitatReferences?: string[];
-  relatedIdentifiers?: Identifier[];
+  relatedIdentifiers?: RelatedIdentifier[];
   externalSourceInformation: ExternalSource;
 };
 
@@ -96,6 +98,42 @@ export type IdentifierType =
   | 'URN'
   | 'w3id';
 
+export type Relation =
+  | 'IsCitedBy'
+  | 'Cites'
+  | 'IsSupplementTo'
+  | 'IsPublishedIn'
+  | 'IsSupplementedBy'
+  | 'IsContinuedBy'
+  | 'Continues'
+  | 'HasMetadata'
+  | 'IsMetadataFor'
+  | 'IsNewVersionOf'
+  | 'IsPreviousVersionOf'
+  | 'IsPartOf'
+  | 'HasPart'
+  | 'IsReferencedBy'
+  | 'References'
+  | 'IsDocumentedBy'
+  | 'Documents'
+  | 'isCompiledBy'
+  | 'Compiles'
+  | 'IsVariantFormOf'
+  | 'IsOriginalFormOf'
+  | 'IsIdenticalTo'
+  | 'IsReviewedBy'
+  | 'Reviews'
+  | 'IsDerivedFrom'
+  | 'IsSourceOf'
+  | 'Describes'
+  | 'IsDescribedBy'
+  | 'HasVersion'
+  | 'IsVersionOf'
+  | 'Requires'
+  | 'IsRequiredBy'
+  | 'Obsoletes'
+  | 'IsObsoletedBy';
+
 const identifierTypesMap = new Map<string, IdentifierType>(
   [
     'ARK',
@@ -120,9 +158,49 @@ const identifierTypesMap = new Map<string, IdentifierType>(
   ].map((type) => [type.toLowerCase(), type as IdentifierType]),
 );
 
-export type Identifier = {
+const resourceTypesMap = new Map<string, IdentifierType>(
+  [
+    'Audiovisual',
+    'Book',
+    'BookChapter',
+    'Collection',
+    'ComputationalNotebook',
+    'ConferencePaper',
+    'ConferenceProceeding',
+    'DataPaper',
+    'Dataset',
+    'Dissertation',
+    'Event',
+    'Image',
+    'InteractiveResource',
+    'Journal',
+    'JournalArticle',
+    'Model',
+    'OutputManagementPlan',
+    'PeerReview',
+    'PhysicalObject',
+    'Preprint',
+    'Report',
+    'Service',
+    'Software',
+    'Sound',
+    'Standard',
+    'Text',
+    'Workflow',
+    'Other',
+  ].map((type) => [type.toLowerCase(), type as IdentifierType]),
+);
+
+export type AlternateIdentifier = {
   alternateID: string;
   alternateIDType: IdentifierType;
+};
+
+export type RelatedIdentifier = {
+  relatedID: string;
+  relatedIDType: IdentifierType;
+  relatedResourceType: IdentifierType;
+  relationType: Relation;
 };
 
 export type Title = {
@@ -308,14 +386,83 @@ export type AdditionalMetadata = {
   value: string;
 };
 
-// eslint-disable-next-line
-export function extractIdentifiers(input: any): Identifier[] {
-  return Object.entries(input || {})
-    .filter(([key]) => identifierTypesMap.has(key.toLowerCase()))
-    .map(([key, value]) => ({
-      alternateID: value as string,
-      alternateIDType: identifierTypesMap.get(key.toLowerCase()) as IdentifierType,
-    }));
+export function extractAlternateIdentifiers(input: Metadata): [AlternateIdentifier[], AdditionalMetadata[]] {
+  const additionalMetadata: AdditionalMetadata[] = [];
+  const identifiers: AlternateIdentifier[] = [];
+  input.alternate_identifiers?.map((item) => {
+    if (!item || typeof item.alternate_identifier_type !== 'string' || typeof item.alternate_identifier !== 'string') {
+      return null;
+    }
+
+    const typeKey = item.alternate_identifier_type.toLowerCase().trim();
+    const value = item.alternate_identifier.trim();
+
+    if (!value) {
+      return null;
+    }
+
+    const idType = identifierTypesMap.get(typeKey) as IdentifierType;
+    const idTypeIfReversed = identifierTypesMap.get(value.toLowerCase()) as IdentifierType;
+    if (idType) {
+      identifiers.push({
+        alternateID: value,
+        alternateIDType: idType,
+      });
+    } else if (idTypeIfReversed) {
+      identifiers.push({
+        alternateID: item.alternate_identifier_type.trim(),
+        alternateIDType: idTypeIfReversed,
+      });
+    } else {
+      additionalMetadata.push({
+        name: item.alternate_identifier_type.trim(),
+        value: value,
+      });
+    }
+  });
+  return [identifiers, additionalMetadata];
+}
+
+export function extractRelatedIdentifiers(input: Metadata): [RelatedIdentifier[], AdditionalMetadata[]] {
+  const additionalMetadata: AdditionalMetadata[] = [];
+  const identifiers: RelatedIdentifier[] = [];
+  input.related_identifiers?.map((item) => {
+    if (!item || typeof item.related_identifier_type !== 'string' || typeof item.related_identifier !== 'string') {
+      return null;
+    }
+
+    const typeKey = item.related_identifier_type.toLowerCase().trim();
+    const value = item.related_identifier.trim();
+
+    if (!value) {
+      return null;
+    }
+
+    const idType = identifierTypesMap.get(typeKey) as IdentifierType;
+    const idTypeIfReversed = identifierTypesMap.get(value.toLowerCase()) as IdentifierType;
+    const idTypeResource = resourceTypesMap.get(value.toLowerCase()) as IdentifierType;
+    if (idType) {
+      identifiers.push({
+        relatedID: value,
+        relatedIDType: idType,
+        relatedResourceType: idTypeResource,
+        relationType: item.relation_type,
+      });
+    } else if (idTypeIfReversed) {
+      identifiers.push({
+        relatedID: value,
+        relatedIDType: idType,
+        relatedResourceType: idTypeResource,
+        relationType: item.relation_type,
+      });
+    } else {
+      additionalMetadata.push({
+        name: item.related_identifier_type.trim(),
+        value: value,
+      });
+    }
+  });
+  return [identifiers, additionalMetadata];
 }
 
 export function parseDOIUrl(url: string): DOI | null {
@@ -340,7 +487,7 @@ export function parsePID(url: string): PID | null {
   };
 }
 
-export function toPID(identifiers: Identifier[]): PID | undefined {
+export function toPID(identifiers: AlternateIdentifier[]): PID | undefined {
   const doiEntry = identifiers.find((id) => id.alternateIDType.toLowerCase() === 'doi');
   if (!doiEntry) return undefined;
 
