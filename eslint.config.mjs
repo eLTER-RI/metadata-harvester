@@ -30,6 +30,7 @@ export default tseslint.config(
           code: 120,
         },
       ],
+      '@typescript-eslint/no-explicit-any': 'off',
       'prettier/prettier': ['error', { printWidth: 120 }],
     },
   },
