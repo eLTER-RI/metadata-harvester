@@ -23,7 +23,7 @@ if (!API_URL || !AUTH_TOKEN) {
 }
 
 // Load JSON records
-const records = JSON.parse(fs.readFileSync(CONFIG.MAPPED_RECORDS, 'utf-8'));
+const records = JSON.parse(fs.readFileSync(CONFIG.B2SHARE_MAPPED_RECORDS, 'utf-8'));
 const failedResponses: FailedResponseInfo[] = [];
 
 interface FailedResponseInfo {

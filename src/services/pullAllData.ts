@@ -2,7 +2,7 @@ import { promises as fs } from 'fs';
 import fetch from 'node-fetch';
 import { CONFIG } from '../../config';
 import { mapB2ShareToCommonDatasetMetadata } from '../store/b2shareParser';
-import { fetchSites, getB2ShareMatchedSites, getMatchedSitesForRecord } from '../utilities/matchDeimsId';
+import { fetchSites, getB2ShareMatchedSites } from '../utilities/matchDeimsId';
 
 // Function to fetch JSON from a URL
 export async function fetchJson(url: string): Promise<any> {
@@ -52,7 +52,7 @@ async function processPage(url: string, sites: any): Promise<any[]> {
 // Run the script
 async function processAll() {
   try {
-    await fs.unlink(CONFIG.MAPPED_RECORDS);
+    await fs.unlink(CONFIG.B2SHARE_MAPPED_RECORDS);
     process.stdout.write('File deleted\n');
   } catch (err: any) {
     if (err.code !== 'ENOENT') {
@@ -68,7 +68,7 @@ async function processAll() {
   let page = 1;
 
   while (true) {
-    const pageUrl = `${CONFIG.INITIAL_API_URL}&size=${size}&page=${page}`;
+    const pageUrl = `${CONFIG.B2SHARE_API_URL}&size=${size}&page=${page}`;
     process.stdout.write(`Fetching page ${page}...\n`);
 
     const pageRecords = await processPage(pageUrl, sites);
@@ -88,8 +88,8 @@ async function processAll() {
     page++;
   }
 
-  await fs.writeFile(CONFIG.MAPPED_RECORDS, JSON.stringify(allRecords, null, 2));
-  process.stdout.write(`Done. Saved ${allRecords.length} records to ${CONFIG.MAPPED_RECORDS}\n`);
+  await fs.writeFile(CONFIG.B2SHARE_MAPPED_RECORDS, JSON.stringify(allRecords, null, 2));
+  process.stdout.write(`Done. Saved ${allRecords.length} records to ${CONFIG.B2SHARE_MAPPED_RECORDS}\n`);
 }
 
 processAll();
