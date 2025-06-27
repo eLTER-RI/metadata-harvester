@@ -18,7 +18,7 @@ export async function fetchJson(url: string): Promise<any> {
 }
 
 // Main function
-async function processPage(url: string, sites: any): Promise<any[]> {
+async function processB2SharePage(url: string, sites: any): Promise<any[]> {
   process.stdout.write(`Fetching the dataset from: ${url}...\n`);
 
   const data = await fetchJson(url);
@@ -49,11 +49,29 @@ async function processPage(url: string, sites: any): Promise<any[]> {
   return mappedResults.filter((r) => r !== null);
 }
 
+type RepositoryType = 'B2SHARE';
+
 // Run the script
-async function processAll() {
+async function processAll(repositoryType: RepositoryType) {
+  let apiUrl: string;
+  let mappedRecordsPath: string;
+  let processPageFunction: (url: string, sites: any) => Promise<any[]>;
+  let pageSize: number;
+
+  switch (repositoryType) {
+    case 'B2SHARE':
+      apiUrl = CONFIG.B2SHARE_API_URL;
+      mappedRecordsPath = CONFIG.B2SHARE_MAPPED_RECORDS;
+      processPageFunction = processB2SharePage;
+      pageSize = CONFIG.PAGE_SIZE || 100;
+      break;
+    default:
+      throw new Error(`Unknown repository type: ${repositoryType}`);
+  }
+
   try {
-    await fs.unlink(CONFIG.B2SHARE_MAPPED_RECORDS);
-    process.stdout.write('File deleted\n');
+    await fs.unlink(mappedRecordsPath);
+    process.stdout.write(`File ${mappedRecordsPath} deleted\n`);
   } catch (err: any) {
     if (err.code !== 'ENOENT') {
       throw err;
@@ -64,14 +82,13 @@ async function processAll() {
   process.stdout.write(`Found ${sites.length} sites.\n`);
 
   const allRecords: any[] = [];
-  const size = CONFIG.PAGE_SIZE || 100;
   let page = 1;
 
   while (true) {
-    const pageUrl = `${CONFIG.B2SHARE_API_URL}&size=${size}&page=${page}`;
-    process.stdout.write(`Fetching page ${page}...\n`);
+    const pageUrl = `${apiUrl}&size=${pageSize}&page=${page}`;
+    process.stdout.write(`Fetching page ${page} from ${repositoryType}...\n`);
 
-    const pageRecords = await processPage(pageUrl, sites);
+    const pageRecords = await processPageFunction(pageUrl, sites);
     if (pageRecords.length === 0) {
       process.stdout.write(`No records found on page ${page}. Stopping.\n`);
       break;
@@ -80,7 +97,7 @@ async function processAll() {
     allRecords.push(...pageRecords);
     process.stdout.write(`Page ${page} processed (${pageRecords.length} records).\n`);
 
-    if (pageRecords.length < size) {
+    if (pageRecords.length < pageSize) {
       process.stdout.write('Last page reached.\n');
       break;
     }
@@ -88,8 +105,14 @@ async function processAll() {
     page++;
   }
 
-  await fs.writeFile(CONFIG.B2SHARE_MAPPED_RECORDS, JSON.stringify(allRecords, null, 2));
-  process.stdout.write(`Done. Saved ${allRecords.length} records to ${CONFIG.B2SHARE_MAPPED_RECORDS}\n`);
+  await fs.writeFile(mappedRecordsPath, JSON.stringify(allRecords, null, 2));
+  process.stdout.write(`Done. Saved ${allRecords.length} records to ${mappedRecordsPath}\n`);
 }
 
-processAll();
+const repositoryToProcess = process.argv[2] as RepositoryType;
+
+if (repositoryToProcess) {
+  processAll(repositoryToProcess).catch(console.error);
+} else {
+  console.error("Please specify a repository to process: 'B2SHARE'");
+}
