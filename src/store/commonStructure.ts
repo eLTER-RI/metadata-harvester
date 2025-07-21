@@ -34,6 +34,7 @@ export type CommonDatasetMetadata = {
   additionalMetadata?: AdditionalMetadata[];
   habitatReferences?: string[];
   relatedIdentifiers?: RelatedIdentifier[];
+  dataLevel?: DataLevel;
   externalSourceInformation: ExternalSource;
 };
 
@@ -386,6 +387,11 @@ export type AdditionalMetadata = {
   value: string;
 };
 
+export type DataLevel = {
+  dataLevelCode?: string;
+  dataLevelURI?: string;
+};
+
 export function extractAlternateIdentifiers(input: Metadata): [AlternateIdentifier[], AdditionalMetadata[]] {
   const additionalMetadata: AdditionalMetadata[] = [];
   const identifiers: AlternateIdentifier[] = [];
@@ -507,4 +513,33 @@ export function isValidEntityIdSchema(schema: string | undefined): boolean {
     return false;
   }
   return validEntityIdSchemas.has(schema.toLowerCase());
+}
+
+export function normalizeDate(isoString: string) {
+  try {
+    let normalized: string;
+
+    const match = isoString.match(/^(\d{2})[./](\d{2})[./](\d{4})$/);
+    if (match) {
+      const [, day, month, year] = match;
+      normalized = `${year}-${month}-${day}`;
+    } else {
+      normalized = isoString;
+    }
+    return normalized;
+  } catch {
+    return undefined;
+  }
+}
+
+export function formatDate(isoString: string): string | undefined {
+  try {
+    const date = new Date(isoString);
+    if (isNaN(date.getTime())) {
+      throw new RangeError('Invalid time value');
+    }
+    return date.toISOString().split('T')[0];
+  } catch {
+    return undefined;
+  }
 }

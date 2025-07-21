@@ -15,6 +15,8 @@ import {
   ContributorType,
   extractAlternateIdentifiers,
   extractRelatedIdentifiers,
+  normalizeDate,
+  formatDate,
 } from './commonStructure';
 
 function extractB2ShareGeolocation(input: any): Geolocation[] {
@@ -100,27 +102,9 @@ function extractB2ShareKeywords(input: any): Keywords[] {
   });
   return keywords;
 }
-function formatDate(isoString: string): string | undefined {
-  try {
-    let normalized: string;
-
-    const match = isoString.match(/^(\d{2})[./](\d{2})[./](\d{4})$/);
-    if (match) {
-      const [, day, month, year] = match;
-      normalized = `${year}-${month}-${day}`;
-    } else {
-      normalized = isoString;
-    }
-
-    const date = new Date(normalized);
-    if (isNaN(date.getTime())) {
-      throw new RangeError('Invalid time value');
-    }
-
-    return date.toISOString().split('T')[0];
-  } catch {
-    return undefined;
-  }
+function formatDateB2Share(isoString: string): string | undefined {
+  const normalized = normalizeDate(isoString);
+  return normalized ? formatDate(normalized) : undefined;
 }
 
 function convertHttpToHttps(url: string): string {
@@ -277,10 +261,12 @@ export async function mapB2ShareToCommonDatasetMetadata(
       })),
       keywords: extractB2ShareKeywords(b2share.metadata) || undefined,
       contributors: contributors as Contributor[],
-      publicationDate: b2share.metadata.publication_date ? formatDate(b2share.metadata.publication_date) : undefined,
+      publicationDate: b2share.metadata.publication_date
+        ? formatDateB2Share(b2share.metadata.publication_date)
+        : undefined,
       temporalCoverages: b2share.metadata.temporal_coverages?.ranges?.map((t) => ({
-        startDate: t.start_date ? formatDate(t.start_date) : undefined,
-        endDate: t.end_date ? formatDate(t.end_date) : undefined,
+        startDate: t.start_date ? formatDateB2Share(t.start_date) : undefined,
+        endDate: t.end_date ? formatDateB2Share(t.end_date) : undefined,
       })),
       geoLocations: extractB2ShareGeolocation(b2share.metadata),
       licenses: licenses.length > 0 ? licenses : undefined,
