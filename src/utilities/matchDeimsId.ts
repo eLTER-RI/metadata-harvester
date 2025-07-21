@@ -111,3 +111,8 @@ export async function getB2ShareMatchedSites(recordData: any, sites: any): Promi
 
   return [];
 }
+
+export async function getSitesMatchedSites(): Promise<SiteReference[]> {
+  // TODO
+  return [];
+}

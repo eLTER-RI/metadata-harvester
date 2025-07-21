@@ -2,22 +2,42 @@ import { promises as fs } from 'fs';
 import fetch from 'node-fetch';
 import { CONFIG } from '../../config';
 import { mapB2ShareToCommonDatasetMetadata } from '../store/b2shareParser';
-import { fetchSites, getB2ShareMatchedSites } from '../utilities/matchDeimsId';
+import { fetchSites, getB2ShareMatchedSites, getSitesMatchedSites } from '../utilities/matchDeimsId';
+import { mapFieldSitesToCommonDatasetMetadata } from '../store/sitesParser';
+import { JSDOM } from 'jsdom';
 
 // Function to fetch JSON from a URL
 export async function fetchJson(url: string): Promise<any> {
   try {
     await new Promise((resolve) => setTimeout(resolve, 500));
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      headers: {
+        Accept: 'application/json',
+      },
+    });
     if (!response.ok) return null;
     return await response.json();
   } catch (error) {
-    process.stdout.write(`Error fetching ${url}:` + error + '\n');
+    process.stderr.write(`Error fetching ${url}:` + error + '\n');
     return null;
   }
 }
 
-// Main function
+// Function to fetch XML from a given URL.
+async function fetchXml(url: string): Promise<Document | null> {
+  try {
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    const response = await fetch(url);
+    if (!response.ok) return null;
+    const text = await response.text();
+    const dom = new JSDOM(text, { contentType: 'application/xml' });
+    return dom.window.document;
+  } catch (error) {
+    process.stdout.write(`Error fetching XML from ${url}:` + error + '\n');
+    return null;
+  }
+}
+
 async function processB2SharePage(url: string, sites: any): Promise<any[]> {
   process.stdout.write(`Fetching the dataset from: ${url}...\n`);
 
@@ -49,14 +69,43 @@ async function processB2SharePage(url: string, sites: any): Promise<any[]> {
   return mappedResults.filter((r) => r !== null);
 }
 
-type RepositoryType = 'B2SHARE';
+async function processFieldSitesPage(url: string): Promise<any[]> {
+  process.stdout.write(`Fetching the dataset from: ${url}...\n`);
 
-// Run the script
+  const data = await fetchXml(url);
+  if (!data) {
+    process.stderr.write('Failed to fetch or parse sitemap XML.');
+    return [];
+  }
+  const locElements = data.getElementsByTagName('loc');
+  const urls: string[] = [];
+  for (let i = 0; i < locElements.length; i++) {
+    urls.push(locElements[i].textContent || '');
+  }
+
+  process.stdout.write(`Found ${urls.length} URLs. Fetching individual records...\n`);
+
+  // // Process individual records using the parser
+  const mappedResults = await Promise.all(
+    urls.map(async (datasetUrl: any) => {
+      if (!datasetUrl) return null;
+      const recordData = await fetchJson(datasetUrl);
+      if (!recordData) return null;
+      const matchedSites = getSitesMatchedSites();
+      return mapFieldSitesToCommonDatasetMetadata(datasetUrl, recordData, matchedSites);
+    }),
+  );
+  return mappedResults.filter((r) => r !== null);
+}
+
+type RepositoryType = 'B2SHARE' | 'SITES';
+
+// Main function
 async function processAll(repositoryType: RepositoryType) {
   let apiUrl: string;
   let mappedRecordsPath: string;
   let processPageFunction: (url: string, sites: any) => Promise<any[]>;
-  let pageSize: number;
+  let pageSize: number | undefined = undefined;
 
   switch (repositoryType) {
     case 'B2SHARE':
@@ -64,6 +113,11 @@ async function processAll(repositoryType: RepositoryType) {
       mappedRecordsPath = CONFIG.B2SHARE_MAPPED_RECORDS;
       processPageFunction = processB2SharePage;
       pageSize = CONFIG.PAGE_SIZE || 100;
+      break;
+    case 'SITES':
+      apiUrl = CONFIG.SITES_API_URL;
+      mappedRecordsPath = CONFIG.SITES_MAPPED_RECORDS;
+      processPageFunction = processFieldSitesPage;
       break;
     default:
       throw new Error(`Unknown repository type: ${repositoryType}`);
@@ -84,7 +138,7 @@ async function processAll(repositoryType: RepositoryType) {
   const allRecords: any[] = [];
   let page = 1;
 
-  while (true) {
+  while (pageSize) {
     const pageUrl = `${apiUrl}&size=${pageSize}&page=${page}`;
     process.stdout.write(`Fetching page ${page} from ${repositoryType}...\n`);
 
@@ -105,6 +159,11 @@ async function processAll(repositoryType: RepositoryType) {
     page++;
   }
 
+  if (!pageSize) {
+    const records = await processPageFunction(apiUrl, sites);
+    allRecords.push(...records);
+  }
+
   await fs.writeFile(mappedRecordsPath, JSON.stringify(allRecords, null, 2));
   process.stdout.write(`Done. Saved ${allRecords.length} records to ${mappedRecordsPath}\n`);
 }
@@ -114,5 +173,5 @@ const repositoryToProcess = process.argv[2] as RepositoryType;
 if (repositoryToProcess) {
   processAll(repositoryToProcess).catch(console.error);
 } else {
-  console.error("Please specify a repository to process: 'B2SHARE'");
+  console.error("Please specify a repository to process: 'B2SHARE', 'SITES'");
 }
