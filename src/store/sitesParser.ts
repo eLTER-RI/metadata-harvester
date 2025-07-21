@@ -1,4 +1,4 @@
-import { License, CommonDataset, Creator } from './commonStructure';
+import { License, CommonDataset, Creator, AlternateIdentifier } from './commonStructure';
 
 export async function mapFieldSitesToCommonDatasetMetadata(
   url: string,
@@ -29,6 +29,7 @@ export async function mapFieldSitesToCommonDatasetMetadata(
     });
   }
 
+  const responsibleOrganization: string[] = [];
   if (fieldSites.specificInfo?.acquisition?.station?.responsibleOrganization) {
     creators.push({
       creatorFamilyName: fieldSites.specificInfo.acquisition.station.responsibleOrganization.name,
@@ -41,11 +42,23 @@ export async function mapFieldSitesToCommonDatasetMetadata(
       },
       creatorIDs: [],
     });
+    if (fieldSites.specificInfo?.acquisition?.station?.responsibleOrganization) {
+      responsibleOrganization.push(fieldSites.specificInfo.acquisition.station.responsibleOrganization.name);
+    }
+  }
+
+  const alternateIdentifiers: AlternateIdentifier[] = [];
+  if (fieldSites.pid) {
+    alternateIdentifiers.push({
+      alternateID: fieldSites.pid,
+      alternateIDType: 'Handle',
+    });
   }
 
   return {
     metadata: {
       assetType: 'Dataset',
+      alternateIdentifiers: alternateIdentifiers,
       externalSourceInformation: {
         externalSourceName: 'fieldsites',
         externalSourceURI: url,
@@ -57,6 +70,7 @@ export async function mapFieldSitesToCommonDatasetMetadata(
       ],
       creators: creators,
       licenses: licenses,
+      responsibleOrganizations: [],
       siteReferences: sites,
     },
   };
