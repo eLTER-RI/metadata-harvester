@@ -6,8 +6,43 @@ import {
   RelatedIdentifier,
   Contact,
   Description,
+  Geolocation,
   formatDate,
 } from './commonStructure';
+
+function extractSitesGeolocation(input: any): Geolocation[] {
+  const coverages: Geolocation[] = [];
+
+  input.coverageGeo?.features?.map((coverage: any) => {
+    const geographicDescription = coverage.properties?.label || '';
+    if (coverage.geometry.type === 'Point') {
+      const coords = coverage.geometry.coordinates as number[];
+      coverages.push({
+        geographicDescription,
+        point: {
+          latitude: coords[1],
+          longitude: coords[0],
+        },
+      });
+    } else if (coverage.geometry.type === 'Polygon') {
+      const coordinates = coverage.geometry.coordinates as number[][][];
+      const points = coordinates[0].map((coord) => ({
+        longitude: coord[0],
+        latitude: coord[1],
+      }));
+      coverages.push({
+        geographicDescription,
+        boundingPolygon: [
+          {
+            points: points,
+            inPolygonPoint: points.length > 0 ? points[0] : { longitude: 0, latitude: 0 },
+          },
+        ],
+      });
+    }
+  });
+  return coverages;
+}
 
 export async function mapFieldSitesToCommonDatasetMetadata(
   url: string,
@@ -82,6 +117,7 @@ export async function mapFieldSitesToCommonDatasetMetadata(
 
   if (fieldSites.latestVersion) {
     // if latestVersion === id or there is no nextVersion => keep, else delete
+    // or update - maybe better because of OAR/GHS pop?
     relatedIdentifiers.push({
       relatedID: fieldSites.latestVersion,
       relatedIDType: 'URL',
@@ -182,6 +218,7 @@ export async function mapFieldSitesToCommonDatasetMetadata(
       })),
       publicationDate: publicationDate,
       temporalCoverages: temporalCoverages,
+      geoLocations: extractSitesGeolocation(fieldSites),
       licenses: licenses,
       externalSourceInformation: {
         externalSourceName: 'fieldsites',
