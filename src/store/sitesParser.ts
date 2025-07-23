@@ -200,6 +200,16 @@ export async function mapFieldSitesToCommonDatasetMetadata(
     }
   }
 
+  const responsibleOrganizations: string[] = [];
+  const respOrg = fieldSites.specificInfo?.acquisition?.station?.responsibleOrganization;
+  if (respOrg) {
+    responsibleOrganizations.push(respOrg.name);
+  }
+  const stationOrg = fieldSites.specificInfo?.acquisition?.station?.org;
+  if (stationOrg && stationOrg.name != respOrg) {
+    responsibleOrganizations.push(stationOrg.name);
+  }
+
   return {
     metadata: {
       assetType: 'Dataset',
@@ -231,10 +241,10 @@ export async function mapFieldSitesToCommonDatasetMetadata(
         },
       ],
       externalSourceInformation: {
-        externalSourceName: 'fieldsites',
+        externalSourceName: 'FieldSites',
         externalSourceURI: url,
       },
-      responsibleOrganizations: [],
+      responsibleOrganizations: responsibleOrganization,
       siteReferences: [],
       dataLevel: {
         dataLevelCode: fieldSites.specification.dataLevel.toString(),
