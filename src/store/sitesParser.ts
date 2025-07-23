@@ -245,6 +245,14 @@ export async function mapFieldSitesToCommonDatasetMetadata(
         externalSourceURI: url,
       },
       responsibleOrganizations: responsibleOrganization,
+      projects: fieldSites.specification?.project?.self?.label
+        ? [
+            {
+              projectName: fieldSites.specification.project.self.label,
+              projectID: fieldSites.specification.project.self.uri,
+            },
+          ]
+        : [],
       siteReferences: [],
       dataLevel: {
         dataLevelCode: fieldSites.specification.dataLevel.toString(),
