@@ -351,7 +351,7 @@ export type File = {
   format?: string;
   md5?: string;
   size?: string;
-  sizeMeasureType?: 'GB' | 'MB' | 'kB';
+  sizeMeasureType?: 'GB' | 'MB' | 'kB' | 'B';
 };
 
 export type Method = {

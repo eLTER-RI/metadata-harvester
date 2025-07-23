@@ -220,6 +220,16 @@ export async function mapFieldSitesToCommonDatasetMetadata(
       temporalCoverages: temporalCoverages,
       geoLocations: extractSitesGeolocation(fieldSites),
       licenses: licenses,
+      files: [
+        {
+          name: fieldSites.fileName,
+          sourceUrl: fieldSites.accessUrl,
+          md5: fieldSites.hash,
+          size: fieldSites.size.toString(),
+          sizeMeasureType: 'B',
+          format: fieldSites.fileName.split('.').pop(),
+        },
+      ],
       externalSourceInformation: {
         externalSourceName: 'fieldsites',
         externalSourceURI: url,
