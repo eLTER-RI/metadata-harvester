@@ -2,7 +2,7 @@ import { promises as fs } from 'fs';
 import fetch from 'node-fetch';
 import { CONFIG } from '../../config';
 import { mapB2ShareToCommonDatasetMetadata } from '../store/b2shareParser';
-import { fetchSites, getB2ShareMatchedSites, getSitesMatchedSites } from '../utilities/matchDeimsId';
+import { fetchSites, getB2ShareMatchedSites, getFieldSitesMatchedSites } from '../utilities/matchDeimsId';
 import { mapFieldSitesToCommonDatasetMetadata } from '../store/sitesParser';
 import { JSDOM } from 'jsdom';
 
@@ -69,7 +69,7 @@ async function processB2SharePage(url: string, sites: any): Promise<any[]> {
   return mappedResults.filter((r) => r !== null);
 }
 
-async function processFieldSitesPage(url: string): Promise<any[]> {
+async function processFieldSitesPage(url: string, sites: any): Promise<any[]> {
   process.stdout.write(`Fetching the dataset from: ${url}...\n`);
 
   const data = await fetchXml(url);
@@ -91,7 +91,7 @@ async function processFieldSitesPage(url: string): Promise<any[]> {
       if (!datasetUrl) return null;
       const recordData = await fetchJson(datasetUrl);
       if (!recordData) return null;
-      const matchedSites = getSitesMatchedSites();
+      const matchedSites = getFieldSitesMatchedSites(recordData);
       return mapFieldSitesToCommonDatasetMetadata(datasetUrl, recordData, matchedSites);
     }),
   );

@@ -23,7 +23,7 @@ export type CommonDatasetMetadata = {
   geoLocations?: Geolocation[];
   licenses?: License[];
   files?: File[];
-  responsibleOrganizations?: string[];
+  responsibleOrganizations?: ResponsibleOrganizations[];
   contributors?: Contributor[];
   publicationDate?: string;
   taxonomicCoverages?: string[];
@@ -245,6 +245,15 @@ export type Creator = {
   creatorEmail?: string;
   creatorAffiliation?: Affiliation;
   creatorIDs?: {
+    entityID?: string;
+    entityIDSchema?: string;
+  }[];
+};
+
+export type ResponsibleOrganizations = {
+  organizationName?: string;
+  organizationEmail?: string;
+  organizationIDs?: {
     entityID?: string;
     entityIDSchema?: string;
   }[];

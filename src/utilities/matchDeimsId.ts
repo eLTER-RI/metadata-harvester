@@ -11,7 +11,7 @@ export async function fetchSites(): Promise<any> {
   return data;
 }
 
-export function findMatchingUuid(text: string, sites: { id?: { suffix?: string } }[]): string[] | null {
+export function findMatchingUuid(text: string, sites: { id?: { suffix?: string }; title: string }[]): string[] | null {
   if (typeof text !== 'string') {
     console.warn('Expected a string for text, got:', typeof text);
     return null;
@@ -104,7 +104,7 @@ export async function getB2ShareMatchedSites(recordData: any, sites: any): Promi
   if (matchedUuidsFromFullRecord) {
     matchedSites = mapUuidsToSiteReferences(matchedUuidsFromFullRecord, sites);
     if (matchedSites.length > 0) {
-      console.log('Site ', matchedSites, 'found outside metadata');
+      process.stdout.write('Site ' + matchedSites + ' found outside metadata');
       return matchedSites;
     }
   }
@@ -112,7 +112,28 @@ export async function getB2ShareMatchedSites(recordData: any, sites: any): Promi
   return [];
 }
 
-export async function getSitesMatchedSites(): Promise<SiteReference[]> {
-  // TODO
+const FIELDSITES_ID_TO_DEIMS_UUID_MAP: { [key: string]: { uuid: string; name: string } } = {
+  ANS: { uuid: '64679f32-fb3e-4937-b1f7-dc25e327c7af', name: 'Abisko Scientific Research Station - Sweden' },
+  ASA: { uuid: '13b28889-ed32-495a-9bb6-a0886099e6d9', name: 'Asa Experimental Forest and Research Station - Sweden' },
+  BOL: { uuid: 'e17d8c56-bf35-411d-a76b-061b6c7a9f0c', name: 'Bolmen Research Station - Sweden' },
+  ERK: { uuid: '2c560a19-85bb-4e3b-b41f-9f1d06c6e0d6', name: 'Erken Laboratory - Sweden' },
+  GRI: { uuid: 'ba81bcc6-8916-47f3-a54a-5ac8ebe1c455', name: 'Grimsö Wildlife Research Station - Sweden' },
+  LON: { uuid: 'd733f936-b0b6-4bc1-9ab5-6cdb4081763a', name: 'Lönnstorp Research Station - Sweden' },
+  RBD: { uuid: '7e2e2f68-989c-4e0a-8443-315ea48aac7f', name: 'Röbäcksdalen Field Research Station - Sweden' },
+  SRC: { uuid: '13f080f9-4831-4807-91da-bbfecb09a4f2', name: 'Skogaryd Research Catchment - Sweden' },
+  SVB: { uuid: 'c0705d0f-92c1-4964-a345-38c0be3113e1', name: 'Svartberget Research Station - Sweden' },
+  TRS: { uuid: '332a99af-8c02-4ce8-8f2b-70d17aaacf0a', name: 'Tarfala Research Station - Sweden' },
+};
+
+export function getFieldSitesMatchedSites(recordData: any): SiteReference[] {
+  const stationId = recordData?.specificInfo?.acquisition?.station?.id;
+  if (stationId) {
+    const deims = FIELDSITES_ID_TO_DEIMS_UUID_MAP[stationId];
+    if (!deims) {
+      return [];
+    }
+    return [{ siteID: deims?.uuid, siteName: deims?.name }];
+  }
+
   return [];
 }

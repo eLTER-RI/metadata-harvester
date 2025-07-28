@@ -8,6 +8,7 @@ import {
   Description,
   Geolocation,
   formatDate,
+  ResponsibleOrganizations,
 } from './commonStructure';
 
 function extractSitesGeolocation(input: any): Geolocation[] {
@@ -72,7 +73,7 @@ export async function mapFieldSitesToCommonDatasetMetadata(
     });
   }
 
-  const responsibleOrganization: string[] = [];
+  const responsibleOrganization: ResponsibleOrganizations[] = [];
   if (fieldSites.specificInfo?.acquisition?.station?.responsibleOrganization) {
     creators.push({
       creatorFamilyName: fieldSites.specificInfo.acquisition.station.responsibleOrganization.name,
@@ -85,7 +86,9 @@ export async function mapFieldSitesToCommonDatasetMetadata(
       creatorIDs: [],
     });
     if (fieldSites.specificInfo?.acquisition?.station?.responsibleOrganization) {
-      responsibleOrganization.push(fieldSites.specificInfo.acquisition.station.responsibleOrganization.name);
+      responsibleOrganization.push({
+        organizationName: fieldSites.specificInfo.acquisition.station.responsibleOrganization.name,
+      });
     }
   }
 
@@ -210,6 +213,7 @@ export async function mapFieldSitesToCommonDatasetMetadata(
     responsibleOrganizations.push(stationOrg.name);
   }
 
+  console.log('mapping ' + url);
   return {
     metadata: {
       assetType: 'Dataset',
@@ -253,7 +257,7 @@ export async function mapFieldSitesToCommonDatasetMetadata(
             },
           ]
         : [],
-      siteReferences: [],
+      siteReferences: sites,
       dataLevel: {
         dataLevelCode: fieldSites.specification.dataLevel.toString(),
       },
