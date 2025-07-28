@@ -197,6 +197,11 @@ export type AlternateIdentifier = {
   alternateIDType: IdentifierType;
 };
 
+export type EntityIdentifier = {
+  entityID?: string;
+  entityIDSchema?: string;
+};
+
 export type RelatedIdentifier = {
   relatedID: string;
   relatedIDType: IdentifierType;
@@ -227,10 +232,7 @@ export type Contact = {
 export type Organization = {
   organizationName?: string;
   organizationEmail?: string;
-  organizationIDs?: {
-    entityID?: string;
-    entityIDSchema?: string;
-  }[];
+  organizationIDs?: EntityIdentifier[];
 };
 
 export type ExternalSource = {
@@ -244,19 +246,13 @@ export type Creator = {
   creatorGivenName?: string;
   creatorEmail?: string;
   creatorAffiliation?: Affiliation;
-  creatorIDs?: {
-    entityID?: string;
-    entityIDSchema?: string;
-  }[];
+  creatorIDs?: EntityIdentifier[];
 };
 
 export type ResponsibleOrganizations = {
   organizationName?: string;
   organizationEmail?: string;
-  organizationIDs?: {
-    entityID?: string;
-    entityIDSchema?: string;
-  }[];
+  organizationIDs?: EntityIdentifier[];
 };
 
 const validContributorTypeArray = [
@@ -287,19 +283,13 @@ export type Contributor = {
   contributorGivenName?: string;
   contributorEmail?: string;
   contributorAffiliation?: Affiliation;
-  contributorIDs?: {
-    entityID?: string;
-    entityIDSchema?: string;
-  }[];
+  contributorIDs?: EntityIdentifier[];
   contributorType?: ContributorType;
 };
 
 export type Affiliation = {
   entityName?: string;
-  entityID?: {
-    entityID?: string;
-    entityIDSchema?: string;
-  };
+  entityID?: EntityIdentifier;
 };
 
 export type TemporalCoverage = {
