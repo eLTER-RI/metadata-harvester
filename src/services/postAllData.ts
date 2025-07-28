@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import * as fs from 'fs';
 import fetch, { Response, RequestInit } from 'node-fetch';
-import { CommonDataset } from '../store/commonStructure';
+import { CommonDataset, RepositoryType } from '../store/commonStructure';
 import { CONFIG } from '../../config';
 
 // Configurations
@@ -23,7 +23,20 @@ if (!API_URL || !AUTH_TOKEN) {
 }
 
 // Load JSON records
-const records = JSON.parse(fs.readFileSync(CONFIG.B2SHARE_MAPPED_RECORDS, 'utf-8'));
+let mappedRecordsPath: string = '';
+const repositoryType = process.argv[2] as RepositoryType;
+switch (repositoryType) {
+  case 'B2SHARE':
+    mappedRecordsPath = CONFIG.B2SHARE_MAPPED_RECORDS;
+    break;
+  case 'SITES':
+    mappedRecordsPath = CONFIG.SITES_MAPPED_RECORDS;
+    break;
+  default:
+    throw new Error(`Unknown repository type for submission: ${repositoryType}`);
+}
+
+const records = JSON.parse(fs.readFileSync(mappedRecordsPath, 'utf-8'));
 const failedResponses: FailedResponseInfo[] = [];
 
 interface FailedResponseInfo {

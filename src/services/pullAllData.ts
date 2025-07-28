@@ -5,6 +5,7 @@ import { mapB2ShareToCommonDatasetMetadata } from '../store/b2shareParser';
 import { fetchSites, getB2ShareMatchedSites, getFieldSitesMatchedSites } from '../utilities/matchDeimsId';
 import { mapFieldSitesToCommonDatasetMetadata } from '../store/sitesParser';
 import { JSDOM } from 'jsdom';
+import { RepositoryType } from '../store/commonStructure';
 
 // Function to fetch JSON from a URL
 export async function fetchJson(url: string): Promise<any> {
@@ -97,8 +98,6 @@ async function processFieldSitesPage(url: string, sites: any): Promise<any[]> {
   );
   return mappedResults.filter((r) => r !== null);
 }
-
-type RepositoryType = 'B2SHARE' | 'SITES';
 
 // Main function
 async function processAll(repositoryType: RepositoryType) {

@@ -5,6 +5,8 @@
 
 import { Metadata } from './b2shareApi';
 
+export type RepositoryType = 'B2SHARE' | 'SITES';
+
 export type CommonDataset = {
   pids?: PID;
   metadata: CommonDatasetMetadata;
