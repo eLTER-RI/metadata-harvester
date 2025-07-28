@@ -1,7 +1,6 @@
 import {
   License,
   CommonDataset,
-  Creator,
   AlternateIdentifier,
   RelatedIdentifier,
   Contact,
@@ -9,6 +8,7 @@ import {
   Geolocation,
   formatDate,
   ResponsibleOrganizations,
+  EntityIdentifier,
 } from './commonStructure';
 
 function extractSitesGeolocation(input: any): Geolocation[] {
@@ -58,38 +58,44 @@ export async function mapFieldSitesToCommonDatasetMetadata(
     });
   }
 
-  const creators: Creator[] = [];
+  const responsibleOrganization: ResponsibleOrganizations[] = [];
   if (fieldSites.submission?.submitter) {
-    creators.push({
-      creatorFamilyName: fieldSites.submission.submitter.name,
-      creatorGivenName: '',
-      creatorAffiliation: {
-        entityName: fieldSites.submission.submitter.name,
-        entityID: {
-          entityID: fieldSites.submission.submitter.self.uri,
-        },
-      },
-      creatorIDs: [],
+    const submitter = fieldSites.submission.submitter;
+    const creatorIds: EntityIdentifier[] = [];
+    if (submitter.website) {
+      creatorIds.push({
+        entityID: submitter.website,
+      });
+    }
+    if (submitter.self?.uri && submitter.self?.uri != submitter.website) {
+      creatorIds.push({
+        entityID: submitter.self.uri,
+      });
+    }
+    responsibleOrganization.push({
+      organizationEmail: submitter.email,
+      organizationName: submitter.name,
+      organizationIDs: creatorIds,
     });
   }
 
-  const responsibleOrganization: ResponsibleOrganizations[] = [];
   if (fieldSites.specificInfo?.acquisition?.station?.responsibleOrganization) {
-    creators.push({
-      creatorFamilyName: fieldSites.specificInfo.acquisition.station.responsibleOrganization.name,
-      creatorAffiliation: {
-        entityName: fieldSites.specificInfo.acquisition.station.responsibleOrganization.name,
-        entityID: {
-          entityID: fieldSites.specificInfo.acquisition.station.responsibleOrganization.self.uri,
-        },
-      },
-      creatorIDs: [],
-    });
-    if (fieldSites.specificInfo?.acquisition?.station?.responsibleOrganization) {
-      responsibleOrganization.push({
-        organizationName: fieldSites.specificInfo.acquisition.station.responsibleOrganization.name,
+    const org = fieldSites.specificInfo.acquisition.station.responsibleOrganization;
+    const entityIds: EntityIdentifier[] = [];
+    if (org.website) {
+      entityIds.push({
+        entityID: org.website,
       });
     }
+    if (org.self?.uri && org.uri != org.website) {
+      entityIds.push({
+        entityID: org.uri,
+      });
+    }
+
+    responsibleOrganization.push({
+      organizationName: org.name,
+    });
   }
 
   const alternateIdentifiers: AlternateIdentifier[] = [];
@@ -224,7 +230,7 @@ export async function mapFieldSitesToCommonDatasetMetadata(
           titleText: fieldSites.references.title,
         },
       ],
-      creators: creators,
+      creators: [],
       contactPoints: contactPoints,
       descriptions: descriptions,
       keywords: fieldSites.specification?.keywords?.map((keyword: string) => ({
