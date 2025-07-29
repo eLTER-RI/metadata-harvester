@@ -6,6 +6,7 @@ import { fetchSites, getB2ShareMatchedSites, getFieldSitesMatchedSites } from '.
 import { mapFieldSitesToCommonDatasetMetadata } from '../store/sitesParser';
 import { JSDOM } from 'jsdom';
 import { RepositoryType } from '../store/commonStructure';
+import { mapZenodoToCommonDatasetMetadata } from '../store/zenodoParser';
 
 // Function to fetch JSON from a URL
 export async function fetchJson(url: string): Promise<any> {
@@ -42,12 +43,12 @@ async function fetchXml(url: string): Promise<Document | null> {
 async function processB2SharePage(
   url: string,
   sites: any,
-  repositoryType?: 'B2SHARE' | 'B2SHARE_JUELICH',
+  repositoryType?: 'B2SHARE' | 'B2SHARE_JUELICH' | 'ZENODO' | 'ZENODO_IT',
 ): Promise<any[]> {
   process.stdout.write(`Fetching the dataset from: ${url}...\n`);
 
   if (!repositoryType) {
-    process.stderr.write(`Repository type for B2SHARE must be either B2SHARE or B2SHARE_JUELICH.\n`);
+    process.stderr.write(`Invalid repository type.\n`);
     return [];
   }
 
@@ -66,14 +67,27 @@ async function processB2SharePage(
 
       if (!recordData) return null;
 
-      const matchedSites = await getB2ShareMatchedSites(recordData, sites);
+      switch (repositoryType) {
+        case 'B2SHARE':
+        case 'B2SHARE_JUELICH': {
+          const matchedSites = await getB2ShareMatchedSites(recordData, sites);
 
-      return mapB2ShareToCommonDatasetMetadata(
-        recordData.metadata.ePIC_PID || recordData.links?.self,
-        recordData,
-        matchedSites,
-        repositoryType,
-      );
+          return mapB2ShareToCommonDatasetMetadata(
+            recordData.metadata.ePIC_PID || recordData.links?.self,
+            recordData,
+            matchedSites,
+            repositoryType,
+          );
+        }
+        case 'ZENODO':
+        case 'ZENODO_IT':
+          return mapZenodoToCommonDatasetMetadata(
+            recordData.metadata.ePIC_PID || recordData.links?.self,
+            recordData,
+            [],
+            repositoryType,
+          );
+      }
     }),
   );
 

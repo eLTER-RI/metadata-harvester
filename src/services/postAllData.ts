@@ -35,6 +35,12 @@ switch (repositoryType) {
   case 'SITES':
     mappedRecordsPath = CONFIG.SITES_MAPPED_RECORDS;
     break;
+  case 'ZENODO':
+    mappedRecordsPath = CONFIG.ZENODO_LTER_MAPPED_RECORDS;
+    break;
+  case 'ZENODO_IT':
+    mappedRecordsPath = CONFIG.ZENODO_LTER_IT_MAPPED_RECORDS;
+    break;
   default:
     throw new Error(`Unknown repository type for submission: ${repositoryType}`);
 }
