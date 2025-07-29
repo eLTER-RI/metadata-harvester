@@ -29,6 +29,9 @@ switch (repositoryType) {
   case 'B2SHARE':
     mappedRecordsPath = CONFIG.B2SHARE_MAPPED_RECORDS;
     break;
+  case 'B2SHARE_JUELICH':
+    mappedRecordsPath = CONFIG.B2SHARE_JUELICH_MAPPED_RECORDS;
+    break;
   case 'SITES':
     mappedRecordsPath = CONFIG.SITES_MAPPED_RECORDS;
     break;

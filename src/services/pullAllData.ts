@@ -39,8 +39,17 @@ async function fetchXml(url: string): Promise<Document | null> {
   }
 }
 
-async function processB2SharePage(url: string, sites: any): Promise<any[]> {
+async function processB2SharePage(
+  url: string,
+  sites: any,
+  repositoryType?: 'B2SHARE' | 'B2SHARE_JUELICH',
+): Promise<any[]> {
   process.stdout.write(`Fetching the dataset from: ${url}...\n`);
+
+  if (!repositoryType) {
+    process.stderr.write(`Repository type for B2SHARE must be either B2SHARE or B2SHARE_JUELICH.\n`);
+    return [];
+  }
 
   const data = await fetchJson(url);
   const hits: string[] = data?.hits?.hits || [];
@@ -63,6 +72,7 @@ async function processB2SharePage(url: string, sites: any): Promise<any[]> {
         recordData.metadata.ePIC_PID || recordData.links?.self,
         recordData,
         matchedSites,
+        repositoryType,
       );
     }),
   );
@@ -103,13 +113,15 @@ async function processFieldSitesPage(url: string, sites: any): Promise<any[]> {
 async function processAll(repositoryType: RepositoryType) {
   let apiUrl: string;
   let mappedRecordsPath: string;
-  let processPageFunction: (url: string, sites: any) => Promise<any[]>;
+  let processPageFunction: (url: string, sites: any, repositoryType?: 'B2SHARE' | 'B2SHARE_JUELICH') => Promise<any[]>;
   let pageSize: number | undefined = undefined;
 
   switch (repositoryType) {
     case 'B2SHARE':
-      apiUrl = CONFIG.B2SHARE_API_URL;
-      mappedRecordsPath = CONFIG.B2SHARE_MAPPED_RECORDS;
+    case 'B2SHARE_JUELICH':
+      apiUrl = repositoryType === 'B2SHARE' ? CONFIG.B2SHARE_API_URL : CONFIG.B2SHARE_JUELICH_API_URL;
+      mappedRecordsPath =
+        repositoryType === 'B2SHARE' ? CONFIG.B2SHARE_MAPPED_RECORDS : CONFIG.B2SHARE_JUELICH_MAPPED_RECORDS;
       processPageFunction = processB2SharePage;
       pageSize = CONFIG.PAGE_SIZE || 100;
       break;
@@ -141,7 +153,11 @@ async function processAll(repositoryType: RepositoryType) {
     const pageUrl = `${apiUrl}&size=${pageSize}&page=${page}`;
     process.stdout.write(`Fetching page ${page} from ${repositoryType}...\n`);
 
-    const pageRecords = await processPageFunction(pageUrl, sites);
+    const pageRecords = await processPageFunction(
+      pageUrl,
+      sites,
+      repositoryType === 'B2SHARE' || repositoryType === 'B2SHARE_JUELICH' ? repositoryType : undefined,
+    );
     if (pageRecords.length === 0) {
       process.stdout.write(`No records found on page ${page}. Stopping.\n`);
       break;
