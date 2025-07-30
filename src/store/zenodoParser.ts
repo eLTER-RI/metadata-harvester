@@ -1,4 +1,4 @@
-import { AlternateIdentifier, CommonDataset, Creator, parsePID } from './commonStructure';
+import { AlternateIdentifier, CommonDataset, Creator, formatDate, parsePID } from './commonStructure';
 
 export async function mapZenodoToCommonDatasetMetadata(
   url: string,
@@ -30,6 +30,12 @@ export async function mapZenodoToCommonDatasetMetadata(
       relatedIdentifiers: [],
       titles: [{ titleText: zenodo.metadata?.title || zenodo.title || '' }],
       creators: creators,
+      descriptions: [
+        {
+          descriptionText: zenodo.metadata?.description,
+          descriptionType: 'Abstract',
+        },
+      ],
       externalSourceInformation: {
         externalSourceName: repositoryType,
         externalSourceURI: url,
