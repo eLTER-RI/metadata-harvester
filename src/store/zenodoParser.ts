@@ -31,7 +31,7 @@ export async function mapZenodoToCommonDatasetMetadata(
       titles: [{ titleText: zenodo.metadata?.title || zenodo.title || '' }],
       creators: creators,
       externalSourceInformation: {
-        externalSourceName: 'Zenodo',
+        externalSourceName: repositoryType,
         externalSourceURI: url,
       },
       language: zenodo.metadata?.language || undefined,
