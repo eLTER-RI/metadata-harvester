@@ -39,6 +39,7 @@ export async function mapZenodoToCommonDatasetMetadata(
       keywords: (zenodo.metadata?.keywords || []).map((keyword: string) => ({
         keywordLabel: keyword,
       })),
+      publicationDate: formatDate(zenodo.metadata?.publication_date),
       externalSourceInformation: {
         externalSourceName: repositoryType,
         externalSourceURI: url,
