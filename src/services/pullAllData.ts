@@ -40,7 +40,7 @@ async function fetchXml(url: string): Promise<Document | null> {
   }
 }
 
-async function processB2SharePage(
+async function processApiPage(
   url: string,
   sites: any,
   repositoryType?: 'B2SHARE' | 'B2SHARE_JUELICH' | 'ZENODO' | 'ZENODO_IT',
@@ -125,28 +125,31 @@ async function processFieldSitesPage(url: string, sites: any): Promise<any[]> {
 
 // Main function
 async function processAll(repositoryType: RepositoryType) {
-  let apiUrl: string;
-  let mappedRecordsPath: string;
-  let processPageFunction: (url: string, sites: any, repositoryType?: 'B2SHARE' | 'B2SHARE_JUELICH') => Promise<any[]>;
-  let pageSize: number | undefined = undefined;
-
-  switch (repositoryType) {
-    case 'B2SHARE':
-    case 'B2SHARE_JUELICH':
-      apiUrl = repositoryType === 'B2SHARE' ? CONFIG.B2SHARE_API_URL : CONFIG.B2SHARE_JUELICH_API_URL;
-      mappedRecordsPath =
-        repositoryType === 'B2SHARE' ? CONFIG.B2SHARE_MAPPED_RECORDS : CONFIG.B2SHARE_JUELICH_MAPPED_RECORDS;
-      processPageFunction = processB2SharePage;
-      pageSize = CONFIG.PAGE_SIZE || 100;
-      break;
-    case 'SITES':
-      apiUrl = CONFIG.SITES_API_URL;
-      mappedRecordsPath = CONFIG.SITES_MAPPED_RECORDS;
-      processPageFunction = processFieldSitesPage;
-      break;
-    default:
-      throw new Error(`Unknown repository type: ${repositoryType}`);
+  const repoConfig = CONFIG.REPOSITORIES[repositoryType];
+  if (!repoConfig) {
+    process.stderr.write(`Configuration for repository '${repositoryType}' not available.\n`);
+    return;
   }
+
+  const apiUrl = repoConfig.apiUrl;
+  const mappedRecordsPath = repoConfig.mappedRecordsPath;
+  const pageSize = repoConfig.pageSize;
+  const processFunctionName = repoConfig.processFunction;
+
+  const processorFunctionsMap = {
+    processApiPage: processApiPage,
+    processFieldSitesPage: processFieldSitesPage,
+  };
+
+  const resolvedProcessingFunction = processorFunctionsMap[processFunctionName];
+  if (!resolvedProcessingFunction) {
+    throw new Error(`Processing function '${resolvedProcessingFunction}' not found.`);
+  }
+  const processRepositoryFunction: (
+    url: string,
+    sites: any,
+    repositoryType?: 'B2SHARE' | 'B2SHARE_JUELICH' | 'ZENODO' | 'ZENODO_IT',
+  ) => Promise<any[]> = resolvedProcessingFunction as typeof processRepositoryFunction;
 
   try {
     await fs.unlink(mappedRecordsPath);
@@ -167,11 +170,12 @@ async function processAll(repositoryType: RepositoryType) {
     const pageUrl = `${apiUrl}&size=${pageSize}&page=${page}`;
     process.stdout.write(`Fetching page ${page} from ${repositoryType}...\n`);
 
-    const pageRecords = await processPageFunction(
-      pageUrl,
-      sites,
-      repositoryType === 'B2SHARE' || repositoryType === 'B2SHARE_JUELICH' ? repositoryType : undefined,
-    );
+    // Here we know that Sites does not do paging, and the parsing is different
+    if (repositoryType === 'SITES') {
+      process.stderr.write(`Pagination parsing not implemented for SITES repository.\n`);
+      return;
+    }
+    const pageRecords = await processRepositoryFunction(pageUrl, sites, repositoryType);
     if (pageRecords.length === 0) {
       process.stdout.write(`No records found on page ${page}. Stopping.\n`);
       break;
@@ -189,7 +193,7 @@ async function processAll(repositoryType: RepositoryType) {
   }
 
   if (!pageSize) {
-    const records = await processPageFunction(apiUrl, sites);
+    const records = await processRepositoryFunction(apiUrl, sites);
     allRecords.push(...records);
   }
 
