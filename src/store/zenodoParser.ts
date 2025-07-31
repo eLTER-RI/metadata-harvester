@@ -8,6 +8,7 @@ import {
   IdentifierType,
   License,
   parsePID,
+  ResponsibleOrganizations,
   TemporalCoverage,
 } from './commonStructure';
 
@@ -103,6 +104,15 @@ export async function mapZenodoToCommonDatasetMetadata(
       creatorIDs: creator.orcid ? [{ entityID: creator.orcid, entityIDSchema: 'orcid' }] : undefined,
     });
   });
+  const responsibleOrganizations: ResponsibleOrganizations[] = [];
+  const uniqueAffiliations = new Set<string>();
+  creators.forEach((creator: Creator) => {
+    const creatorAffiliationName = creator.creatorAffiliation?.entityName;
+    if (creatorAffiliationName && !uniqueAffiliations.has(creatorAffiliationName)) {
+      uniqueAffiliations.add(creatorAffiliationName);
+      responsibleOrganizations.push({ organizationName: creatorAffiliationName });
+    }
+  });
   const publicationDate: string | undefined = formatDate(zenodo.metadata?.publication_date);
   const temporalCoverages: TemporalCoverage[] = [];
   if (zenodo.metadata?.dates && Array.isArray(zenodo.metadata.dates)) {
@@ -153,6 +163,7 @@ export async function mapZenodoToCommonDatasetMetadata(
         externalSourceName: 'Zenodo',
         externalSourceURI: url,
       },
+      responsibleOrganizations: responsibleOrganizations,
       projects:
         repositoryType == 'ZENODO'
           ? [
