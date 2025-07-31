@@ -1,4 +1,67 @@
-import { AlternateIdentifier, CommonDataset, Creator, formatDate, parsePID } from './commonStructure';
+import { AlternateIdentifier, CommonDataset, Creator, formatDate, IdentifierType, parsePID } from './commonStructure';
+
+const ZENODO_ASSET_TYPE_MAP = new Map<string, IdentifierType>([
+  ['poster', 'Other'],
+  ['presentation', 'Other'],
+  ['dataset', 'Dataset'],
+  ['image', 'Image'],
+  ['video', 'Audiovisual'],
+  ['software', 'Software'],
+  ['lesson', 'Other'],
+  ['physicalobject', 'PhysicalObject'],
+  ['other', 'Other'],
+]);
+
+const ZENODO_PUBLICATION_SUBTYPE_MAP = new Map<string, IdentifierType>([
+  ['annotationcollection', 'Collection'],
+  ['book', 'Book'],
+  ['section', 'BookChapter'],
+  ['conferencepaper', 'ConferencePaper'],
+  ['datamanagementplan', 'Other'],
+  ['article', 'JournalArticle'],
+  ['patent', 'Other'],
+  ['preprint', 'Preprint'],
+  ['deliverable', 'Other'],
+  ['milestone', 'Other'],
+  ['proposal', 'Other'],
+  ['report', 'Report'],
+  ['softwaredocumentation', 'Software'],
+  ['taxonomictreatment', 'Text'],
+  ['technicalnote', 'Other'],
+  ['thesis', 'Dissertation'],
+  ['workingpaper', 'Other'],
+  ['other', 'Other'],
+]);
+
+export function getZenodoAssetType(
+  zenodoResourceType: { title?: string; type?: string; subtype?: string } | undefined,
+): IdentifierType {
+  if (!zenodoResourceType || !zenodoResourceType.type) {
+    return 'Dataset';
+  }
+
+  const resource_type = zenodoResourceType.type.toLowerCase().trim();
+  const publicationType = zenodoResourceType.subtype?.toLowerCase().trim();
+
+  if (resource_type === 'publication') {
+    const mappedSubtype = ZENODO_PUBLICATION_SUBTYPE_MAP.get(publicationType || '');
+    if (!mappedSubtype) {
+      process.stderr.write(
+        `Publication type ${mappedSubtype} does not have an alternative in Dar. Setting to 'Other'.\n`,
+      );
+      return 'Other';
+    }
+    return mappedSubtype;
+  }
+  const mappedType = ZENODO_ASSET_TYPE_MAP.get(resource_type);
+  if (!mappedType) {
+    process.stderr.write(
+      `Resource type: "${resource_type}" does not have an alternative in Dar. Setting to 'Other'.\n`,
+    );
+    return 'Other';
+  }
+  return mappedType;
+}
 
 export async function mapZenodoToCommonDatasetMetadata(
   url: string,
@@ -25,7 +88,7 @@ export async function mapZenodoToCommonDatasetMetadata(
   return {
     pids: parsePID(zenodo.metadata.doi) || undefined,
     metadata: {
-      assetType: zenodo.metadata.resource_type.title || 'Dataset',
+      assetType: getZenodoAssetType(zenodo.metadata.resource_type),
       alternateIdentifiers: alternateIdentifiers,
       relatedIdentifiers: [],
       titles: [{ titleText: zenodo.metadata?.title || zenodo.title || '' }],
@@ -41,9 +104,24 @@ export async function mapZenodoToCommonDatasetMetadata(
       })),
       publicationDate: formatDate(zenodo.metadata?.publication_date),
       externalSourceInformation: {
-        externalSourceName: repositoryType,
+        externalSourceName: 'Zenodo',
         externalSourceURI: url,
       },
+      projects:
+        repositoryType == 'ZENODO'
+          ? [
+              {
+                projectName: 'Zenodo external record - eLTER Community',
+                projectID: 'https://zenodo.org/communities/elter',
+              },
+            ]
+          : [
+              {
+                projectName: 'Zenodo external record - eLTER-Italy Community',
+                projectID: 'https://zenodo.org/communities/lter-italy',
+              },
+            ],
+
       language: zenodo.metadata?.language || undefined,
     },
   };
