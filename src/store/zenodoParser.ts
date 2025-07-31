@@ -3,6 +3,7 @@ import {
   CommonDataset,
   Creator,
   formatDate,
+  getChecksum,
   getLicenseURI,
   IdentifierType,
   License,
@@ -139,6 +140,15 @@ export async function mapZenodoToCommonDatasetMetadata(
       temporalCoverages: temporalCoverages,
       geoLocations: [],
       licenses: licenses,
+      files: zenodo.metadata?.files?.map((file: any) => {
+        return {
+          name: file.key,
+          sourceUrl: file.links?.self,
+          md5: getChecksum(file.checksum),
+          size: file.size.toString(),
+          sizeMeasureType: 'B',
+        };
+      }),
       externalSourceInformation: {
         externalSourceName: 'Zenodo',
         externalSourceURI: url,
