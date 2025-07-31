@@ -9,6 +9,7 @@ import {
   formatDate,
   ResponsibleOrganizations,
   EntityIdentifier,
+  getLicenseURI,
 } from './commonStructure';
 
 function extractSitesGeolocation(input: any): Geolocation[] {
@@ -61,9 +62,10 @@ export async function mapFieldSitesToCommonDatasetMetadata(
 ): Promise<CommonDataset> {
   const licenses: License[] = [];
   if (fieldSites.references?.licence) {
+    const licenseCode = fieldSites.references.licence.name;
     licenses.push({
-      licenseCode: fieldSites.references.licence.name,
-      licenseURI: fieldSites.references.licence.url,
+      licenseCode: licenseCode,
+      licenseURI: fieldSites.references.licence.url || licenseCode ? getLicenseURI(licenseCode) : undefined,
     });
   }
 

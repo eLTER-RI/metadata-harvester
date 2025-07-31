@@ -17,6 +17,7 @@ import {
   extractRelatedIdentifiers,
   normalizeDate,
   formatDate,
+  getLicenseURI,
 } from './commonStructure';
 
 function extractB2ShareGeolocation(input: any): Geolocation[] {
@@ -168,9 +169,11 @@ export async function mapB2ShareToCommonDatasetMetadata(
 ): Promise<CommonDataset> {
   const licenses: License[] = [];
   if (b2share.metadata.license && (b2share.metadata.license.license_identifier || b2share.metadata.license.license)) {
+    const licenseCode: string | undefined =
+      b2share.metadata.license.license_identifier || b2share.metadata.license.license;
     licenses.push({
-      licenseCode: b2share.metadata.license.license_identifier || b2share.metadata.license.license,
-      licenseURI: b2share.metadata.license.license_uri,
+      licenseCode: licenseCode,
+      licenseURI: b2share.metadata.license.license_uri || licenseCode ? getLicenseURI(licenseCode) : undefined,
     });
   }
 

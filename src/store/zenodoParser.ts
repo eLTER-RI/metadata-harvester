@@ -3,7 +3,9 @@ import {
   CommonDataset,
   Creator,
   formatDate,
+  getLicenseURI,
   IdentifierType,
+  License,
   parsePID,
   TemporalCoverage,
 } from './commonStructure';
@@ -77,6 +79,13 @@ export async function mapZenodoToCommonDatasetMetadata(
   sites: any,
   repositoryType: 'ZENODO' | 'ZENODO_IT',
 ): Promise<CommonDataset> {
+  const licenses: License[] = [];
+  if (zenodo.metadata?.license?.id) {
+    licenses.push({
+      licenseCode: zenodo.metadata?.license?.id,
+      licenseURI: getLicenseURI(zenodo.metadata?.license?.id),
+    });
+  }
   const alternateIdentifiers: AlternateIdentifier[] = zenodo.metadata.doi
     ? [{ alternateID: zenodo.metadata.doi, alternateIDType: 'DOI' }]
     : [];
@@ -128,6 +137,8 @@ export async function mapZenodoToCommonDatasetMetadata(
       })),
       publicationDate: publicationDate,
       temporalCoverages: temporalCoverages,
+      geoLocations: [],
+      licenses: licenses,
       externalSourceInformation: {
         externalSourceName: 'Zenodo',
         externalSourceURI: url,
