@@ -1,4 +1,12 @@
-import { AlternateIdentifier, CommonDataset, Creator, formatDate, IdentifierType, parsePID } from './commonStructure';
+import {
+  AlternateIdentifier,
+  CommonDataset,
+  Creator,
+  formatDate,
+  IdentifierType,
+  parsePID,
+  TemporalCoverage,
+} from './commonStructure';
 
 const ZENODO_ASSET_TYPE_MAP = new Map<string, IdentifierType>([
   ['poster', 'Other'],
@@ -85,6 +93,22 @@ export async function mapZenodoToCommonDatasetMetadata(
       creatorIDs: creator.orcid ? [{ entityID: creator.orcid, entityIDSchema: 'orcid' }] : undefined,
     });
   });
+  const publicationDate: string | undefined = formatDate(zenodo.metadata?.publication_date);
+  const temporalCoverages: TemporalCoverage[] = [];
+  if (zenodo.metadata?.dates && Array.isArray(zenodo.metadata.dates)) {
+    zenodo.metadata.dates.forEach((dateObject: any) => {
+      if (!dateObject.start && !dateObject.end) {
+        return;
+      }
+      temporalCoverages.push({
+        startDate: dateObject.start ? formatDate(dateObject.start) : undefined,
+        endDate: dateObject.end ? formatDate(dateObject.end) : undefined,
+      });
+    });
+  }
+  if (temporalCoverages.length === 0 && publicationDate) {
+    temporalCoverages.push({ startDate: publicationDate, endDate: publicationDate });
+  }
   return {
     pids: parsePID(zenodo.metadata.doi) || undefined,
     metadata: {
@@ -102,7 +126,8 @@ export async function mapZenodoToCommonDatasetMetadata(
       keywords: (zenodo.metadata?.keywords || []).map((keyword: string) => ({
         keywordLabel: keyword,
       })),
-      publicationDate: formatDate(zenodo.metadata?.publication_date),
+      publicationDate: publicationDate,
+      temporalCoverages: temporalCoverages,
       externalSourceInformation: {
         externalSourceName: 'Zenodo',
         externalSourceURI: url,
@@ -121,7 +146,7 @@ export async function mapZenodoToCommonDatasetMetadata(
                 projectID: 'https://zenodo.org/communities/lter-italy',
               },
             ],
-
+      siteReferences: sites,
       language: zenodo.metadata?.language || undefined,
     },
   };
