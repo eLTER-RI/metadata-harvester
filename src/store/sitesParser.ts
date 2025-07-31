@@ -10,6 +10,7 @@ import {
   ResponsibleOrganizations,
   EntityIdentifier,
   getLicenseURI,
+  getChecksum,
 } from './commonStructure';
 
 function extractSitesGeolocation(input: any): Geolocation[] {
@@ -255,7 +256,7 @@ export async function mapFieldSitesToCommonDatasetMetadata(
         {
           name: fieldSites.fileName,
           sourceUrl: fieldSites.accessUrl,
-          md5: fieldSites.hash,
+          md5: getChecksum(fieldSites.hash),
           size: fieldSites.size.toString(),
           sizeMeasureType: 'B',
           format: fieldSites.fileName.split('.').pop(),

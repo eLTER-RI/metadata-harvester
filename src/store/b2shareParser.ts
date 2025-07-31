@@ -18,6 +18,7 @@ import {
   normalizeDate,
   formatDate,
   getLicenseURI,
+  getChecksum,
 } from './commonStructure';
 
 function extractB2ShareGeolocation(input: any): Geolocation[] {
@@ -277,7 +278,7 @@ export async function mapB2ShareToCommonDatasetMetadata(
       files: b2share.files?.map((f) => ({
         name: f.key,
         sourceUrl: f.ePIC_PID ? convertHttpToHttps(f.ePIC_PID) : undefined,
-        md5: f.checksum?.split(':').pop(),
+        md5: getChecksum(f.checksum),
         size: f.size?.toString(),
         sizeMeasureType: 'kB',
         format: f.key?.split('.').pop(),

@@ -573,3 +573,12 @@ export function getLicenseURI(licenseId: string): string | undefined {
       return undefined;
   }
 }
+
+export function getChecksum(checksum?: any): string | undefined {
+  if (!checksum || typeof checksum !== 'string') {
+    return undefined;
+  }
+
+  const prefixRegex = /^(md5|sha1|sha256|sha512):/i;
+  return checksum.replace(prefixRegex, '');
+}
