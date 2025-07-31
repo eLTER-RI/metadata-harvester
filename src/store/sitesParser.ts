@@ -66,7 +66,7 @@ export async function mapFieldSitesToCommonDatasetMetadata(
     const licenseCode = fieldSites.references.licence.name;
     licenses.push({
       licenseCode: licenseCode,
-      licenseURI: fieldSites.references.licence.url || licenseCode ? getLicenseURI(licenseCode) : undefined,
+      licenseURI: fieldSites.references.licence.url || (licenseCode ? getLicenseURI(licenseCode) : undefined),
     });
   }
 

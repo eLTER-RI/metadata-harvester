@@ -174,7 +174,7 @@ export async function mapB2ShareToCommonDatasetMetadata(
       b2share.metadata.license.license_identifier || b2share.metadata.license.license;
     licenses.push({
       licenseCode: licenseCode,
-      licenseURI: b2share.metadata.license.license_uri || licenseCode ? getLicenseURI(licenseCode) : undefined,
+      licenseURI: b2share.metadata.license.license_uri || (licenseCode ? getLicenseURI(licenseCode) : undefined),
     });
   }
 
