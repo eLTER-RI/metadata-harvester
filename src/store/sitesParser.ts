@@ -40,6 +40,15 @@ function extractSitesGeolocation(input: any): Geolocation[] {
           },
         ],
       });
+    } else if (coverage.geometry?.type === 'LineString') {
+      const coordinates = coverage.geometry.coordinates as number[][];
+      if (coordinates && coordinates.length > 0) {
+        const points = coordinates.map((coord) => ({ longitude: coord[0], latitude: coord[1] }));
+        coverages.push({
+          geographicDescription,
+          lineString: points,
+        });
+      }
     }
   });
   return coverages;

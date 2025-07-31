@@ -13,7 +13,7 @@ export type CommonDataset = {
 };
 
 export type CommonDatasetMetadata = {
-  assetType: string;
+  assetType: IdentifierType;
   datasetType?: string;
   alternateIdentifiers?: AlternateIdentifier[];
   titles?: Title[];
@@ -307,6 +307,7 @@ export type Geolocation = {
     points: Coordinates[];
     inPolygonPoint: Coordinates;
   }[];
+  lineString?: Coordinates[];
   point?: Coordinates;
 };
 
