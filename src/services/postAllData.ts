@@ -23,28 +23,12 @@ if (!API_URL || !AUTH_TOKEN) {
 }
 
 // Load JSON records
-let mappedRecordsPath: string = '';
 const repositoryType = process.argv[2] as RepositoryType;
-switch (repositoryType) {
-  case 'B2SHARE':
-    mappedRecordsPath = CONFIG.B2SHARE_MAPPED_RECORDS;
-    break;
-  case 'B2SHARE_JUELICH':
-    mappedRecordsPath = CONFIG.B2SHARE_JUELICH_MAPPED_RECORDS;
-    break;
-  case 'SITES':
-    mappedRecordsPath = CONFIG.SITES_MAPPED_RECORDS;
-    break;
-  case 'ZENODO':
-    mappedRecordsPath = CONFIG.ZENODO_LTER_MAPPED_RECORDS;
-    break;
-  case 'ZENODO_IT':
-    mappedRecordsPath = CONFIG.ZENODO_LTER_IT_MAPPED_RECORDS;
-    break;
-  default:
-    throw new Error(`Unknown repository type for submission: ${repositoryType}`);
+const repoConfig = CONFIG.REPOSITORIES[repositoryType];
+if (!repoConfig) {
+  throw new Error(`Unknown repository type for submission: ${repositoryType}`);
 }
-
+const mappedRecordsPath = repoConfig.mappedRecordsPath;
 const records = JSON.parse(fs.readFileSync(mappedRecordsPath, 'utf-8'));
 const failedResponses: FailedResponseInfo[] = [];
 
