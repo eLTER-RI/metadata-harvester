@@ -8,6 +8,7 @@ import {
   IdentifierType,
   License,
   parsePID,
+  Project,
   ResponsibleOrganizations,
   TemporalCoverage,
 } from './commonStructure';
@@ -129,6 +130,30 @@ export async function mapZenodoToCommonDatasetMetadata(
   if (temporalCoverages.length === 0 && publicationDate) {
     temporalCoverages.push({ startDate: publicationDate, endDate: publicationDate });
   }
+
+  const projects: Project[] = [];
+  if (repositoryType === 'ZENODO') {
+    projects.push({
+      projectName: 'Zenodo external record - eLTER Community',
+      projectID: 'https://zenodo.org/communities/elter',
+    });
+  } else if (repositoryType === 'ZENODO_IT') {
+    projects.push({
+      projectName: 'Zenodo external record - eLTER-Italy Community',
+      projectID: 'https://zenodo.org/communities/lter-italy',
+    });
+  }
+  if (zenodo.metadata?.grants && Array.isArray(zenodo.metadata.grants)) {
+    zenodo.metadata.grants.forEach((grant: any) => {
+      if (grant.title) {
+        projects.push({
+          projectName: grant.title,
+          projectID: grant.url || grant.internal_id,
+        });
+      }
+    });
+  }
+
   return {
     pids: parsePID(zenodo.metadata.doi) || undefined,
     metadata: {
@@ -164,20 +189,7 @@ export async function mapZenodoToCommonDatasetMetadata(
         externalSourceURI: url,
       },
       responsibleOrganizations: responsibleOrganizations,
-      projects:
-        repositoryType == 'ZENODO'
-          ? [
-              {
-                projectName: 'Zenodo external record - eLTER Community',
-                projectID: 'https://zenodo.org/communities/elter',
-              },
-            ]
-          : [
-              {
-                projectName: 'Zenodo external record - eLTER-Italy Community',
-                projectID: 'https://zenodo.org/communities/lter-italy',
-              },
-            ],
+      projects: projects,
       siteReferences: sites,
       language: zenodo.metadata?.language || undefined,
     },
