@@ -122,6 +122,7 @@ async function processApiPage(
   return mappedResults.filter((r) => r !== null);
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function processFieldSitesPage(url: string, sites: any): Promise<any[]> {
   process.stdout.write(`Fetching the dataset from: ${url}...\n`);
 
