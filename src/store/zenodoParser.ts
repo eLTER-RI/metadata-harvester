@@ -16,8 +16,11 @@ import {
 const ZENODO_ASSET_TYPE_MAP = new Map<string, IdentifierType>([
   ['poster', 'Other'],
   ['presentation', 'Other'],
+  ['publication-article', 'JournalArticle'],
+  ['publication-book', 'Book'],
   ['dataset', 'Dataset'],
   ['image', 'Image'],
+  ['image-figure', 'Image'],
   ['video', 'Audiovisual'],
   ['software', 'Software'],
   ['lesson', 'Other'],
@@ -159,7 +162,12 @@ export async function mapZenodoToCommonDatasetMetadata(
     metadata: {
       assetType: getZenodoAssetType(zenodo.metadata.resource_type),
       alternateIdentifiers: alternateIdentifiers,
-      relatedIdentifiers: [],
+      relatedIdentifiers: (zenodo.metadata?.related_identifiers || []).map((relatedId: any) => ({
+        relatedID: relatedId.identifier,
+        relatedIDType: relatedId.scheme?.toUpperCase() || 'URL',
+        relatedResourceType: getZenodoAssetType(relatedId.resource_type) || 'Dataset',
+        relationType: relatedId.relation,
+      })),
       titles: [{ titleText: zenodo.metadata?.title || zenodo.title || '' }],
       creators: creators,
       descriptions: [
