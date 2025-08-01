@@ -170,6 +170,40 @@ export function getZenodoIdentifierType(zenodoIdentifierType: string | undefined
   }
 }
 
+function mapZenodoCommunitiesToProjects(communitiesArray: { id: string }[]): Project[] {
+  if (!communitiesArray || communitiesArray.length === 0) {
+    return [];
+  }
+
+  const projects: Project[] = [];
+
+  for (const community of communitiesArray) {
+    const communityId = community.id.toLowerCase();
+    switch (communityId) {
+      case 'elter':
+        projects.push({
+          projectName: 'Zenodo external record - eLTER Community',
+          projectID: `https://zenodo.org/communities/${community.id}`,
+        });
+        break;
+      case 'lter-italy':
+        projects.push({
+          projectName: 'Zenodo external record - eLTER-Italy Community',
+          projectID: `https://zenodo.org/communities/${community.id}`,
+        });
+        break;
+      default:
+        projects.push({
+          projectName: `Zenodo Community: ${community.id}`,
+          projectID: `https://zenodo.org/communities/${community.id}`,
+        });
+        break;
+    }
+  }
+
+  return projects;
+}
+
 export async function mapZenodoToCommonDatasetMetadata(
   url: string,
   zenodo: any,
@@ -225,18 +259,7 @@ export async function mapZenodoToCommonDatasetMetadata(
     temporalCoverages.push({ startDate: publicationDate, endDate: publicationDate });
   }
 
-  const projects: Project[] = [];
-  if (repositoryType === 'ZENODO') {
-    projects.push({
-      projectName: 'Zenodo external record - eLTER Community',
-      projectID: 'https://zenodo.org/communities/elter',
-    });
-  } else if (repositoryType === 'ZENODO_IT') {
-    projects.push({
-      projectName: 'Zenodo external record - eLTER-Italy Community',
-      projectID: 'https://zenodo.org/communities/lter-italy',
-    });
-  }
+  const projects: Project[] = mapZenodoCommunitiesToProjects(zenodo.metadata?.communities);
   if (zenodo.metadata?.grants && Array.isArray(zenodo.metadata.grants)) {
     zenodo.metadata.grants.forEach((grant: any) => {
       if (grant.title) {
