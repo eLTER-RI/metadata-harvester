@@ -7,6 +7,7 @@ import { mapFieldSitesToCommonDatasetMetadata } from '../store/sitesParser';
 import { JSDOM } from 'jsdom';
 import { RepositoryType } from '../store/commonStructure';
 import { mapZenodoToCommonDatasetMetadata } from '../store/zenodoParser';
+import { RateLimiter } from './rateLimiter';
 
 // Function to fetch JSON from a URL
 export async function fetchJson(url: string): Promise<any> {
@@ -17,7 +18,28 @@ export async function fetchJson(url: string): Promise<any> {
         Accept: 'application/json',
       },
     });
-    if (!response.ok) return null;
+    if (!response.ok) {
+      let errorBody = 'No response body';
+      try {
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          errorBody = JSON.stringify(await response.json(), null, 2);
+        } else {
+          errorBody = await response.text();
+        }
+      } catch (e) {
+        errorBody = `Could not parse response body: ${e.message}`;
+      }
+
+      const errorMessage = `
+        Error fetching ${url}: Request faile with status: ${response.status} ${response.statusText}
+        URL: ${response.url}
+        Response Body: ${errorBody}
+      `;
+
+      process.stderr.write(errorMessage);
+      return null;
+    }
     return await response.json();
   } catch (error) {
     process.stderr.write(`Error fetching ${url}:` + error + '\n');
@@ -46,10 +68,12 @@ async function processApiPage(
   repositoryType?: 'B2SHARE' | 'B2SHARE_JUELICH' | 'ZENODO' | 'ZENODO_IT',
 ): Promise<any[]> {
   process.stdout.write(`Fetching the dataset from: ${url}...\n`);
-
+  let rateLimiter: RateLimiter;
   if (!repositoryType) {
     process.stderr.write(`Invalid repository type.\n`);
     return [];
+  } else if (repositoryType === 'ZENODO' || repositoryType === 'ZENODO_IT') {
+    rateLimiter = new RateLimiter(100);
   }
 
   const data = await fetchJson(url);
@@ -65,7 +89,10 @@ async function processApiPage(
       const selfLink = hit.links.self;
       const recordData = await fetchJson(selfLink);
 
-      if (!recordData) return null;
+      if (!recordData) {
+        process.stdout.write(`Failed dataset: ${selfLink}...\n`);
+        return null;
+      }
 
       switch (repositoryType) {
         case 'B2SHARE':
@@ -81,6 +108,7 @@ async function processApiPage(
         }
         case 'ZENODO':
         case 'ZENODO_IT':
+          await rateLimiter.waitForRequest();
           return mapZenodoToCommonDatasetMetadata(
             recordData.metadata.ePIC_PID || recordData.links?.self,
             recordData,
