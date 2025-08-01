@@ -9,6 +9,7 @@ import {
   License,
   parsePID,
   Project,
+  Relation,
   ResponsibleOrganizations,
   TemporalCoverage,
 } from './commonStructure';
@@ -49,6 +50,64 @@ const ZENODO_PUBLICATION_SUBTYPE_MAP = new Map<string, IdentifierType>([
   ['other', 'Other'],
 ]);
 
+const ZENODO_RELATION_MAP = new Map<string, Relation>([
+  ['iscitedby', 'IsCitedBy'],
+  ['cites', 'Cites'],
+  ['issupplementto', 'IsSupplementTo'],
+  ['ispublishedin', 'IsPublishedIn'],
+  ['issupplementedby', 'IsSupplementedBy'],
+  ['iscontinuedby', 'IsContinuedBy'],
+  ['continues', 'Continues'],
+  ['hasmetadata', 'HasMetadata'],
+  ['ismetadatafor', 'IsMetadataFor'],
+  ['isnewversionof', 'IsNewVersionOf'],
+  ['ispreviousversionof', 'IsPreviousVersionOf'],
+  ['ispartof', 'IsPartOf'],
+  ['haspart', 'HasPart'],
+  ['isreferencedby', 'IsReferencedBy'],
+  ['references', 'References'],
+  ['isdocumentedby', 'IsDocumentedBy'],
+  ['documents', 'Documents'],
+  ['iscompiledby', 'isCompiledBy'],
+  ['compiles', 'Compiles'],
+  ['isvariantformof', 'IsVariantFormOf'],
+  ['isoriginalformof', 'IsOriginalFormOf'],
+  ['isidenticalto', 'IsIdenticalTo'],
+  ['isalternateidentifier', 'IsIdenticalTo'],
+  ['isreviewedby', 'IsReviewedBy'],
+  ['reviews', 'Reviews'],
+  ['isderivedfrom', 'IsDerivedFrom'],
+  ['issourceof', 'IsSourceOf'],
+  ['describes', 'Describes'],
+  ['isdescribedby', 'IsDescribedBy'],
+  ['requires', 'Requires'],
+  ['isrequiredby', 'IsRequiredBy'],
+  ['isobsoletedby', 'IsObsoletedBy'],
+  ['obsoletes', 'Obsoletes'],
+]);
+
+const ZENODO_ID_TYPE_MAP = new Map<string, IdentifierType>([
+  ['ark', 'ARK'],
+  ['arxiv', 'arXiv'],
+  ['bibcode', 'bibcode'],
+  ['doi', 'DOI'],
+  ['ean13', 'EAN13'],
+  ['eissn', 'EISSN'],
+  ['handle', 'Handle'],
+  ['isbn', 'ISBN'],
+  ['issn', 'ISSN'],
+  ['istc', 'ISTC'],
+  ['lissn', 'LISSN'],
+  ['lsid', 'LSID'],
+  ['orcid', 'ORCID'],
+  ['pmid', 'PMID'],
+  ['purl', 'PURL'],
+  ['upc', 'UPC'],
+  ['url', 'URL'],
+  ['urn', 'URN'],
+  ['w3id', 'w3id'],
+]);
+
 export function getZenodoAssetType(
   zenodoResourceType: { title?: string; type?: string; subtype?: string } | undefined,
 ): IdentifierType {
@@ -77,6 +136,38 @@ export function getZenodoAssetType(
     return 'Other';
   }
   return mappedType;
+}
+
+export function getZenodoRelationType(zenodoRelation: string | undefined): Relation | undefined {
+  if (typeof zenodoRelation !== 'string') {
+    return undefined;
+  }
+
+  const normalizedRelation = zenodoRelation.toLowerCase().trim();
+  const mappedRelation = ZENODO_RELATION_MAP.get(normalizedRelation);
+
+  if (mappedRelation) {
+    return mappedRelation;
+  } else {
+    process.stdout.write(`Unknown Zenodo relation: "${zenodoRelation}". Mapping to 'Other'.`);
+    return undefined;
+  }
+}
+
+export function getZenodoIdentifierType(zenodoIdentifierType: string | undefined): IdentifierType | undefined {
+  if (typeof zenodoIdentifierType !== 'string') {
+    return undefined;
+  }
+
+  const normalizedRelation = zenodoIdentifierType.toLowerCase().trim();
+  const mappedRelation = ZENODO_ID_TYPE_MAP.get(normalizedRelation);
+
+  if (mappedRelation) {
+    return mappedRelation;
+  } else {
+    process.stderr.write(`Unknown Zenodo identifier type: "${zenodoIdentifierType}". Mapping to 'Other'.`);
+    return undefined;
+  }
 }
 
 export async function mapZenodoToCommonDatasetMetadata(
@@ -164,9 +255,9 @@ export async function mapZenodoToCommonDatasetMetadata(
       alternateIdentifiers: alternateIdentifiers,
       relatedIdentifiers: (zenodo.metadata?.related_identifiers || []).map((relatedId: any) => ({
         relatedID: relatedId.identifier,
-        relatedIDType: relatedId.scheme?.toUpperCase() || 'URL',
+        relatedIDType: getZenodoIdentifierType(relatedId.scheme) || 'URL',
         relatedResourceType: getZenodoAssetType(relatedId.resource_type) || 'Dataset',
-        relationType: relatedId.relation,
+        relationType: getZenodoRelationType(relatedId.relation),
       })),
       titles: [{ titleText: zenodo.metadata?.title || zenodo.title || '' }],
       creators: creators,
