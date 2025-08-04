@@ -2,7 +2,12 @@ import { promises as fs } from 'fs';
 import fetch from 'node-fetch';
 import { CONFIG } from '../../config';
 import { mapB2ShareToCommonDatasetMetadata } from '../store/b2shareParser';
-import { fetchSites, getB2ShareMatchedSites, getFieldSitesMatchedSites } from '../utilities/matchDeimsId';
+import {
+  fetchSites,
+  getB2ShareMatchedSites,
+  getFieldSitesMatchedSites,
+  getZenodoMatchedSites,
+} from '../utilities/matchDeimsId';
 import { mapFieldSitesToCommonDatasetMetadata } from '../store/sitesParser';
 import { JSDOM } from 'jsdom';
 import { RepositoryType } from '../store/commonStructure';
@@ -117,14 +122,17 @@ async function processApiPage(
           );
         }
         case 'ZENODO':
-        case 'ZENODO_IT':
+        case 'ZENODO_IT': {
           await rateLimiter.waitForRequest();
+          const matchedSites = await getZenodoMatchedSites(recordData, sites);
+
           return mapZenodoToCommonDatasetMetadata(
             recordData.metadata.ePIC_PID || recordData.links?.self,
             recordData,
-            [],
+            matchedSites,
             repositoryType,
           );
+        }
       }
     }),
   );

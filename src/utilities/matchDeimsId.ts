@@ -137,3 +137,27 @@ export function getFieldSitesMatchedSites(recordData: any): SiteReference[] {
 
   return [];
 }
+
+export async function getZenodoMatchedSites(recordData: any, sites: any): Promise<SiteReference[]> {
+  let matchedSites: SiteReference[] = [];
+
+  const matchedUuidsFromDescription = findMatchingUuid(recordData.metadata.description, sites);
+  if (matchedUuidsFromDescription) {
+    matchedSites = mapUuidsToSiteReferences(matchedUuidsFromDescription, sites);
+    if (matchedSites.length > 0) {
+      return matchedSites;
+    }
+  }
+
+  if (recordData.metadata.related_identifiers) {
+    const matchedUuidsRelatedIds = findMatchingUuid(JSON.stringify(recordData.metadata.related_identifiers), sites);
+    if (matchedUuidsRelatedIds) {
+      matchedSites = mapUuidsToSiteReferences(matchedUuidsRelatedIds, sites);
+      if (matchedSites.length > 0) {
+        return matchedSites;
+      }
+    }
+  }
+
+  return [];
+}
