@@ -1,4 +1,5 @@
 import {
+  AdditionalMetadata,
   AlternateIdentifier,
   CommonDataset,
   Creator,
@@ -204,6 +205,36 @@ function mapZenodoCommunitiesToProjects(communitiesArray: { id: string }[]): Pro
   return projects;
 }
 
+function getAdditionalMetadata(zenodo: any): AdditionalMetadata[] {
+  const additional_metadata: AdditionalMetadata[] = [];
+  if (zenodo.metadata.version) {
+    additional_metadata.push({
+      name: 'version',
+      value: zenodo.metadata.version,
+    });
+  }
+  if (zenodo.status) {
+    additional_metadata.push({
+      name: 'status',
+      value: zenodo.status,
+    });
+  }
+  if (zenodo.metadata.open_access) {
+    additional_metadata.push({
+      name: 'access_right',
+      value: zenodo.metadata.open_access ? 'open' : 'not open',
+    });
+  }
+  if (zenodo.metadata.grants) {
+    additional_metadata.push({
+      name: 'grants',
+      value: JSON.stringify(zenodo.metadata.grants, null, 2),
+    });
+  }
+
+  return additional_metadata;
+}
+
 export async function mapZenodoToCommonDatasetMetadata(
   url: string,
   zenodo: any,
@@ -297,13 +328,14 @@ export async function mapZenodoToCommonDatasetMetadata(
       temporalCoverages: temporalCoverages,
       geoLocations: [],
       licenses: licenses,
-      files: zenodo.metadata?.files?.map((file: any) => {
+      files: zenodo.files?.map((file: any) => {
         return {
           name: file.key,
           sourceUrl: file.links?.self,
           md5: getChecksum(file.checksum),
           size: file.size.toString(),
           sizeMeasureType: 'B',
+          format: file.key?.split('.').pop(),
         };
       }),
       externalSourceInformation: {
@@ -314,6 +346,7 @@ export async function mapZenodoToCommonDatasetMetadata(
       projects: projects,
       siteReferences: sites,
       language: zenodo.metadata?.language || undefined,
+      additionalMetadata: getAdditionalMetadata(zenodo),
     },
   };
 }
