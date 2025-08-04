@@ -159,6 +159,14 @@ function getAdditionalMetadata(b2share: B2ShareExtractedSchema): AdditionalMetad
       value: b2share.metadata.community,
     });
   }
+
+  if (b2share.metadata.open_access) {
+    additional_metadata.push({
+      name: 'access_right',
+      value: b2share.metadata.open_access ? 'open' : 'not open',
+    });
+  }
+
   return additional_metadata;
 }
 
