@@ -1,4 +1,4 @@
-import { CommonDataset, getLicenseURI } from './commonStructure';
+import { CommonDataset, getLicenseURI, License } from './commonStructure';
 
 export async function mapDataRegistryToCommonDatasetMetadata(
   url: string,
@@ -15,7 +15,12 @@ export async function mapDataRegistryToCommonDatasetMetadata(
 
   return {
     metadata: {
-      assetType: dataRegistry?.resource_type === 'dataset' ? 'Dataset' : 'Other',
+      assetType: dataRegistry.resource_type === 'dataset' ? 'Dataset' : 'Other',
+      titles: [
+        {
+          titleText: dataRegistry.title,
+        },
+      ],
       licenses: licenses.length > 0 ? licenses : undefined,
       externalSourceInformation: {
         externalSourceName: 'LTER-Italy',
