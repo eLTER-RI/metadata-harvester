@@ -27,6 +27,7 @@ export async function mapDataRegistryToCommonDatasetMetadata(
         externalSourceURI: url,
       },
       siteReferences: sites,
+      language: dataRegistry.language ?? undefined,
     },
   };
 }
