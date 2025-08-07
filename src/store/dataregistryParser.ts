@@ -1,4 +1,4 @@
-import { CommonDataset, getLicenseURI, License } from './commonStructure';
+import { CommonDataset, Contact, Creator, getLicenseURI, License } from './commonStructure';
 
 export async function mapDataRegistryToCommonDatasetMetadata(
   url: string,
@@ -13,6 +13,27 @@ export async function mapDataRegistryToCommonDatasetMetadata(
     });
   }
 
+  const creators: Creator[] = [];
+  const contactPoints: Contact[] = [];
+  if (dataRegistry.owner) {
+    const owner = dataRegistry.owner;
+    creators.push({
+      creatorFamilyName: owner.last_name,
+      creatorGivenName: owner.first_name,
+      creatorEmail: owner.email,
+      creatorIDs: [
+        {
+          entityID: owner.pk,
+          entityIDSchema: 'dataregistry primary key',
+        },
+      ],
+    });
+    contactPoints.push({
+      contactName: `${owner.first_name} ${owner.last_name}`,
+      contactEmail: owner.email,
+    });
+  }
+
   return {
     metadata: {
       assetType: dataRegistry.resource_type === 'dataset' ? 'Dataset' : 'Other',
@@ -21,6 +42,8 @@ export async function mapDataRegistryToCommonDatasetMetadata(
           titleText: dataRegistry.title,
         },
       ],
+      creators: creators,
+      contactPoints: contactPoints,
       licenses: licenses.length > 0 ? licenses : undefined,
       externalSourceInformation: {
         externalSourceName: 'LTER-Italy',
