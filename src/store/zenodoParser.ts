@@ -235,12 +235,7 @@ function getAdditionalMetadata(zenodo: any): AdditionalMetadata[] {
   return additional_metadata;
 }
 
-export async function mapZenodoToCommonDatasetMetadata(
-  url: string,
-  zenodo: any,
-  sites: any,
-  repositoryType: 'ZENODO' | 'ZENODO_IT',
-): Promise<CommonDataset> {
+export async function mapZenodoToCommonDatasetMetadata(url: string, zenodo: any, sites: any): Promise<CommonDataset> {
   const licenses: License[] = [];
   if (zenodo.metadata?.license?.id) {
     licenses.push({

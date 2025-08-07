@@ -2,7 +2,7 @@ export interface RepositoryConfig {
   apiUrl: string;
   mappedRecordsPath: string;
   pageSize?: number;
-  dataKey: string;
+  dataKey?: string;
   processFunction: 'processApiPage' | 'processFieldSitesPage';
 }
 
