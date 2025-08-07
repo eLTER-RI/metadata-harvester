@@ -34,6 +34,13 @@ export async function mapDataRegistryToCommonDatasetMetadata(
     });
   }
 
+  dataRegistry.poc.forEach((contact: any) => {
+    contactPoints.push({
+      contactName: contact.first_name + ' ' + contact.last_name,
+      contactEmail: contact.email,
+    });
+  });
+
   return {
     metadata: {
       assetType: dataRegistry.resource_type === 'dataset' ? 'Dataset' : 'Other',
