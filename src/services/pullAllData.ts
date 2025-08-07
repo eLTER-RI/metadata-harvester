@@ -10,12 +10,24 @@ import {
 } from '../utilities/matchDeimsId';
 import { mapFieldSitesToCommonDatasetMetadata } from '../store/sitesParser';
 import { JSDOM } from 'jsdom';
-import { RepositoryType } from '../store/commonStructure';
+import { RepositoryType, SiteReference } from '../store/commonStructure';
 import { mapZenodoToCommonDatasetMetadata } from '../store/zenodoParser';
 import { RateLimiter } from './rateLimiter';
 
 const MAX_RETRIES = 5;
 const INITIAL_RETRY_DELAY_MS = 20000;
+
+function getNestedValue(obj: any, path: string): any {
+  const objectParts = path.split('.');
+  let currentPart = obj;
+  for (const part of objectParts) {
+    if (currentPart === null || currentPart === undefined) {
+      return undefined;
+    }
+    currentPart = currentPart[part];
+  }
+  return currentPart;
+}
 
 // Function to fetch JSON from a URL
 export async function fetchJson(url: string, retriesLeft = MAX_RETRIES, delay = INITIAL_RETRY_DELAY_MS): Promise<any> {
@@ -80,7 +92,8 @@ async function fetchXml(url: string): Promise<Document | null> {
 async function processApiPage(
   url: string,
   sites: any,
-  repositoryType?: 'B2SHARE' | 'B2SHARE_JUELICH' | 'ZENODO' | 'ZENODO_IT',
+  dataKey?: string,
+  repositoryType?: RepositoryType,
 ): Promise<any[]> {
   process.stdout.write(`Fetching the dataset from: ${url}...\n`);
   let rateLimiter: RateLimiter;
@@ -92,7 +105,7 @@ async function processApiPage(
   }
 
   const data = await fetchJson(url);
-  const hits: string[] = data?.hits?.hits || [];
+  const hits: string[] = dataKey ? getNestedValue(data, dataKey) || [] : [];
 
   process.stdout.write(`Found ${hits.length} self links. Fetching individual records...\n`);
 
@@ -130,7 +143,6 @@ async function processApiPage(
             recordData.metadata.ePIC_PID || recordData.links?.self,
             recordData,
             matchedSites,
-            repositoryType,
           );
         }
       }
@@ -181,22 +193,29 @@ async function processAll(repositoryType: RepositoryType) {
   const apiUrl = repoConfig.apiUrl;
   const mappedRecordsPath = repoConfig.mappedRecordsPath;
   const pageSize = repoConfig.pageSize;
-  const processFunctionName = repoConfig.processFunction;
+  const dataKey = repoConfig.dataKey;
 
-  const processorFunctionsMap = {
-    processApiPage: processApiPage,
-    processFieldSitesPage: processFieldSitesPage,
-  };
-
-  const resolvedProcessingFunction = processorFunctionsMap[processFunctionName];
-  if (!resolvedProcessingFunction) {
-    throw new Error(`Processing function '${resolvedProcessingFunction}' not found.`);
-  }
-  const processRepositoryFunction: (
+  let processPageFunction: (
     url: string,
-    sites: any,
-    repositoryType?: 'B2SHARE' | 'B2SHARE_JUELICH' | 'ZENODO' | 'ZENODO_IT',
-  ) => Promise<any[]> = resolvedProcessingFunction as typeof processRepositoryFunction;
+    sites: SiteReference[],
+    dataKey?: string,
+    repositoryType?: RepositoryType,
+  ) => Promise<any[]>;
+
+  switch (repositoryType) {
+    case 'B2SHARE':
+    case 'B2SHARE_JUELICH':
+    case 'ZENODO':
+    case 'ZENODO_IT':
+    case 'DATAREGISTRY':
+      processPageFunction = processApiPage;
+      break;
+    case 'SITES':
+      processPageFunction = (url: string, sites: any) => processFieldSitesPage(url, sites as Site[]);
+      break;
+    default:
+      throw new Error(`Processor function not defined for repository type: ${repositoryType}`);
+  }
 
   try {
     await fs.unlink(mappedRecordsPath);
@@ -222,7 +241,7 @@ async function processAll(repositoryType: RepositoryType) {
       process.stderr.write(`Pagination parsing not implemented for SITES repository.\n`);
       return;
     }
-    const pageRecords = await processRepositoryFunction(pageUrl, sites, repositoryType);
+    const pageRecords = await processPageFunction(pageUrl, sites, dataKey, repositoryType);
     if (pageRecords.length === 0) {
       process.stdout.write(`No records found on page ${page}. Stopping.\n`);
       break;
@@ -240,7 +259,7 @@ async function processAll(repositoryType: RepositoryType) {
   }
 
   if (!pageSize) {
-    const records = await processRepositoryFunction(apiUrl, sites);
+    const records = await processPageFunction(apiUrl, sites);
     allRecords.push(...records);
   }
 

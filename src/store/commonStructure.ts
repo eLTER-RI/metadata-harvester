@@ -5,7 +5,7 @@
 
 import { Metadata } from './b2shareApi';
 
-export type RepositoryType = 'B2SHARE' | 'SITES' | 'B2SHARE_JUELICH' | 'ZENODO' | 'ZENODO_IT';
+export type RepositoryType = 'B2SHARE' | 'SITES' | 'B2SHARE_JUELICH' | 'ZENODO' | 'ZENODO_IT' | 'DATAREGISTRY';
 
 export type CommonDataset = {
   pids?: PID;
