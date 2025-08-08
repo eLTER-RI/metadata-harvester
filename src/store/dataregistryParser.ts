@@ -46,6 +46,14 @@ export async function mapDataRegistryToCommonDatasetMetadata(
       ],
       creators: creators,
       contactPoints: contactPoints,
+      descriptions: dataRegistry.resource.abstract
+        ? [
+            {
+              descriptionText: dataRegistry.resource.abstract,
+              descriptionType: 'Abstract',
+            },
+          ]
+        : [],
       licenses: licenses.length > 0 ? licenses : undefined,
       files: dataRegistry.resource.download_urls?.map((downloadUrl: any) => ({
         name: dataRegistry.resource.title,
