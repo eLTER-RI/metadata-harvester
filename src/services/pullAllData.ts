@@ -13,6 +13,7 @@ import { JSDOM } from 'jsdom';
 import { RepositoryType, SiteReference } from '../store/commonStructure';
 import { mapZenodoToCommonDatasetMetadata } from '../store/zenodoParser';
 import { RateLimiter } from './rateLimiter';
+import { mapDataRegistryToCommonDatasetMetadata } from '../store/dataregistryParser';
 
 const MAX_RETRIES = 5;
 const INITIAL_RETRY_DELAY_MS = 20000;
@@ -92,12 +93,13 @@ async function fetchXml(url: string): Promise<Document | null> {
 async function processApiPage(
   url: string,
   sites: any,
+  selfLinkKey?: string,
   dataKey?: string,
   repositoryType?: RepositoryType,
 ): Promise<any[]> {
   process.stdout.write(`Fetching the dataset from: ${url}...\n`);
   let rateLimiter: RateLimiter;
-  if (!repositoryType) {
+  if (!repositoryType || !selfLinkKey) {
     process.stderr.write(`Invalid repository type.\n`);
     return [];
   } else if (repositoryType === 'ZENODO' || repositoryType === 'ZENODO_IT') {
@@ -112,13 +114,13 @@ async function processApiPage(
   // Process individual records using the parser
   const mappedResults = await Promise.all(
     hits.map(async (hit: any) => {
-      if (!hit || !hit.links?.self) return null;
+      const recordUrl = getNestedValue(hit, selfLinkKey);
+      if (!hit) return null;
 
-      const selfLink = hit.links.self;
-      const recordData = await fetchJson(selfLink);
+      const recordData = recordUrl ? await fetchJson(recordUrl) : hit;
 
       if (!recordData) {
-        process.stdout.write(`Failed dataset: ${selfLink}...\n`);
+        process.stdout.write(`Failed dataset: ${recordUrl}...\n`);
         return null;
       }
 
@@ -127,23 +129,17 @@ async function processApiPage(
         case 'B2SHARE_JUELICH': {
           const matchedSites = await getB2ShareMatchedSites(recordData, sites);
 
-          return mapB2ShareToCommonDatasetMetadata(
-            recordData.metadata.ePIC_PID || recordData.links?.self,
-            recordData,
-            matchedSites,
-            repositoryType,
-          );
+          return mapB2ShareToCommonDatasetMetadata(recordUrl, recordData, matchedSites, repositoryType);
+        }
+        case 'DATAREGISTRY': {
+          return mapDataRegistryToCommonDatasetMetadata(recordUrl, recordData, []);
         }
         case 'ZENODO':
         case 'ZENODO_IT': {
           await rateLimiter.waitForRequest();
           const matchedSites = await getZenodoMatchedSites(recordData, sites);
 
-          return mapZenodoToCommonDatasetMetadata(
-            recordData.metadata.ePIC_PID || recordData.links?.self,
-            recordData,
-            matchedSites,
-          );
+          return mapZenodoToCommonDatasetMetadata(recordUrl, recordData, matchedSites);
         }
       }
     }),
@@ -193,11 +189,13 @@ async function processAll(repositoryType: RepositoryType) {
   const apiUrl = repoConfig.apiUrl;
   const mappedRecordsPath = repoConfig.mappedRecordsPath;
   const pageSize = repoConfig.pageSize;
+  const selfLinkKey = repoConfig.selfLinkKey;
   const dataKey = repoConfig.dataKey;
 
   let processPageFunction: (
     url: string,
     sites: SiteReference[],
+    selfLinkKey?: string,
     dataKey?: string,
     repositoryType?: RepositoryType,
   ) => Promise<any[]>;
@@ -211,7 +209,7 @@ async function processAll(repositoryType: RepositoryType) {
       processPageFunction = processApiPage;
       break;
     case 'SITES':
-      processPageFunction = (url: string, sites: any) => processFieldSitesPage(url, sites as Site[]);
+      processPageFunction = (url: string, sites: any) => processFieldSitesPage(url, sites);
       break;
     default:
       throw new Error(`Processor function not defined for repository type: ${repositoryType}`);
@@ -241,7 +239,7 @@ async function processAll(repositoryType: RepositoryType) {
       process.stderr.write(`Pagination parsing not implemented for SITES repository.\n`);
       return;
     }
-    const pageRecords = await processPageFunction(pageUrl, sites, dataKey, repositoryType);
+    const pageRecords = await processPageFunction(pageUrl, sites, selfLinkKey, dataKey, repositoryType);
     if (pageRecords.length === 0) {
       process.stdout.write(`No records found on page ${page}. Stopping.\n`);
       break;

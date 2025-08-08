@@ -2,6 +2,7 @@ export interface RepositoryConfig {
   apiUrl: string;
   mappedRecordsPath: string;
   pageSize?: number;
+  selfLinkKey?: string;
   dataKey?: string;
   processFunction: 'processApiPage' | 'processFieldSitesPage';
 }
@@ -12,6 +13,7 @@ export const CONFIG = {
       apiUrl: 'https://b2share.eudat.eu/api/records/?q=community:d952913c-451e-4b5c-817e-d578dc8a4469&sort=oldest',
       mappedRecordsPath: './data/mapped_b2share_records.json',
       pageSize: 100,
+      selfLinkKey: 'self',
       dataKey: 'hits.hits',
       processFunction: 'processApiPage',
       rateLimit: 0,
@@ -20,14 +22,16 @@ export const CONFIG = {
       apiUrl: 'https://b2share.fz-juelich.de/api/records/?q=community:d952913c-451e-4b5c-817e-d578dc8a4469&sort=oldest',
       mappedRecordsPath: './data/mapped_b2share_juelich_records.json',
       pageSize: 100,
+      selfLinkKey: 'self',
       dataKey: 'hits.hits',
       processFunction: 'processApiPage',
       rateLimit: 0,
     } as RepositoryConfig,
     DATAREGISTRY: {
-      apiUrl: 'https://dataregistry.lteritalia.it/api/v2/resources',
+      apiUrl: 'https://dataregistry.lteritalia.it/api/v2/resources?format=json',
       mappedRecordsPath: './data/mapped_dataregistry_records.json',
-      pageSize: 100,
+      pageSize: 10,
+      selfLinkKey: 'link',
       dataKey: 'resources',
       processFunction: 'processApiPage',
       rateLimit: 0,
@@ -43,6 +47,7 @@ export const CONFIG = {
       mappedRecordsPath: './data/mapped_zenodo_records.json',
       pageSize: 100,
       dataKey: 'hits.hits',
+      selfLinkKey: 'self',
       processFunction: 'processApiPage',
       rateLimit: 100,
     } as RepositoryConfig,
@@ -51,6 +56,7 @@ export const CONFIG = {
       mappedRecordsPath: './data/mapped_zenodo_lter_it_records.json',
       pageSize: 100,
       dataKey: 'hits.hits',
+      selfLinkKey: 'self',
       processFunction: 'processApiPage',
       rateLimit: 100,
     } as RepositoryConfig,

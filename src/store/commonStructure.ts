@@ -548,24 +548,31 @@ export function formatDate(isoString: string): string | undefined {
 
 export function getLicenseURI(licenseId: string): string | undefined {
   switch (licenseId) {
+    case 'cc by':
     case 'cc-by':
     case 'cc-by-4.0':
       return 'https://creativecommons.org/licenses/by/4.0/';
+    case 'cc by-nc':
     case 'cc-by-nc':
     case 'cc-by-nc-4.0':
       return 'https://creativecommons.org/licenses/by-nc/4.0/';
+    case 'cc by-nc-nd':
     case 'cc-by-nc-nd':
     case 'cc-by-nc-nd-4.0':
       return 'https://creativecommons.org/licenses/by-nc-nd/4.0/';
+    case 'cc by-nc-sa':
     case 'cc-by-nc-sa':
     case 'cc-by-nc-sa-4.0':
       return 'https://creativecommons.org/licenses/by-nc-sa/4.0/';
+    case 'cc by-nd':
     case 'cc-by-nd':
     case 'cc-by-nd-4.0':
       return 'https://creativecommons.org/licenses/by-nd/4.0/';
+    case 'cc by-sa':
     case 'cc-by-sa':
     case 'cc-by-sa-4.0':
       return 'https://creativecommons.org/licenses/by-sa/4.0/';
+    case 'cc zero':
     case 'cc-zero':
     case 'cc-zero-1.0':
       return 'https://creativecommons.org/publicdomain/zero/1.0/';

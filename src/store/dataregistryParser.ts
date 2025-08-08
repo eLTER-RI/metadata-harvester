@@ -15,18 +15,12 @@ export async function mapDataRegistryToCommonDatasetMetadata(
 
   const creators: Creator[] = [];
   const contactPoints: Contact[] = [];
-  if (dataRegistry.owner) {
-    const owner = dataRegistry.owner;
+  const owner = dataRegistry.resource.owner;
+  if (owner) {
     creators.push({
       creatorFamilyName: owner.last_name,
       creatorGivenName: owner.first_name,
       creatorEmail: owner.email,
-      creatorIDs: [
-        {
-          entityID: owner.pk,
-          entityIDSchema: 'dataregistry primary key',
-        },
-      ],
     });
     contactPoints.push({
       contactName: `${owner.first_name} ${owner.last_name}`,
@@ -34,30 +28,31 @@ export async function mapDataRegistryToCommonDatasetMetadata(
     });
   }
 
-  dataRegistry.poc.forEach((contact: any) => {
-    contactPoints.push({
-      contactName: contact.first_name + ' ' + contact.last_name,
-      contactEmail: contact.email,
-    });
+  dataRegistry.resource.poc.forEach((contact: any) => {
+    if (owner && contact.last_name === owner.last_name && contact.first_name === owner.first_name)
+      contactPoints.push({
+        contactName: contact.first_name + ' ' + contact.last_name,
+        contactEmail: contact.email,
+      });
   });
 
   return {
     metadata: {
-      assetType: dataRegistry.resource_type === 'dataset' ? 'Dataset' : 'Other',
+      assetType: dataRegistry.resource.resource_type === 'dataset' ? 'Dataset' : 'Other',
       titles: [
         {
-          titleText: dataRegistry.title,
+          titleText: dataRegistry.resource.title,
         },
       ],
       creators: creators,
       contactPoints: contactPoints,
       licenses: licenses.length > 0 ? licenses : undefined,
       externalSourceInformation: {
-        externalSourceName: 'LTER-Italy',
+        externalSourceName: 'DataRegistry',
         externalSourceURI: url,
       },
       siteReferences: sites,
-      language: dataRegistry.language ?? undefined,
+      language: dataRegistry.resource.language ?? undefined,
     },
   };
 }
