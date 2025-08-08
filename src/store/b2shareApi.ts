@@ -15,8 +15,8 @@ type Files = {
   bucket?: string;
   checksum?: string;
   ePIC_PID?: string;
-  key?: string; 
-  size?: number; 
+  key?: string;
+  size?: number;
   version_id?: string;
 };
 
@@ -102,7 +102,7 @@ export type Affiliations = {
 /**
  * The type of name described.
  */
-export type NameType = "Personal" | "Organizational";
+export type NameType = 'Personal' | 'Organizational';
 /**
  * The scheme used for the identifier.
  */
@@ -148,12 +148,12 @@ export type Titles = [
   ...{
     title: string;
     type?: Type;
-  }[]
+  }[],
 ];
 /**
  * The type of the title.
  */
-export type Type = "Alternative Title" | "Subtitle" | "TranslatedTitle" | "Other";
+export type Type = 'Alternative Title' | 'Subtitle' | 'TranslatedTitle' | 'Other';
 /**
  * The entity responsible for making the resource available, either a person, an organization, or a service.
  */
@@ -175,37 +175,37 @@ export type ResourceType = [
   ...{
     resource_type_general: Type1;
     resource_type_description?: Description;
-  }[]
+  }[],
 ];
 export type Type1 =
-  | "Audiovisual"
-  | "Book"
-  | "BookChapter"
-  | "Collection"
-  | "ComputationalNotebook"
-  | "ConferencePaper"
-  | "ConferenceProceeding"
-  | "DataPaper"
-  | "Dataset"
-  | "Dissertation"
-  | "Event"
-  | "Image"
-  | "InteractiveResource"
-  | "Journal"
-  | "JournalArticle"
-  | "Model"
-  | "OutputManagementPlan"
-  | "PeerReview"
-  | "PhysicalObject"
-  | "Preprint"
-  | "Report"
-  | "Service"
-  | "Software"
-  | "Sound"
-  | "Standard"
-  | "Text"
-  | "Workflow"
-  | "Other";
+  | 'Audiovisual'
+  | 'Book'
+  | 'BookChapter'
+  | 'Collection'
+  | 'ComputationalNotebook'
+  | 'ConferencePaper'
+  | 'ConferenceProceeding'
+  | 'DataPaper'
+  | 'Dataset'
+  | 'Dissertation'
+  | 'Event'
+  | 'Image'
+  | 'InteractiveResource'
+  | 'Journal'
+  | 'JournalArticle'
+  | 'Model'
+  | 'OutputManagementPlan'
+  | 'PeerReview'
+  | 'PhysicalObject'
+  | 'Preprint'
+  | 'Report'
+  | 'Service'
+  | 'Software'
+  | 'Sound'
+  | 'Standard'
+  | 'Text'
+  | 'Workflow'
+  | 'Other';
 /**
  * An optional description of the resource type.
  */
@@ -218,25 +218,25 @@ export type Identifier1 = string;
  * The type of the identifier.
  */
 export type Type2 =
-  | "ARK"
-  | "arXiv"
-  | "bibcode"
-  | "DOI"
-  | "EAN13"
-  | "EISSN"
-  | "Handle"
-  | "ISBN"
-  | "ISSN"
-  | "ISTC"
-  | "LISSN"
-  | "LSID"
-  | "ORCID"
-  | "PMID"
-  | "PURL"
-  | "UPC"
-  | "URL"
-  | "URN"
-  | "w3id";
+  | 'ARK'
+  | 'arXiv'
+  | 'bibcode'
+  | 'DOI'
+  | 'EAN13'
+  | 'EISSN'
+  | 'Handle'
+  | 'ISBN'
+  | 'ISSN'
+  | 'ISTC'
+  | 'LISSN'
+  | 'LSID'
+  | 'ORCID'
+  | 'PMID'
+  | 'PURL'
+  | 'UPC'
+  | 'URL'
+  | 'URN'
+  | 'w3id';
 /**
  * The scientific instruments the data was generated or captured on.
  */
@@ -326,7 +326,7 @@ export type Affiliations1 = {
 /**
  * The type of name described.
  */
-export type NameType1 = "Personal" | "Organizational";
+export type NameType1 = 'Personal' | 'Organizational';
 /**
  * The scheme used for the identifier.
  */
@@ -351,27 +351,27 @@ export type NameIdentifiers1 = {
  * The type of the contributor.
  */
 export type ContributorType =
-  | "ContactPerson"
-  | "DataCollector"
-  | "DataCurator"
-  | "DataManager"
-  | "Distributor"
-  | "Editor"
-  | "HostingInstitution"
-  | "Producer"
-  | "ProjectLeader"
-  | "ProjectManager"
-  | "ProjectMember"
-  | "RegistrationAgency"
-  | "RegistrationAuthority"
-  | "RelatedPerson"
-  | "Researcher"
-  | "ResearchGroup"
-  | "RightsHolder"
-  | "Sponsor"
-  | "Supervisor"
-  | "WorkPackageLeader"
-  | "Other";
+  | 'ContactPerson'
+  | 'DataCollector'
+  | 'DataCurator'
+  | 'DataManager'
+  | 'Distributor'
+  | 'Editor'
+  | 'HostingInstitution'
+  | 'Producer'
+  | 'ProjectLeader'
+  | 'ProjectManager'
+  | 'ProjectMember'
+  | 'RegistrationAgency'
+  | 'RegistrationAuthority'
+  | 'RelatedPerson'
+  | 'Researcher'
+  | 'ResearchGroup'
+  | 'RightsHolder'
+  | 'Sponsor'
+  | 'Supervisor'
+  | 'WorkPackageLeader'
+  | 'Other';
 /**
  * The list of all other contributors. Please mention all persons that were relevant in the creation of the resource.
  */
@@ -410,25 +410,25 @@ export type Languages = {
  * The type of the identifier.
  */
 export type Type3 =
-  | "ARK"
-  | "arXiv"
-  | "bibcode"
-  | "DOI"
-  | "EAN13"
-  | "EISSN"
-  | "Handle"
-  | "ISBN"
-  | "ISSN"
-  | "ISTC"
-  | "LISSN"
-  | "LSID"
-  | "ORCID"
-  | "PMID"
-  | "PURL"
-  | "UPC"
-  | "URL"
-  | "URN"
-  | "w3id";
+  | 'ARK'
+  | 'arXiv'
+  | 'bibcode'
+  | 'DOI'
+  | 'EAN13'
+  | 'EISSN'
+  | 'Handle'
+  | 'ISBN'
+  | 'ISSN'
+  | 'ISTC'
+  | 'LISSN'
+  | 'LSID'
+  | 'ORCID'
+  | 'PMID'
+  | 'PURL'
+  | 'UPC'
+  | 'URL'
+  | 'URN'
+  | 'w3id';
 /**
  * The alternative identifiers for this resource such as a URN, URI or an ISBN number.
  */
@@ -440,95 +440,95 @@ export type AlternateIdentifier = {
  * The type of the resource.
  */
 export type ResourceType1 =
-  | "Audiovisual"
-  | "Book"
-  | "BookChapter"
-  | "Collection"
-  | "ComputationalNotebook"
-  | "ConferencePaper"
-  | "ConferenceProceeding"
-  | "DataPaper"
-  | "Dataset"
-  | "Dissertation"
-  | "Event"
-  | "Image"
-  | "InteractiveResource"
-  | "Journal"
-  | "JournalArticle"
-  | "Model"
-  | "OutputManagementPlan"
-  | "PeerReview"
-  | "PhysicalObject"
-  | "Preprint"
-  | "Report"
-  | "Service"
-  | "Software"
-  | "Sound"
-  | "Standard"
-  | "Text"
-  | "Workflow"
-  | "Other";
+  | 'Audiovisual'
+  | 'Book'
+  | 'BookChapter'
+  | 'Collection'
+  | 'ComputationalNotebook'
+  | 'ConferencePaper'
+  | 'ConferenceProceeding'
+  | 'DataPaper'
+  | 'Dataset'
+  | 'Dissertation'
+  | 'Event'
+  | 'Image'
+  | 'InteractiveResource'
+  | 'Journal'
+  | 'JournalArticle'
+  | 'Model'
+  | 'OutputManagementPlan'
+  | 'PeerReview'
+  | 'PhysicalObject'
+  | 'Preprint'
+  | 'Report'
+  | 'Service'
+  | 'Software'
+  | 'Sound'
+  | 'Standard'
+  | 'Text'
+  | 'Workflow'
+  | 'Other';
 /**
  * The type of the identifier.
  */
 export type Type4 =
-  | "ARK"
-  | "arXiv"
-  | "bibcode"
-  | "DOI"
-  | "EAN13"
-  | "EISSN"
-  | "Handle"
-  | "ISBN"
-  | "ISSN"
-  | "ISTC"
-  | "LISSN"
-  | "LSID"
-  | "ORCID"
-  | "PMID"
-  | "PURL"
-  | "UPC"
-  | "URL"
-  | "URN"
-  | "w3id";
+  | 'ARK'
+  | 'arXiv'
+  | 'bibcode'
+  | 'DOI'
+  | 'EAN13'
+  | 'EISSN'
+  | 'Handle'
+  | 'ISBN'
+  | 'ISSN'
+  | 'ISTC'
+  | 'LISSN'
+  | 'LSID'
+  | 'ORCID'
+  | 'PMID'
+  | 'PURL'
+  | 'UPC'
+  | 'URL'
+  | 'URN'
+  | 'w3id';
 /**
  * The relation type of the described reference.
  */
 export type Relation =
-  | "IsCitedBy"
-  | "Cites"
-  | "IsSupplementTo"
-  | "IsPublishedIn"
-  | "IsSupplementedBy"
-  | "IsContinuedBy"
-  | "Continues"
-  | "HasMetadata"
-  | "IsMetadataFor"
-  | "IsNewVersionOf"
-  | "IsPreviousVersionOf"
-  | "IsPartOf"
-  | "HasPart"
-  | "IsReferencedBy"
-  | "References"
-  | "IsDocumentedBy"
-  | "Documents"
-  | "isCompiledBy"
-  | "Compiles"
-  | "IsVariantFormOf"
-  | "IsOriginalFormOf"
-  | "IsIdenticalTo"
-  | "IsReviewedBy"
-  | "Reviews"
-  | "IsDerivedFrom"
-  | "IsSourceOf"
-  | "Describes"
-  | "IsDescribedBy"
-  | "HasVersion"
-  | "IsVersionOf"
-  | "Requires"
-  | "IsRequiredBy"
-  | "Obsoletes"
-  | "IsObsoletedBy";
+  | 'IsCitedBy'
+  | 'Cites'
+  | 'IsSupplementTo'
+  | 'IsPublishedIn'
+  | 'IsSupplementedBy'
+  | 'IsContinuedBy'
+  | 'Continues'
+  | 'HasMetadata'
+  | 'IsMetadataFor'
+  | 'IsNewVersionOf'
+  | 'IsPreviousVersionOf'
+  | 'IsPartOf'
+  | 'HasPart'
+  | 'IsReferencedBy'
+  | 'References'
+  | 'IsDocumentedBy'
+  | 'Documents'
+  | 'isCompiledBy'
+  | 'Compiles'
+  | 'IsVariantFormOf'
+  | 'IsOriginalFormOf'
+  | 'IsIdenticalTo'
+  | 'IsReviewedBy'
+  | 'Reviews'
+  | 'IsDerivedFrom'
+  | 'IsSourceOf'
+  | 'Describes'
+  | 'IsDescribedBy'
+  | 'HasVersion'
+  | 'IsVersionOf'
+  | 'Requires'
+  | 'IsRequiredBy'
+  | 'Obsoletes'
+  | 'IsObsoletedBy';
 /**
  * The scheme used for the identifier.
  */
@@ -552,7 +552,7 @@ export type RelatedIdentifiers = {
 /**
  * The type of the description.
  */
-export type Type5 = "Abstract" | "Methods" | "SeriesInformation" | "TableOfContents" | "TechnicalInfo" | "Other";
+export type Type5 = 'Abstract' | 'Methods' | 'SeriesInformation' | 'TableOfContents' | 'TechnicalInfo' | 'Other';
 /**
  * The more elaborate description of the resource. Focus on a content description that makes it easy for others to find, and to interpret its relevance.
  */
@@ -597,17 +597,17 @@ export type Date = string;
  * The type of the date.
  */
 export type DateType =
-  | "Accepted"
-  | "Available"
-  | "Collected"
-  | "Copyrighted"
-  | "Created"
-  | "Issued"
-  | "Other"
-  | "Submitted"
-  | "Updated"
-  | "Valid"
-  | "Withdrawn";
+  | 'Accepted'
+  | 'Available'
+  | 'Collected'
+  | 'Copyrighted'
+  | 'Created'
+  | 'Issued'
+  | 'Other'
+  | 'Submitted'
+  | 'Updated'
+  | 'Valid'
+  | 'Withdrawn';
 /**
  * The additional information about the date.
  */
@@ -725,7 +725,7 @@ export type FunderName = string;
 /**
  * The type of the identifier of the funder.
  */
-export type Type6 = "ISNI" | "GRID" | "ROR" | "Crossref Funder ID" | "Other";
+export type Type6 = 'ISNI' | 'GRID' | 'ROR' | 'Crossref Funder ID' | 'Other';
 /**
  * The URI pointing to the scheme.
  */
@@ -765,7 +765,7 @@ export type Community = string;
 /**
  * State of the publication workflow.
  */
-export type PublicationState = "draft" | "submitted" | "published";
+export type PublicationState = 'draft' | 'submitted' | 'published';
 
 /**
  * The license under which this data set is available to the users (e.g. GPL, Apache v2 or Commercial). Please use the License Selector for help and additional information.
