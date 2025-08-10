@@ -1,4 +1,4 @@
-import { CommonDataset, Contact, Creator, getLicenseURI, License } from './commonStructure';
+import { CommonDataset, Contact, Creator, Geolocation, getLicenseURI, License } from './commonStructure';
 
 export async function mapDataRegistryToCommonDatasetMetadata(
   url: string,
@@ -36,6 +36,25 @@ export async function mapDataRegistryToCommonDatasetMetadata(
       });
   });
 
+  const geoLocations: Geolocation[] = [];
+  if (dataRegistry.resource.bbox_polygon && dataRegistry.resource.bbox_polygon.type === 'Polygon') {
+    const coordinates = dataRegistry.resource.bbox_polygon.coordinates[0];
+    const points = coordinates.map((coord: number[]) => ({
+      longitude: coord[0],
+      latitude: coord[1],
+    }));
+    if (points.length > 0) {
+      geoLocations.push({
+        boundingPolygon: [
+          {
+            points: points,
+            inPolygonPoint: points[0],
+          },
+        ],
+      });
+    }
+  }
+
   return {
     metadata: {
       assetType: dataRegistry.resource.resource_type === 'dataset' ? 'Dataset' : 'Other',
@@ -57,6 +76,7 @@ export async function mapDataRegistryToCommonDatasetMetadata(
       keywords: (dataRegistry.resource.keywords || []).map((keyword: any) => ({
         keywordLabel: keyword.name,
       })),
+      geoLocations: geoLocations,
       licenses: licenses.length > 0 ? licenses : undefined,
       files: dataRegistry.resource.download_urls?.map((downloadUrl: any) => ({
         name: dataRegistry.resource.title,
