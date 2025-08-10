@@ -54,6 +54,9 @@ export async function mapDataRegistryToCommonDatasetMetadata(
             },
           ]
         : [],
+      keywords: (dataRegistry.resource.keywords || []).map((keyword: any) => ({
+        keywordLabel: keyword.name,
+      })),
       licenses: licenses.length > 0 ? licenses : undefined,
       files: dataRegistry.resource.download_urls?.map((downloadUrl: any) => ({
         name: dataRegistry.resource.title,
