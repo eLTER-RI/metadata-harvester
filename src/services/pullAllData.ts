@@ -5,6 +5,7 @@ import { mapB2ShareToCommonDatasetMetadata } from '../store/b2shareParser';
 import {
   fetchSites,
   getB2ShareMatchedSites,
+  getDataRegistryMatchedSites,
   getFieldSitesMatchedSites,
   getZenodoMatchedSites,
 } from '../utilities/matchDeimsId';
@@ -132,7 +133,9 @@ async function processApiPage(
           return mapB2ShareToCommonDatasetMetadata(recordUrl, recordData, matchedSites, repositoryType);
         }
         case 'DATAREGISTRY': {
-          return mapDataRegistryToCommonDatasetMetadata(recordUrl, recordData, []);
+          const matchedSites = await getDataRegistryMatchedSites(recordData);
+
+          return mapDataRegistryToCommonDatasetMetadata(recordUrl, recordData, matchedSites);
         }
         case 'ZENODO':
         case 'ZENODO_IT': {
