@@ -1,4 +1,4 @@
-import { CommonDataset, Contact, Creator, Geolocation, getLicenseURI, License } from './commonStructure';
+import { CommonDataset, Contact, Creator, formatDate, Geolocation, getLicenseURI, License } from './commonStructure';
 
 export async function mapDataRegistryToCommonDatasetMetadata(
   url: string,
@@ -76,6 +76,7 @@ export async function mapDataRegistryToCommonDatasetMetadata(
       keywords: (dataRegistry.resource.keywords || []).map((keyword: any) => ({
         keywordLabel: keyword.name,
       })),
+      publicationDate: formatDate(dataRegistry.resource.date),
       geoLocations: geoLocations,
       licenses: licenses.length > 0 ? licenses : undefined,
       files: dataRegistry.resource.download_url
