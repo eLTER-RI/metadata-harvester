@@ -78,11 +78,7 @@ export async function mapDataRegistryToCommonDatasetMetadata(
       })),
       geoLocations: geoLocations,
       licenses: licenses.length > 0 ? licenses : undefined,
-      files: dataRegistry.resource.download_urls?.map((downloadUrl: any) => ({
-        name: dataRegistry.resource.title,
-        sourceUrl: downloadUrl.url,
-        format: dataRegistry.resource.title.split('.').pop(),
-      })),
+      files: dataRegistry.resource.download_url,
       externalSourceInformation: {
         externalSourceName: 'DataRegistry',
         externalSourceURI: url,
