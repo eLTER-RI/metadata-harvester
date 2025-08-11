@@ -91,6 +91,12 @@ export async function mapDataRegistryToCommonDatasetMetadata(
         externalSourceName: 'DataRegistry',
         externalSourceURI: url,
       },
+      projects: [
+        {
+          projectName: 'Dataregistry LTER-Italy DAR',
+          projectID: 'https://dataregistry.lteritalia.it/',
+        },
+      ],
       siteReferences: sites,
       language: dataRegistry.resource.language ?? undefined,
     },
