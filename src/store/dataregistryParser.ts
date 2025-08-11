@@ -6,10 +6,10 @@ export async function mapDataRegistryToCommonDatasetMetadata(
   sites: any,
 ): Promise<CommonDataset> {
   const licenses: License[] = [];
-  if (dataRegistry?.license) {
+  if (dataRegistry?.resource?.license?.identifier) {
     licenses.push({
-      licenseCode: dataRegistry.license.identifier,
-      licenseURI: getLicenseURI(dataRegistry.license.identifier.toLowerCase()),
+      licenseCode: dataRegistry.resource.license.identifier,
+      licenseURI: getLicenseURI(dataRegistry.resource.license.identifier.toLowerCase()),
     });
   }
 
