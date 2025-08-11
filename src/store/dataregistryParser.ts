@@ -29,7 +29,7 @@ export async function mapDataRegistryToCommonDatasetMetadata(
   }
 
   dataRegistry.resource.poc.forEach((contact: any) => {
-    if (owner && contact.last_name === owner.last_name && contact.first_name === owner.first_name)
+    if (owner && contact.last_name !== owner.last_name && contact.first_name !== owner.first_name)
       contactPoints.push({
         contactName: contact.first_name + ' ' + contact.last_name,
         contactEmail: contact.email,
