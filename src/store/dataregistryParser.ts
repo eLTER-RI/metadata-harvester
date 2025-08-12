@@ -1,4 +1,40 @@
-import { CommonDataset, Contact, Creator, formatDate, Geolocation, getLicenseURI, License } from './commonStructure';
+import {
+  AdditionalMetadata,
+  CommonDataset,
+  Contact,
+  Creator,
+  formatDate,
+  Geolocation,
+  getLicenseURI,
+  License,
+} from './commonStructure';
+
+function getAdditionalMetadata(dataRegistry: any): AdditionalMetadata[] {
+  const additional_metadata: AdditionalMetadata[] = [];
+  const record = dataRegistry.resource;
+  if (record.uuid) {
+    additional_metadata.push({
+      name: 'dataregistry uuid',
+      value: dataRegistry.uuid,
+    });
+  }
+
+  if (record.category?.identifier) {
+    additional_metadata.push({
+      name: 'category identifier',
+      value: record.category.identifier,
+    });
+  }
+
+  if (record.category?.gn_description) {
+    additional_metadata.push({
+      name: 'category description',
+      value: record.category.gn_description,
+    });
+  }
+
+  return additional_metadata;
+}
 
 export async function mapDataRegistryToCommonDatasetMetadata(
   url: string,
@@ -100,6 +136,7 @@ export async function mapDataRegistryToCommonDatasetMetadata(
       ],
       siteReferences: sites,
       language: dataRegistry.resource.language ?? undefined,
+      additionalMetadata: getAdditionalMetadata(dataRegistry),
     },
   };
 }
