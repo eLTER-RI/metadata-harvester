@@ -7,6 +7,7 @@ import {
   Geolocation,
   getLicenseURI,
   License,
+  parsePID,
 } from './commonStructure';
 
 function getAdditionalMetadata(dataRegistry: any): AdditionalMetadata[] {
@@ -92,6 +93,7 @@ export async function mapDataRegistryToCommonDatasetMetadata(
   }
 
   return {
+    pids: parsePID(dataRegistry.resource.doi) || undefined,
     metadata: {
       assetType: dataRegistry.resource.resource_type === 'dataset' ? 'Dataset' : 'Other',
       titles: [
