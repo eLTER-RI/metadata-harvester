@@ -55,7 +55,6 @@ function getAdditionalMetadata(dataRegistry: any): AdditionalMetadata[] {
     'last_updated',
     'raw_purpose',
     'raw_constraints_other',
-    'raw_supplemental_information',
     'raw_data_quality_statement',
     'metadata_only',
     'processed',
@@ -144,7 +143,7 @@ export async function mapDataRegistryToCommonDatasetMetadata(
   if (dataRegistry.resource.raw_supplemental_information) {
     descriptions.push({
       descriptionText: dataRegistry.resource.raw_supplemental_information,
-      descriptionType: 'Supplemental Information',
+      descriptionType: 'Other',
     });
   }
 
