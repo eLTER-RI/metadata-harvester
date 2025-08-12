@@ -3,6 +3,7 @@ import {
   CommonDataset,
   Contact,
   Creator,
+  Description,
   formatDate,
   Geolocation,
   getLicenseURI,
@@ -92,6 +93,21 @@ export async function mapDataRegistryToCommonDatasetMetadata(
     }
   }
 
+  const descriptions: Description[] = [];
+  if (dataRegistry.resource.abstract) {
+    descriptions.push({
+      descriptionText: dataRegistry.resource.abstract,
+      descriptionType: 'Abstract',
+    });
+  }
+
+  if (dataRegistry.resource.raw_supplemental_information) {
+    descriptions.push({
+      descriptionText: dataRegistry.resource.raw_supplemental_information,
+      descriptionType: 'Supplemental Information',
+    });
+  }
+
   return {
     pids: parsePID(dataRegistry.resource.doi) || undefined,
     metadata: {
@@ -103,14 +119,7 @@ export async function mapDataRegistryToCommonDatasetMetadata(
       ],
       creators: creators,
       contactPoints: contactPoints,
-      descriptions: dataRegistry.resource.abstract
-        ? [
-            {
-              descriptionText: dataRegistry.resource.abstract,
-              descriptionType: 'Abstract',
-            },
-          ]
-        : [],
+      descriptions: descriptions,
       keywords: (dataRegistry.resource.keywords || []).map((keyword: any) => ({
         keywordLabel: keyword.name,
       })),
