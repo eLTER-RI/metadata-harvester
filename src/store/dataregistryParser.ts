@@ -13,13 +13,8 @@ import {
 
 function getAdditionalMetadata(dataRegistry: any): AdditionalMetadata[] {
   const additional_metadata: AdditionalMetadata[] = [];
+
   const record = dataRegistry.resource;
-  if (record.uuid) {
-    additional_metadata.push({
-      name: 'dataregistry uuid',
-      value: dataRegistry.uuid,
-    });
-  }
 
   if (record.category?.identifier) {
     additional_metadata.push({
@@ -34,6 +29,51 @@ function getAdditionalMetadata(dataRegistry: any): AdditionalMetadata[] {
       value: record.category.gn_description,
     });
   }
+
+  const stringMetadata = [
+    'pk',
+    'uuid',
+    'polymorphic_ctype_id',
+    'attribution',
+    'srid',
+    'date',
+    'date_type',
+    'edition',
+    'maintenance_frequency',
+    'restriction_code_type',
+    'spatial_representation_type',
+    'temporal_extent_start',
+    'temporal_extent_end',
+    'supplemental_information',
+    'group',
+    'rating',
+    'featured',
+    'advertised',
+    'is_published',
+    'is_approved',
+    'created',
+    'last_updated',
+    'raw_purpose',
+    'raw_constraints_other',
+    'raw_supplemental_information',
+    'raw_data_quality_statement',
+    'metadata_only',
+    'processed',
+    'state',
+    'subtype',
+    'sourcetype',
+    'is_copyable',
+    'metadata_uploaded_preserve',
+  ];
+
+  stringMetadata.forEach((key: string) => {
+    if (record[key]) {
+      additional_metadata.push({
+        name: key,
+        value: String(record[key]),
+      });
+    }
+  });
 
   return additional_metadata;
 }
