@@ -148,7 +148,7 @@ export async function mapDataRegistryToCommonDatasetMetadata(
   }
 
   return {
-    pids: parsePID(dataRegistry.resource.doi) || undefined,
+    pids: dataRegistry.resource.doi ? parsePID(dataRegistry.resource.doi) || undefined : undefined,
     metadata: {
       assetType: dataRegistry.resource.resource_type === 'dataset' ? 'Dataset' : 'Other',
       titles: [
