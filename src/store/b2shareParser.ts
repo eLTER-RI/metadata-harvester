@@ -174,7 +174,7 @@ export async function mapB2ShareToCommonDatasetMetadata(
   url: string,
   b2share: B2ShareExtractedSchema,
   sites: any,
-  repositoryType: 'B2SHARE' | 'B2SHARE_JUELICH',
+  repositoryType: 'B2SHARE_EUDAT' | 'B2SHARE_JUELICH',
 ): Promise<CommonDataset> {
   const licenses: License[] = [];
   if (b2share.metadata.license && (b2share.metadata.license.license_identifier || b2share.metadata.license.license)) {
@@ -292,7 +292,7 @@ export async function mapB2ShareToCommonDatasetMetadata(
         format: f.key?.split('.').pop(),
       })),
       externalSourceInformation: {
-        externalSourceName: repositoryType == 'B2SHARE' ? 'B2Share' : 'B2Share Juelich',
+        externalSourceName: repositoryType == 'B2SHARE_EUDAT' ? 'B2Share Eudat' : 'B2Share Juelich',
         externalSourceURI: url,
       },
       language:
@@ -303,10 +303,10 @@ export async function mapB2ShareToCommonDatasetMetadata(
       taxonomicCoverages: [],
       methods: [],
       projects:
-        repositoryType == 'B2SHARE'
+        repositoryType == 'B2SHARE_EUDAT'
           ? [
               {
-                projectName: 'B2SHARE external record - eLTER Community',
+                projectName: 'B2SHARE Eudat external record - eLTER Community',
                 projectID: 'https://b2share.eudat.eu/communities/LTER',
               },
             ]

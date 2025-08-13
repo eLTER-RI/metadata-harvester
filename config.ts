@@ -9,9 +9,9 @@ export interface RepositoryConfig {
 
 export const CONFIG = {
   REPOSITORIES: {
-    B2SHARE: {
+    B2SHARE_EUDAT: {
       apiUrl: 'https://b2share.eudat.eu/api/records/?q=community:d952913c-451e-4b5c-817e-d578dc8a4469&sort=oldest',
-      mappedRecordsPath: './data/mapped_b2share_records.json',
+      mappedRecordsPath: './data/mapped_b2share_eudat_records.json',
       pageSize: 100,
       selfLinkKey: 'self',
       dataKey: 'hits.hits',

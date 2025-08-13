@@ -126,7 +126,7 @@ async function processApiPage(
       }
 
       switch (repositoryType) {
-        case 'B2SHARE':
+        case 'B2SHARE_EUDAT':
         case 'B2SHARE_JUELICH': {
           const matchedSites = await getB2ShareMatchedSites(recordData, sites);
 
@@ -204,7 +204,7 @@ async function processAll(repositoryType: RepositoryType) {
   ) => Promise<any[]>;
 
   switch (repositoryType) {
-    case 'B2SHARE':
+    case 'B2SHARE_EUDAT':
     case 'B2SHARE_JUELICH':
     case 'ZENODO':
     case 'ZENODO_IT':
