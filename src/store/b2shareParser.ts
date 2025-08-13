@@ -293,7 +293,8 @@ export async function mapB2ShareToCommonDatasetMetadata(
       })),
       externalSourceInformation: {
         externalSourceName: repositoryType == 'B2SHARE_EUDAT' ? 'B2Share Eudat' : 'B2Share Juelich',
-        externalSourceURI: url,
+        externalSourceURI:
+          b2share.metadata.ePIC_PID && typeof b2share.metadata.ePIC_PID === 'string' ? b2share.metadata.ePIC_PID : url,
       },
       language:
         typeof b2share.metadata.language === 'string'
