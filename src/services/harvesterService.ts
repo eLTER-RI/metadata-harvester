@@ -2,6 +2,9 @@ import 'dotenv/config';
 import express from 'express';
 import { Pool } from 'pg';
 import { log } from './serviceLogging';
+import { RepositoryType } from '../store/commonStructure';
+import { CONFIG } from '../../config';
+import { harvestAndPost } from './harvester';
 
 const pool = new Pool({
   user: process.env.DB_USER,
@@ -15,6 +18,23 @@ const app = express();
 app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
+
+app.post('/harvest', async (req, res) => {
+  const { repository } = req.body;
+  const repositoryType = repository.toUpperCase() as RepositoryType;
+
+  if (!repository || !CONFIG.REPOSITORIES[repositoryType]) {
+    return res.status(400).json({ error: `Invalid repository: '${repository}'.` });
+  }
+
+  try {
+    await harvestAndPost(repositoryType);
+    log('info', `Job for ${repositoryType} completed successfully.`);
+  } catch (e) {
+    log('error', `Job for ${repositoryType} failed with error: ${e}`);
+  }
+  res.status(200).json({ message: `Harvesting job completed.` });
+});
 
 app.listen(PORT, () => {
   log('info', `Data Harvester API listening at http://localhost:${PORT}`);
