@@ -5,6 +5,7 @@ import { log } from './serviceLogging';
 import { RepositoryType } from '../store/commonStructure';
 import { CONFIG } from '../../config';
 import { harvestAndPost } from './harvester';
+import { syncDeimsSites } from './syncDeimsSites';
 
 const pool = new Pool({
   user: process.env.DB_USER,
@@ -34,6 +35,17 @@ app.post('/harvest', async (req, res) => {
     log('error', `Job for ${repositoryType} failed with error: ${e}`);
   }
   res.status(200).json({ message: `Harvesting job completed.` });
+});
+
+app.post('/sync-deims', async (req, res) => {
+  log('info', 'Command received: sync-deims');
+  try {
+    await syncDeimsSites(pool);
+    res.status(200).json({ message: 'DEIMS sites synchronization started successfully.' });
+  } catch (error) {
+    log('error', `${error}`);
+    res.status(500).json({ error: 'Failed to start DEIMS sites synchronization.' });
+  }
 });
 
 app.listen(PORT, () => {

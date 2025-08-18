@@ -52,7 +52,7 @@ async function init(): Promise<void> {
   try {
     process.stdout.write(`Creating table 'harvested_records'.\n`);
     await appClient.connect();
-    const createTableQuery = `
+    const createRecordsTableQuery = `
       CREATE TABLE IF NOT EXISTS harvested_records (
         source_url TEXT PRIMARY KEY,
         source_repository TEXT NOT NULL,
@@ -63,8 +63,21 @@ async function init(): Promise<void> {
         last_harvested TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       );
     `;
-    await appClient.query(createTableQuery);
+    await appClient.query(createRecordsTableQuery);
     process.stdout.write(`Successfully created table harvested_records.\n`);
+
+    const createSitesTableQuery = `
+    CREATE TABLE IF NOT EXISTS deims_sites (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    shortname TEXT,
+    site_data JSONB NOT NULL,
+    checksum TEXT NOT NULL
+    );
+  `;
+
+    await appClient.query(createSitesTableQuery);
+    process.stdout.write(`Successfully created table deims_sites.\n`);
   } catch (error) {
     process.stderr.write('Error during table creationg: ' + error + '\n');
     throw error;
