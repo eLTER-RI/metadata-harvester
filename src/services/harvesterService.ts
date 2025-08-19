@@ -29,7 +29,7 @@ app.post('/harvest', async (req, res) => {
   }
 
   try {
-    await harvestAndPost(repositoryType);
+    await harvestAndPost(pool, repositoryType);
     log('info', `Job for ${repositoryType} completed successfully.`);
   } catch (e) {
     log('error', `Job for ${repositoryType} failed with error: ${e}`);
