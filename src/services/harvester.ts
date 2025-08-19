@@ -142,11 +142,16 @@ export async function harvestAndPostFieldSitesPage(pool: Pool, url: string) {
         const matchedSites = getFieldSitesMatchedSites(recordData);
         const mappedDataset = await mapFieldSitesToCommonDatasetMetadata(datasetUrl, recordData, matchedSites);
         const newSourceChecksum = calculateChecksum(recordData);
-        updateDarBasedOnDB(recordDao, datasetUrl, 'SITES', newSourceChecksum, mappedDataset);
+        await updateDarBasedOnDB(recordDao, datasetUrl, 'SITES', newSourceChecksum, mappedDataset);
       }),
     );
-  } catch (error) {
-    log('error', `Error during harvesting and posting fieldsites page: ` + error);
+    await client.query('COMMIT');
+    log('info', `Transaction for SITES committed successfully.`);
+  } catch (e) {
+    if (client) await client.query('ROLLBACK');
+    log('error', `Harvesting process failed: ${e}`);
+  } finally {
+    if (client) client.release();
   }
 }
 
@@ -162,6 +167,7 @@ export const harvestAndPost = async (pool: Pool, repositoryType: RepositoryType)
   const apiUrl = repoConfig.apiUrl;
   if (!pageSize && repositoryType === 'SITES') {
     harvestAndPostFieldSitesPage(pool, apiUrl);
+    log('info', `Harvesting for repository: ${repositoryType} finished`);
     return;
   }
 };
