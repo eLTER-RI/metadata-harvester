@@ -231,7 +231,6 @@ export async function mapFieldSitesToCommonDatasetMetadata(
     responsibleOrganizations.push(stationOrg.name);
   }
 
-  console.log('mapping ' + url);
   return {
     metadata: {
       assetType: 'Dataset',

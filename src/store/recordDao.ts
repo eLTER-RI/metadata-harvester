@@ -19,7 +19,6 @@ export class RecordDao {
   }
 
   async createRecord(record: Omit<DbRecord, 'last_harvested'>): Promise<void> {
-    console.log(record);
     const query = `
             INSERT INTO harvested_records (source_url, source_repository, source_checksum, dar_id, dar_checksum, status, last_harvested)
             VALUES ($1, $2, $3, $4, $5, $6, NOW())
@@ -42,6 +41,16 @@ export class RecordDao {
             WHERE source_url = $4
         `;
     const values = [record.source_checksum, record.dar_checksum, record.status, source_url];
+    await this.pool.query(query, values);
+  }
+
+  async updateRecordAfterPost(source_url: string, record: Partial<DbRecord>): Promise<void> {
+    const query = `
+            UPDATE harvested_records
+            SET dar_id = $2, status = $3
+            WHERE source_url = $1
+        `;
+    const values = [source_url, record.dar_id, record.status];
     await this.pool.query(query, values);
   }
 

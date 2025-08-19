@@ -1,4 +1,4 @@
-import { RepositoryType } from '../store/commonStructure';
+import { CommonDataset, RepositoryType } from '../store/commonStructure';
 import { log } from './serviceLogging';
 import { CONFIG } from '../../config';
 import { Pool } from 'pg';
@@ -26,7 +26,31 @@ if (!API_URL || !AUTH_TOKEN) {
   );
 }
 
-// Function to fetch JSON from a URL
+async function updateDarBasedOnDB(
+  recordDao: RecordDao,
+  url: string,
+  repositoryType: RepositoryType,
+  sourceChecksum: string,
+  dataset: CommonDataset,
+) {
+  const existingRecord = await recordDao.getRecordBySourceId(url);
+  const darChecksum = calculateChecksum(dataset);
+  if (existingRecord.length == 0) {
+    await recordDao.createRecord({
+      source_url: url,
+      source_repository: repositoryType,
+      source_checksum: sourceChecksum,
+      dar_id: '',
+      dar_checksum: darChecksum,
+      status: 'creating',
+    });
+    // post
+    await recordDao.updateRecordAfterPost(url, {
+      dar_id: '', // add response url
+      status: 'success',
+    });
+  }
+}
 
 export async function harvestAndPostFieldSitesPage(pool: Pool, url: string) {
   if (!API_URL || !AUTH_TOKEN) {
@@ -66,20 +90,9 @@ export async function harvestAndPostFieldSitesPage(pool: Pool, url: string) {
         const recordData = await fetchJson(datasetUrl);
         if (!recordData) return null;
         const matchedSites = getFieldSitesMatchedSites(recordData);
-        const existingRecord = await recordDao.getRecordBySourceId(url);
-        if (existingRecord.length == 0) {
-          const newSourceChecksum = calculateChecksum(recordData);
-          const mappedDataset = await mapFieldSitesToCommonDatasetMetadata(datasetUrl, recordData, matchedSites);
-          const darChecksum = calculateChecksum(JSON.stringify(mappedDataset));
-          await recordDao.createRecord({
-            source_url: datasetUrl,
-            source_repository: 'SITES',
-            source_checksum: newSourceChecksum,
-            dar_id: '',
-            dar_checksum: darChecksum,
-            status: 'creating',
-          });
-        }
+        const mappedDataset = await mapFieldSitesToCommonDatasetMetadata(datasetUrl, recordData, matchedSites);
+        const newSourceChecksum = calculateChecksum(recordData);
+        updateDarBasedOnDB(recordDao, datasetUrl, 'SITES', newSourceChecksum, mappedDataset);
       }),
     );
   } catch (error) {
