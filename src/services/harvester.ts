@@ -35,7 +35,41 @@ async function updateDarBasedOnDB(
 ) {
   const existingRecord = await recordDao.getRecordBySourceId(url);
   const darChecksum = calculateChecksum(dataset);
+  if (existingRecord.length > 1) {
+    throw new Error(
+      `API_URL or AUTH_TOKEN undefined, env: '${currentEnv}'.
+      Check the .env file and set environments correctly.`,
+    );
+  }
+
   if (existingRecord.length == 0) {
+    const oldVersions = dataset.metadata.relatedIdentifiers
+      ?.filter((id) => id.relationType === 'IsNewVersionOf')
+      .map((id) => id.relatedID);
+    let hasOldVersionInDar = false;
+    if (oldVersions && oldVersions.length > 0) {
+      oldVersions.forEach(async (oldUrl) => {
+        const rows = await recordDao.getRecordBySourceId(oldUrl);
+        if (rows.length > 0) {
+          hasOldVersionInDar = true;
+          await recordDao.updateRecordWithPrimaryKey(oldUrl, {
+            source_url: url,
+            source_repository: repositoryType,
+            source_checksum: sourceChecksum,
+            dar_id: rows[0].dar_id,
+            dar_checksum: darChecksum,
+            status: 'updating',
+          });
+          // update dar
+          await recordDao.updateStatus(url, {
+            status: 'success',
+          });
+          return;
+        }
+      });
+    }
+    if (hasOldVersionInDar) return;
+
     await recordDao.createRecord({
       source_url: url,
       source_repository: repositoryType,
@@ -45,8 +79,24 @@ async function updateDarBasedOnDB(
       status: 'creating',
     });
     // post
-    await recordDao.updateRecordAfterPost(url, {
+    await recordDao.updateDarIdStatus(url, {
       dar_id: '', // add response url
+      status: 'success',
+    });
+    return;
+  }
+
+  if (existingRecord[0].source_checksum != sourceChecksum || existingRecord[0].dar_checksum != darChecksum) {
+    await recordDao.updateRecord(url, {
+      source_url: url,
+      source_repository: repositoryType,
+      source_checksum: sourceChecksum,
+      dar_id: existingRecord[0].dar_id,
+      dar_checksum: darChecksum,
+      status: 'updating',
+    });
+    // update dar
+    await recordDao.updateStatus(url, {
       status: 'success',
     });
   }

@@ -44,13 +44,35 @@ export class RecordDao {
     await this.pool.query(query, values);
   }
 
-  async updateRecordAfterPost(source_url: string, record: Partial<DbRecord>): Promise<void> {
+  async updateDarIdStatus(source_url: string, record: Partial<DbRecord>): Promise<void> {
     const query = `
             UPDATE harvested_records
             SET dar_id = $2, status = $3
             WHERE source_url = $1
         `;
     const values = [source_url, record.dar_id, record.status];
+    await this.pool.query(query, values);
+  }
+
+  async updateStatus(source_url: string, record: Partial<DbRecord>): Promise<void> {
+    const query = `
+            UPDATE harvested_records
+            SET status = $2
+            WHERE source_url = $1
+        `;
+    const values = [source_url, record.status];
+    await this.pool.query(query, values);
+  }
+
+  // This is an edge case, but sometimes repository owners have versioning, and therefore the souce url changes.
+  // First source_url is the one that we are looking for, and we are replacing the value with source_url from the record structure.
+  async updateRecordWithPrimaryKey(source_url: string, record: Partial<DbRecord>): Promise<void> {
+    const query = `
+            UPDATE harvested_records
+            SET source_url = $ 1, source_checksum = $2, dar_checksum = $3, status = $4, last_harvested = NOW()
+            WHERE source_url = $5
+        `;
+    const values = [record.source_url, record.source_checksum, record.dar_checksum, record.status, source_url];
     await this.pool.query(query, values);
   }
 
