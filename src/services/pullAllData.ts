@@ -77,7 +77,7 @@ export async function fetchJson(url: string, retriesLeft = MAX_RETRIES, delay = 
 }
 
 // Function to fetch XML from a given URL.
-async function fetchXml(url: string): Promise<Document | null> {
+export async function fetchXml(url: string): Promise<Document | null> {
   try {
     await new Promise((resolve) => setTimeout(resolve, 500));
     const response = await fetch(url);
@@ -91,7 +91,7 @@ async function fetchXml(url: string): Promise<Document | null> {
   }
 }
 
-async function processApiPage(
+export async function processApiPage(
   url: string,
   sites: any,
   selfLinkKey?: string,
@@ -152,7 +152,7 @@ async function processApiPage(
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function processFieldSitesPage(url: string, sites: any): Promise<any[]> {
+export async function processFieldSitesPage(url: string, sites: any): Promise<any[]> {
   process.stdout.write(`Fetching the dataset from: ${url}...\n`);
 
   const data = await fetchXml(url);
