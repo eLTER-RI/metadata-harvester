@@ -19,7 +19,7 @@ import { mapDataRegistryToCommonDatasetMetadata } from '../store/dataregistryPar
 const MAX_RETRIES = 5;
 const INITIAL_RETRY_DELAY_MS = 20000;
 
-function getNestedValue(obj: any, path: string): any {
+export function getNestedValue(obj: any, path: string): any {
   const objectParts = path.split('.');
   let currentPart = obj;
   for (const part of objectParts) {

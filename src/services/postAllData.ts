@@ -45,7 +45,7 @@ interface SearchOperationOutcome {
   action: 'POST' | 'PUT';
 }
 
-async function performFetch(url: string, options: RequestInit, actionName: string): Promise<Response | null> {
+export async function performFetch(url: string, options: RequestInit, actionName: string): Promise<Response | null> {
   try {
     process.stdout.write(`Starting ${actionName} request to: ${url}\n`);
     const response = await fetch(url, options);
