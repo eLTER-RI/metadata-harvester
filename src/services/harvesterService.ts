@@ -6,6 +6,7 @@ import { RepositoryType } from '../store/commonStructure';
 import { CONFIG } from '../../config';
 import { harvestAndPost } from './harvester';
 import { syncDeimsSites } from './syncDeimsSites';
+import { syncWithDar } from '../../scripts/localDarSync';
 
 const pool = new Pool({
   user: process.env.DB_USER,
@@ -37,7 +38,7 @@ app.post('/harvest', async (req, res) => {
   res.status(200).json({ message: `Harvesting job completed.` });
 });
 
-app.post('/sync-deims', async (req, res) => {
+app.post('/sync/sites', async (req, res) => {
   log('info', 'Command received: sync-deims');
   try {
     await syncDeimsSites(pool);
@@ -46,6 +47,19 @@ app.post('/sync-deims', async (req, res) => {
     log('error', `${error}`);
     res.status(500).json({ error: 'Failed to start DEIMS sites synchronization.' });
   }
+});
+
+app.post('/sync/records', async (req, res) => {
+  const { repository } = req.body;
+  const repositoryType = repository.toUpperCase() as RepositoryType;
+
+  if (!repository || !CONFIG.REPOSITORIES[repositoryType]) {
+    return res.status(400).json({ error: `Invalid repository: '${repository}'.` });
+  }
+  await syncWithDar(repositoryType, pool).catch((e) => {
+    log('error', `Error during syncWithDar for ${repositoryType}: ${e}`);
+  });
+  res.status(200).json({ message: `Sync job of DAR with the local database started successfully.` });
 });
 
 app.listen(PORT, () => {
