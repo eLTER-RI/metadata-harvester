@@ -35,11 +35,13 @@ export function getNestedValue(obj: any, path: string): any {
 export async function fetchJson(url: string, retriesLeft = MAX_RETRIES, delay = INITIAL_RETRY_DELAY_MS): Promise<any> {
   try {
     await new Promise((resolve) => setTimeout(resolve, 500));
-    const response = await fetch(url, {
-      headers: {
-        Accept: 'application/json',
-      },
-    });
+    const headers: { [key: string]: string } = {
+      Accept: 'application/json',
+    };
+    if (process.env.FIELDSITES_TOKEN && url == CONFIG.REPOSITORIES['SITES'].apiUrl) {
+      headers['Authorization'] = `Bearer ${process.env.FIELDSITES_TOKEN}`;
+    }
+    const response = await fetch(url, { headers });
     if (!response.ok) {
       if (response.status === 429 && retriesLeft > 0) {
         process.stderr.write(`Received 429 Too Many Requests for ${url}. Retrying...\n`);
