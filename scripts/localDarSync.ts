@@ -7,7 +7,14 @@ import { CONFIG } from '../config';
 import { RepositoryType } from '../src/store/commonStructure';
 import { log } from '../src/services/serviceLogging';
 
-const AUTH_TOKEN = process.env.PROD_AUTH_TOKEN || process.env.DEV_AUTH_TOKEN;
+const currentEnv = process.env.NODE_ENV;
+if (currentEnv !== 'prod' && currentEnv !== 'dev') {
+  throw new Error(`NODE_ENV must be set to 'prod' or 'dev'`);
+}
+
+const API_URL = currentEnv === 'prod' ? process.env.PROD_API_URL : process.env.DEV_API_URL;
+const AUTH_TOKEN =
+  currentEnv === 'prod' ? 'Bearer ' + process.env.PROD_AUTH_TOKEN : 'Bearer ' + process.env.DEV_AUTH_TOKEN;
 
 interface DarApiResponse {
   hits: {
@@ -23,6 +30,45 @@ interface DarApiResponse {
   };
 }
 
+async function deleteDarRecordsByIds(ids: string[]) {
+  const deletePromises = ids.map((id) => {
+    const url = `${API_URL}/${id}`;
+
+    log('info', `Starting with deletion of a record with ID: ${id}`);
+
+    return fetch(url, {
+      method: 'DELETE',
+      headers: {
+        Authorization: AUTH_TOKEN,
+      },
+    }).then((response) => {
+      if (!response.ok) {
+        const errorMessage = `
+          Error deleting record with id ${id}.
+          Request failed with status: ${response.status} ${response.statusText}
+          URL: ${response.url}
+        `;
+        throw new Error(errorMessage);
+      }
+      log('info', `Successfully deleted a record with ID: ${id}`);
+    });
+  });
+
+  try {
+    const results = await Promise.allSettled(deletePromises);
+
+    const rejectedPromises = results.filter((result) => result.status === 'rejected');
+    if (rejectedPromises.length > 0) {
+      log('error', 'The following delete operations failed:');
+      rejectedPromises.forEach((rejection) => {
+        console.error(rejection.reason);
+      });
+    }
+  } catch (error) {
+    log('error', 'An unexpected error occurred during the batch delete operation: ' + error);
+  }
+}
+
 async function fetchDarRecords(darRepoQuery: string): Promise<string[]> {
   const allDarIds: string[] = [];
   const rateLimiter = new RateLimiter(100);
@@ -35,7 +81,7 @@ async function fetchDarRecords(darRepoQuery: string): Promise<string[]> {
       const response = await fetch(`${url}`, {
         method: 'GET',
         headers: {
-          Authorization: `Bearer ${AUTH_TOKEN}`,
+          Authorization: AUTH_TOKEN,
           Accept: 'application/json',
         },
       });
@@ -61,7 +107,7 @@ async function fetchDarRecords(darRepoQuery: string): Promise<string[]> {
   return allDarIds;
 }
 
-export async function syncWithDar(repositoryType: RepositoryType, pool: Pool): Promise<void> {
+export async function syncWithDar(repositoryType: RepositoryType, pool: Pool, darCleanup: boolean): Promise<void> {
   console.log(`Starting DAR sync for repository: ${repositoryType}.`);
 
   let remoteDarIds: string[] = [];
@@ -81,9 +127,12 @@ export async function syncWithDar(repositoryType: RepositoryType, pool: Pool): P
   const localDarIdsSet = new Set(localDarIds);
 
   const extraOnRemote = remoteDarIds.filter((item) => !localDarIdsSet.has(item));
-  const extraInLocal = localDarIds.filter((item) => !remoteDarIdsSet.has(item));
-
   log('warn', `Extra on remote: ` + JSON.stringify(extraOnRemote, null, 2));
+  if (darCleanup) {
+    log('warn', `Deleting all extra resources from Dar.`);
+    deleteDarRecordsByIds(extraOnRemote);
+  }
+  const extraInLocal = localDarIds.filter((item) => !remoteDarIdsSet.has(item));
   log('warn', `Extra in local: ` + JSON.stringify(extraInLocal, null, 2));
 
   log('info', 'DAR sync process finished.');
