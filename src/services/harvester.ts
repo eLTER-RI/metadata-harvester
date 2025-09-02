@@ -103,6 +103,72 @@ async function createInDbAndPost(
   return;
 }
 
+async function updateInDbAndPut(
+  existingDarId: string | null,
+  recordDao: RecordDao,
+  url: string,
+  repositoryType: RepositoryType,
+  sourceChecksum: string,
+  dataset: CommonDataset,
+  oldUrl: string | null,
+) {
+  const darId = existingDarId;
+  const darChecksum = calculateChecksum(dataset);
+  if (!oldUrl) {
+    await recordDao.updateRecord(url, {
+      source_url: url,
+      source_repository: repositoryType,
+      source_checksum: sourceChecksum,
+      dar_id: darId || '',
+      dar_checksum: darChecksum,
+      status: 'updating',
+    });
+  } else {
+    await recordDao.updateRecordWithPrimaryKey(oldUrl, {
+      source_url: url,
+      source_repository: repositoryType,
+      source_checksum: sourceChecksum,
+      dar_id: darId || '',
+      dar_checksum: darChecksum,
+      status: 'updating',
+    });
+  }
+
+  log('info', `PUT ${url} to Dar record with id ${darId}.`);
+  const apiResponse = await fetch(`${API_URL}/${darId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: AUTH_TOKEN,
+    },
+    body: JSON.stringify(dataset, null, 2),
+  });
+
+  if (!apiResponse) {
+    log('error', `PUT request ${url} into dar failed`);
+    await recordDao.updateDarIdStatus(url, {
+      dar_id: '',
+      status: 'failed',
+    });
+    return;
+  }
+
+  if (!apiResponse.ok) {
+    const responseText = await apiResponse.text().catch(() => 'Could not read error response.');
+    log('error', `PUT request ${url} into dar failed with : ${apiResponse.status}: ${responseText}`);
+    await recordDao.updateDarIdStatus(url, {
+      dar_id: '',
+      status: 'failed',
+    });
+    return;
+  }
+
+  await recordDao.updateStatus(url, {
+    status: 'success',
+  });
+  return;
+}
+
 async function findDarRecordBySourceURL(url: string): Promise<string | null> {
   const response = await fetch(getSearchUrl(url), {
     method: 'GET',
@@ -131,6 +197,7 @@ async function updateDarBasedOnDB(
   }
 
   if (!darMatches || dbMatches.length == 0) {
+    // record missing in database or in dar
     const oldVersions = dataset.metadata.relatedIdentifiers
       ?.filter((id) => id.relationType === 'IsNewVersionOf')
       .map((id) => id.relatedID);
@@ -139,22 +206,10 @@ async function updateDarBasedOnDB(
         const rows = await recordDao.getRecordBySourceId(oldUrl);
         if (rows.length > 0) {
           log('info', `Record ${url} has an old version in DAR with ${dbMatches[0].dar_id}`);
-          await recordDao.updateRecordWithPrimaryKey(oldUrl, {
-            source_url: url,
-            source_repository: repositoryType,
-            source_checksum: sourceChecksum,
-            dar_id: rows[0].dar_id,
-            dar_checksum: darChecksum,
-            status: 'updating',
-          });
-          // update dar
-          await recordDao.updateStatus(url, {
-            status: 'success',
-          });
+          updateInDbAndPut(rows[0].dar_id, recordDao, url, repositoryType, sourceChecksum, dataset, oldUrl);
           return;
         }
       });
-      return;
     }
 
     createInDbAndPost(darMatches, dbMatches.length == 0, recordDao, url, repositoryType, sourceChecksum, dataset);
@@ -162,28 +217,15 @@ async function updateDarBasedOnDB(
   }
 
   if (dbMatches[0].source_checksum != sourceChecksum || dbMatches[0].dar_checksum != darChecksum) {
-    await recordDao.updateRecord(url, {
-      source_url: url,
-      source_repository: repositoryType,
-      source_checksum: sourceChecksum,
-      dar_id: darMatches || '',
-      dar_checksum: darChecksum,
-      status: 'updating',
-    });
-    // update dar
-    await recordDao.updateStatus(url, {
-      status: 'success',
-    });
-    return;
-  } else {
-    await recordDao.updateStatus(url, {
-      status: 'success',
-    });
-    await recordDao.updateDarId(url, {
-      dar_id: darMatches || '',
-    });
+    // source data or mapping logic changed
+    updateInDbAndPut(darMatches, recordDao, url, repositoryType, sourceChecksum, dataset, null);
     return;
   }
+
+  log('info', 'Record was up to date.');
+  await recordDao.updateStatus(url, {
+    status: 'success',
+  });
 }
 
 async function processFieldSitesDatasetUrls(urls: string[], recordDao: RecordDao) {

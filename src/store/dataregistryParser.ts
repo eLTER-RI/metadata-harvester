@@ -45,7 +45,6 @@ function getAdditionalMetadata(dataRegistry: any): AdditionalMetadata[] {
     'temporal_extent_start',
     'temporal_extent_end',
     'supplemental_information',
-    'group',
     'rating',
     'featured',
     'advertised',
