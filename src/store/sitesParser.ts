@@ -272,6 +272,10 @@ export async function mapFieldSitesToCommonDatasetMetadata(
               projectName: fieldSites.specification.project.self.label,
               projectID: fieldSites.specification.project.self.uri,
             },
+            {
+              projectName: 'SITES external record - eLTER Community',
+              projectID: 'https://meta.fieldsites.se/',
+            },
           ]
         : [],
       siteReferences: sites,
