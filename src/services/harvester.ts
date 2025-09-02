@@ -301,7 +301,7 @@ async function processApiPageDatasetUrls(
   await Promise.all(
     hits.map(async (hit: any) => {
       if (!hit) return null;
-      const recordUrl = getNestedValue(hit, selfLinkKey);
+      let recordUrl = getNestedValue(hit, selfLinkKey);
       const recordData = recordUrl ? await fetchJson(recordUrl) : hit;
       if (!recordData) return null;
 
@@ -328,6 +328,7 @@ async function processApiPageDatasetUrls(
           throw new Error(`Unknown repository: ${repositoryType}.`);
       }
       const newSourceChecksum = calculateChecksum(recordData);
+      recordUrl = mappedDataset.metadata.externalSourceInformation.externalSourceURI;
       await updateDarBasedOnDB(recordDao, recordUrl, repositoryType, newSourceChecksum, mappedDataset);
     }),
   );
