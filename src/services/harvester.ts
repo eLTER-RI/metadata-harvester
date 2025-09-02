@@ -36,6 +36,86 @@ if (!API_URL || !AUTH_TOKEN) {
   );
 }
 
+function getSearchUrl(externalSourceURI: string): string {
+  const encodedURI = encodeURIComponent(externalSourceURI);
+  return `${API_URL}?q=&metadata_externalSourceInformation_externalSourceURI=${encodedURI}`;
+}
+
+async function createInDbAndPost(
+  existingDarId: string | null,
+  missingInDb: boolean,
+  recordDao: RecordDao,
+  url: string,
+  repositoryType: RepositoryType,
+  sourceChecksum: string,
+  dataset: CommonDataset,
+) {
+  let darId = existingDarId;
+  const darChecksum = calculateChecksum(dataset);
+  if (missingInDb) {
+    log('info', `Creating database record for ${url}`);
+    await recordDao.createRecord({
+      source_url: url,
+      source_repository: repositoryType,
+      source_checksum: sourceChecksum,
+      dar_id: '',
+      dar_checksum: darChecksum,
+      status: 'creating',
+    });
+  }
+
+  if (!darId) {
+    log('info', `Posting ${url} to Dar.`);
+    const apiResponse = await fetch(API_URL!, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: AUTH_TOKEN,
+      },
+      body: JSON.stringify(dataset, null, 2),
+    });
+
+    if (!apiResponse) {
+      log('error', `Posting ${url} into dar failed`);
+      await recordDao.updateDarIdStatus(url, {
+        dar_id: '',
+        status: 'failed',
+      });
+      return;
+    }
+
+    if (!apiResponse.ok) {
+      const responseText = await apiResponse.text().catch(() => 'Could not read error response.');
+      log('error', `Posting ${url} into dar failed with : ${apiResponse.status}: ${responseText}`);
+      await recordDao.updateDarIdStatus(url, {
+        dar_id: '',
+        status: 'failed',
+      });
+      return;
+    }
+    const resp = await apiResponse.json();
+    darId = resp.id;
+  }
+  await recordDao.updateDarIdStatus(url, {
+    dar_id: darId || '',
+    status: 'success',
+  });
+  return;
+}
+
+async function findDarRecordBySourceURL(url: string): Promise<string | null> {
+  const response = await fetch(getSearchUrl(url), {
+    method: 'GET',
+    headers: { Authorization: AUTH_TOKEN, Accept: 'application/json' },
+  });
+
+  const searchResult = (await response.json()) as any;
+  if (searchResult?.hits?.hits?.length > 0 && searchResult.hits.hits[0]?.id) {
+    return searchResult.hits.hits[0].id;
+  }
+  return null;
+}
+
 async function updateDarBasedOnDB(
   recordDao: RecordDao,
   url: string,
@@ -43,16 +123,14 @@ async function updateDarBasedOnDB(
   sourceChecksum: string,
   dataset: CommonDataset,
 ) {
-  const existingRecord = await recordDao.getRecordBySourceId(url);
   const darChecksum = calculateChecksum(dataset);
-  if (existingRecord.length > 1) {
-    throw new Error(
-      `API_URL or AUTH_TOKEN undefined, env: '${currentEnv}'.
-      Check the .env file and set environments correctly.`,
-    );
+  const darMatches = await findDarRecordBySourceURL(url);
+  const dbMatches = await recordDao.getRecordBySourceId(url);
+  if (dbMatches.length > 1) {
+    throw new Error('More than one existing records of one dataset in the local database.');
   }
 
-  if (existingRecord.length == 0) {
+  if (!darMatches || dbMatches.length == 0) {
     const oldVersions = dataset.metadata.relatedIdentifiers
       ?.filter((id) => id.relationType === 'IsNewVersionOf')
       .map((id) => id.relatedID);
@@ -60,7 +138,7 @@ async function updateDarBasedOnDB(
       oldVersions.forEach(async (oldUrl) => {
         const rows = await recordDao.getRecordBySourceId(oldUrl);
         if (rows.length > 0) {
-          log('info', `Record ${url} has an old version in DAR with ${existingRecord[0].dar_id}`);
+          log('info', `Record ${url} has an old version in DAR with ${dbMatches[0].dar_id}`);
           await recordDao.updateRecordWithPrimaryKey(oldUrl, {
             source_url: url,
             source_repository: repositoryType,
@@ -76,30 +154,19 @@ async function updateDarBasedOnDB(
           return;
         }
       });
+      return;
     }
 
-    await recordDao.createRecord({
-      source_url: url,
-      source_repository: repositoryType,
-      source_checksum: sourceChecksum,
-      dar_id: '',
-      dar_checksum: darChecksum,
-      status: 'creating',
-    });
-    // post
-    await recordDao.updateDarIdStatus(url, {
-      dar_id: '', // add response url
-      status: 'success',
-    });
+    createInDbAndPost(darMatches, dbMatches.length == 0, recordDao, url, repositoryType, sourceChecksum, dataset);
     return;
   }
 
-  if (existingRecord[0].source_checksum != sourceChecksum || existingRecord[0].dar_checksum != darChecksum) {
+  if (dbMatches[0].source_checksum != sourceChecksum || dbMatches[0].dar_checksum != darChecksum) {
     await recordDao.updateRecord(url, {
       source_url: url,
       source_repository: repositoryType,
       source_checksum: sourceChecksum,
-      dar_id: existingRecord[0].dar_id,
+      dar_id: darMatches || '',
       dar_checksum: darChecksum,
       status: 'updating',
     });
@@ -112,15 +179,20 @@ async function updateDarBasedOnDB(
     await recordDao.updateStatus(url, {
       status: 'success',
     });
+    await recordDao.updateDarId(url, {
+      dar_id: darMatches || '',
+    });
     return;
   }
 }
 
 async function processFieldSitesDatasetUrls(urls: string[], recordDao: RecordDao) {
+  const rateLimiter = new RateLimiter(100);
   await Promise.all(
     urls.map(async (datasetUrl: any) => {
       try {
         if (!datasetUrl) return null;
+        await rateLimiter.waitForRequest();
         const recordData = await fetchJson(datasetUrl);
         if (!recordData) return null;
         const matchedSites = getFieldSitesMatchedSites(recordData);
@@ -151,11 +223,11 @@ export async function harvestAndPostFieldSitesPage(pool: Pool, url: string) {
 
   let client;
   try {
+    const recordDao = new RecordDao(pool);
+    await recordDao.updateRepositoryToInProgress('SITES');
     client = await pool.connect();
     await client.query('BEGIN');
     log('info', `Connected to database. Starting transaction.`);
-    const recordDao = new RecordDao(pool);
-    await recordDao.updateRepositoryToInProgress('SITES');
 
     log('info', `Found ${urls.length} URLs. Fetching individual records...\n`);
 
