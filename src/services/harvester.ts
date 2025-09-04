@@ -17,6 +17,7 @@ import { RateLimiter } from './rateLimiter';
 import { mapB2ShareToCommonDatasetMetadata } from '../store/b2shareParser';
 import { mapDataRegistryToCommonDatasetMetadata } from '../store/dataregistryParser';
 import { mapZenodoToCommonDatasetMetadata } from '../store/zenodoParser';
+import { zenodoLimiter } from './rateLimiterConcurrency';
 
 // Configurations
 const currentEnv = process.env.NODE_ENV;
@@ -41,16 +42,23 @@ function getSearchUrl(externalSourceURI: string): string {
   return `${API_URL}?q=&metadata_externalSourceInformation_externalSourceURI=${encodedURI}`;
 }
 
-async function createInDbAndPost(
-  existingDarId: string | null,
+async function dbRecordUpsert(
+  darId: string | null,
   missingInDb: boolean,
   recordDao: RecordDao,
   url: string,
   repositoryType: RepositoryType,
   sourceChecksum: string,
   dataset: CommonDataset,
+  oldUrl?: string,
 ) {
-  let darId = existingDarId;
+  if (!darId) {
+    await recordDao.updateDarIdStatus(url, {
+      status: 'failed',
+    });
+    return;
+  }
+
   const darChecksum = calculateChecksum(dataset);
   if (missingInDb) {
     log('info', `Creating database record for ${url}`);
@@ -58,12 +66,44 @@ async function createInDbAndPost(
       source_url: url,
       source_repository: repositoryType,
       source_checksum: sourceChecksum,
-      dar_id: '',
+      dar_id: darId,
       dar_checksum: darChecksum,
-      status: 'creating',
+      status: 'success',
     });
+    return;
   }
 
+  if (oldUrl) {
+    log('info', `Record ${url} has an old version of ${oldUrl} in DAR with ${darId}`);
+    await recordDao.updateRecordWithPrimaryKey(oldUrl, {
+      source_url: url,
+      source_repository: repositoryType,
+      source_checksum: sourceChecksum,
+      dar_id: darId,
+      dar_checksum: darChecksum,
+      status: 'updating',
+    });
+    return;
+  }
+
+  log('info', `Updating record in database for record ${url}, dar id ${darId}`);
+  await recordDao.updateRecord(url, {
+    source_url: url,
+    source_repository: repositoryType,
+    source_checksum: sourceChecksum,
+    dar_id: darId,
+    dar_checksum: darChecksum,
+    status: 'updating',
+  });
+}
+
+async function postToDar(
+  existingDarId: string | null,
+  recordDao: RecordDao,
+  url: string,
+  dataset: CommonDataset,
+): Promise<string | null> {
+  let darId = existingDarId;
   if (!darId) {
     log('info', `Posting ${url} to Dar.`);
     const apiResponse = await fetch(API_URL!, {
@@ -81,7 +121,7 @@ async function createInDbAndPost(
         dar_id: '',
         status: 'failed',
       });
-      return;
+      return darId;
     }
 
     if (!apiResponse.ok) {
@@ -91,49 +131,15 @@ async function createInDbAndPost(
         dar_id: '',
         status: 'failed',
       });
-      return;
+      return darId;
     }
     const resp = await apiResponse.json();
     darId = resp.id;
   }
-  await recordDao.updateDarIdStatus(url, {
-    dar_id: darId || '',
-    status: 'success',
-  });
-  return;
+  return darId;
 }
 
-async function updateInDbAndPut(
-  existingDarId: string | null,
-  recordDao: RecordDao,
-  url: string,
-  repositoryType: RepositoryType,
-  sourceChecksum: string,
-  dataset: CommonDataset,
-  oldUrl: string | null,
-) {
-  const darId = existingDarId;
-  const darChecksum = calculateChecksum(dataset);
-  if (!oldUrl) {
-    await recordDao.updateRecord(url, {
-      source_url: url,
-      source_repository: repositoryType,
-      source_checksum: sourceChecksum,
-      dar_id: darId || '',
-      dar_checksum: darChecksum,
-      status: 'updating',
-    });
-  } else {
-    await recordDao.updateRecordWithPrimaryKey(oldUrl, {
-      source_url: url,
-      source_repository: repositoryType,
-      source_checksum: sourceChecksum,
-      dar_id: darId || '',
-      dar_checksum: darChecksum,
-      status: 'updating',
-    });
-  }
-
+async function putToDar(darId: string | null, recordDao: RecordDao, url: string, dataset: CommonDataset) {
   log('info', `PUT ${url} to Dar record with id ${darId}.`);
   const apiResponse = await fetch(`${API_URL}/${darId}`, {
     method: 'PUT',
@@ -147,7 +153,6 @@ async function updateInDbAndPut(
   if (!apiResponse) {
     log('error', `PUT request ${url} into dar failed`);
     await recordDao.updateDarIdStatus(url, {
-      dar_id: '',
       status: 'failed',
     });
     return;
@@ -157,7 +162,6 @@ async function updateInDbAndPut(
     const responseText = await apiResponse.text().catch(() => 'Could not read error response.');
     log('error', `PUT request ${url} into dar failed with : ${apiResponse.status}: ${responseText}`);
     await recordDao.updateDarIdStatus(url, {
-      dar_id: '',
       status: 'failed',
     });
     return;
@@ -195,30 +199,58 @@ async function updateDarBasedOnDB(
   if (dbMatches.length > 1) {
     throw new Error('More than one existing records of one dataset in the local database.');
   }
+  const oldVersions = dataset.metadata.relatedIdentifiers
+    ?.filter((id) => id.relationType === 'IsNewVersionOf')
+    .map((id) => id.relatedID);
 
-  if (!darMatches || dbMatches.length == 0) {
+  if (oldVersions && oldVersions.length > 0) {
     // record missing in database or in dar
-    const oldVersions = dataset.metadata.relatedIdentifiers
-      ?.filter((id) => id.relationType === 'IsNewVersionOf')
-      .map((id) => id.relatedID);
-    if (oldVersions && oldVersions.length > 0) {
-      oldVersions.forEach(async (oldUrl) => {
-        const rows = await recordDao.getRecordBySourceId(oldUrl);
-        if (rows.length > 0) {
-          log('info', `Record ${url} has an old version in DAR with ${dbMatches[0].dar_id}`);
-          updateInDbAndPut(rows[0].dar_id, recordDao, url, repositoryType, sourceChecksum, dataset, oldUrl);
-          return;
-        }
-      });
-    }
+    oldVersions.forEach(async (oldUrl) => {
+      const oldVersionsInDb = await recordDao.getRecordBySourceId(oldUrl);
+      if (oldVersionsInDb.length > 0) {
+        // there is a record in dar that is an old version of this record
+        // we update the old record with our new data, and update our db record
+        // with a new source url and other data
+        putToDar(oldVersionsInDb[0].dar_id, recordDao, url, dataset);
+        dbRecordUpsert(
+          oldVersionsInDb[0].dar_id,
+          dbMatches.length == 0,
+          recordDao,
+          url,
+          repositoryType,
+          sourceChecksum,
+          dataset,
+          oldUrl,
+        );
+        return;
+      }
+    });
+  }
 
-    createInDbAndPost(darMatches, dbMatches.length == 0, recordDao, url, repositoryType, sourceChecksum, dataset);
+  if (!darMatches) {
+    const darId = await postToDar(null, recordDao, url, dataset);
+    await dbRecordUpsert(darId, dbMatches.length == 0, recordDao, url, repositoryType, sourceChecksum, dataset);
     return;
   }
 
-  if (dbMatches[0].source_checksum != sourceChecksum || dbMatches[0].dar_checksum != darChecksum) {
+  if (
+    dbMatches.length == 0 ||
+    dbMatches[0].source_checksum != sourceChecksum ||
+    dbMatches[0].dar_checksum != darChecksum
+  ) {
     // source data or mapping logic changed
-    updateInDbAndPut(darMatches, recordDao, url, repositoryType, sourceChecksum, dataset, null);
+    if (dbMatches.length == 0) {
+      log('info', `No database record for the given dar record. No checksum available, updating.`);
+    } else if (dbMatches[0].source_checksum != sourceChecksum) {
+      log(
+        'info',
+        `Source data changed for ${url}, previous checksum: ${dbMatches[0].source_checksum}, current: ${sourceChecksum}.`,
+      );
+    } else {
+      log('info', 'Implementation of mappers might have changed.');
+    }
+    await putToDar(darMatches, recordDao, url, dataset);
+    await dbRecordUpsert(darMatches, dbMatches.length == 0, recordDao, url, repositoryType, sourceChecksum, dataset);
     return;
   }
 
@@ -293,52 +325,94 @@ async function processApiPageDatasetUrls(
   selfLinkKey: string,
   repositoryType?: RepositoryType,
 ) {
-  let rateLimiter: RateLimiter;
-  if (repositoryType === 'ZENODO' || repositoryType === 'ZENODO_IT') {
-    rateLimiter = new RateLimiter(100);
-  }
   let mappedDataset: CommonDataset;
   await Promise.all(
     hits.map(async (hit: any) => {
       if (!hit) return null;
-      let recordUrl = getNestedValue(hit, selfLinkKey);
-      const recordData = recordUrl ? await fetchJson(recordUrl) : hit;
-      if (!recordData) return null;
+      const processOnePageTask = async () => {
+        let recordUrl = getNestedValue(hit, selfLinkKey);
+        const recordData = recordUrl ? await fetchJson(recordUrl) : hit;
+        if (!recordData) return null;
 
-      switch (repositoryType) {
-        case 'B2SHARE_EUDAT':
-        case 'B2SHARE_JUELICH': {
-          const matchedSites = await getB2ShareMatchedSites(recordData, sites);
-          mappedDataset = await mapB2ShareToCommonDatasetMetadata(recordUrl, recordData, matchedSites, repositoryType);
-          break;
+        switch (repositoryType) {
+          case 'B2SHARE_EUDAT':
+          case 'B2SHARE_JUELICH': {
+            const matchedSites = await getB2ShareMatchedSites(recordData, sites);
+            mappedDataset = await mapB2ShareToCommonDatasetMetadata(
+              recordUrl,
+              recordData,
+              matchedSites,
+              repositoryType,
+            );
+            break;
+          }
+          case 'DATAREGISTRY': {
+            const matchedSites = await getDataRegistryMatchedSites(recordData);
+            mappedDataset = await mapDataRegistryToCommonDatasetMetadata(recordUrl, recordData, matchedSites);
+            break;
+          }
+          case 'ZENODO':
+          case 'ZENODO_IT': {
+            const matchedSites = await getZenodoMatchedSites(recordData, sites);
+            mappedDataset = await mapZenodoToCommonDatasetMetadata(recordUrl, recordData, matchedSites);
+            repositoryType = 'ZENODO';
+            break;
+          }
+          default:
+            throw new Error(`Unknown repository: ${repositoryType}.`);
         }
-        case 'DATAREGISTRY': {
-          const matchedSites = await getDataRegistryMatchedSites(recordData);
-          mappedDataset = await mapDataRegistryToCommonDatasetMetadata(recordUrl, recordData, matchedSites);
-          break;
-        }
-        case 'ZENODO':
-        case 'ZENODO_IT': {
-          await rateLimiter.waitForRequest();
-          const matchedSites = await getZenodoMatchedSites(recordData, sites);
-          mappedDataset = await mapZenodoToCommonDatasetMetadata(recordUrl, recordData, matchedSites);
-          break;
-        }
-        default:
-          throw new Error(`Unknown repository: ${repositoryType}.`);
+        const newSourceChecksum = calculateChecksum(recordData);
+        recordUrl = mappedDataset.metadata.externalSourceInformation.externalSourceURI;
+        await updateDarBasedOnDB(recordDao, recordUrl, repositoryType, newSourceChecksum, mappedDataset);
+      };
+      if (repositoryType === 'ZENODO' || repositoryType === 'ZENODO_IT') {
+        return zenodoLimiter.schedule(() => processOnePageTask());
       }
-      const newSourceChecksum = calculateChecksum(recordData);
-      recordUrl = mappedDataset.metadata.externalSourceInformation.externalSourceURI;
-      await updateDarBasedOnDB(recordDao, recordUrl, repositoryType, newSourceChecksum, mappedDataset);
+      return processOnePageTask();
     }),
   );
 }
+
+async function harvestAndPostApiPageWithTransaction(
+  pool: Pool,
+  url: string,
+  repositoryType: RepositoryType,
+  repoConfig: any,
+) {
+  let page = 1;
+  const { apiUrl, pageSize, selfLinkKey, dataKey } = repoConfig;
+  const recordDao = new RecordDao(pool);
+  await recordDao.updateRepositoryToInProgress(repositoryType);
+  const sites = await fetchSites();
+  while (pageSize) {
+    const pageUrl = `${apiUrl}&size=${pageSize}&page=${page}`;
+    log('info', `Fetching the dataset from: ${pageUrl}...`);
+    // const deimsDao = new DeimsDao(pool);
+    // const sites = await deimsDao.getSitesForLookup();
+
+    const data = await fetchJson(pageUrl);
+    const hits: string[] = dataKey ? getNestedValue(data, dataKey) || [] : [];
+    log('info', `Found ${hits.length} self links. Fetching individual records...\n`);
+
+    // // Process individual records using the parser
+    await processApiPageDatasetUrls(hits, recordDao, sites, selfLinkKey, repositoryType);
+
+    if (hits.length === 0) {
+      log('warn', `No records found on page ${page}. Stopping.`);
+      break;
+    }
+
+    if (hits.length < pageSize) {
+      log('info', 'Last page reached.');
+      break;
+    }
+    page++;
+  }
+}
+
 export async function harvestAndPostApiPage(pool: Pool, url: string, repositoryType: RepositoryType) {
   const repoConfig = CONFIG.REPOSITORIES[repositoryType];
-  const apiUrl = repoConfig.apiUrl;
-  const pageSize = repoConfig.pageSize;
   const selfLinkKey = repoConfig.selfLinkKey;
-  const dataKey = repoConfig.dataKey;
   if (!repoConfig) {
     log('error', `Configuration for repository '${repositoryType}' not available.`);
     throw new Error(`Configuration for repository '${repositoryType}' not available.`);
@@ -350,39 +424,12 @@ export async function harvestAndPostApiPage(pool: Pool, url: string, repositoryT
   }
 
   log('info', `Fetching from ${repositoryType}...`);
-  let page = 1;
   let client;
   try {
     client = await pool.connect();
     log('info', `Connected to database. Starting transaction.`);
     await client.query('BEGIN');
-    const recordDao = new RecordDao(pool);
-    await recordDao.updateRepositoryToInProgress(repositoryType);
-    while (pageSize) {
-      const pageUrl = `${apiUrl}&size=${pageSize}&page=${page}`;
-      log('info', `Fetching the dataset from: ${pageUrl}...`);
-      // const deimsDao = new DeimsDao(pool);
-      // const sites = await deimsDao.getSitesForLookup();
-      const sites = await fetchSites();
-
-      const data = await fetchJson(pageUrl);
-      const hits: string[] = dataKey ? getNestedValue(data, dataKey) || [] : [];
-      log('info', `Found ${hits.length} self links. Fetching individual records...\n`);
-
-      // // Process individual records using the parser
-      await processApiPageDatasetUrls(hits, recordDao, sites, selfLinkKey, repositoryType);
-
-      if (hits.length === 0) {
-        log('warn', `No records found on page ${page}. Stopping.`);
-        break;
-      }
-
-      if (hits.length < pageSize) {
-        log('info', 'Last page reached.');
-        break;
-      }
-      page++;
-    }
+    await harvestAndPostApiPageWithTransaction(pool, url, repositoryType, repoConfig);
     await client.query('COMMIT');
     log('info', `Transaction for SITES committed successfully.`);
   } catch (e) {

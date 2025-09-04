@@ -37,10 +37,17 @@ export class RecordDao {
   async updateRecord(source_url: string, record: Partial<DbRecord>): Promise<void> {
     const query = `
             UPDATE harvested_records
-            SET source_checksum = $1, dar_checksum = $2, status = $3, last_harvested = NOW()
-            WHERE source_url = $4
+            SET source_repository = $1, source_checksum = $2, dar_id = $3, dar_checksum = $4, status = $5, last_harvested = NOW()
+            WHERE source_url = $6
         `;
-    const values = [record.source_checksum, record.dar_checksum, record.status, source_url];
+    const values = [
+      record.source_repository,
+      record.source_checksum,
+      record.dar_id,
+      record.dar_checksum,
+      record.status,
+      source_url,
+    ];
     await this.pool.query(query, values);
   }
 
@@ -85,7 +92,7 @@ export class RecordDao {
   async updateRecordWithPrimaryKey(source_url: string, record: Partial<DbRecord>): Promise<void> {
     const query = `
             UPDATE harvested_records
-            SET source_url = $ 1, source_checksum = $2, dar_checksum = $3, status = $4, last_harvested = NOW()
+            SET source_url = $1, source_checksum = $2, dar_checksum = $3, status = $4, last_harvested = NOW()
             WHERE source_url = $5
         `;
     const values = [record.source_url, record.source_checksum, record.dar_checksum, record.status, source_url];
