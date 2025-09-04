@@ -13,11 +13,10 @@ import {
   getZenodoMatchedSites,
 } from '../utilities/matchDeimsId';
 import { RecordDao } from '../store/recordDao';
-import { RateLimiter } from './rateLimiter';
 import { mapB2ShareToCommonDatasetMetadata } from '../store/b2shareParser';
 import { mapDataRegistryToCommonDatasetMetadata } from '../store/dataregistryParser';
 import { mapZenodoToCommonDatasetMetadata } from '../store/zenodoParser';
-import { zenodoLimiter } from './rateLimiterConcurrency';
+import { fieldSitesLimiter, zenodoLimiter } from './rateLimiterConcurrency';
 
 // Configurations
 const currentEnv = process.env.NODE_ENV;
@@ -261,12 +260,10 @@ async function updateDarBasedOnDB(
 }
 
 async function processFieldSitesDatasetUrls(urls: string[], recordDao: RecordDao) {
-  const rateLimiter = new RateLimiter(100);
-  await Promise.all(
-    urls.map(async (datasetUrl: any) => {
+  const processingPromises = urls.map((datasetUrl: string) => {
+    return fieldSitesLimiter.schedule(async () => {
       try {
         if (!datasetUrl) return null;
-        await rateLimiter.waitForRequest();
         const recordData = await fetchJson(datasetUrl);
         if (!recordData) return null;
         const matchedSites = getFieldSitesMatchedSites(recordData);
@@ -277,8 +274,9 @@ async function processFieldSitesDatasetUrls(urls: string[], recordDao: RecordDao
         log('error', `Failed to process record for ${'SITES'}: ${error}`);
         await recordDao.updateStatus(datasetUrl, { status: 'failed' });
       }
-    }),
-  );
+    });
+  });
+  await Promise.allSettled(processingPromises);
 }
 
 export async function harvestAndPostFieldSitesPage(pool: Pool, url: string) {
