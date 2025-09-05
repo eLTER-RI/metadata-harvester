@@ -155,7 +155,14 @@ async function postToDar(recordDao: RecordDao, url: string, dataset: CommonDatas
   return resp.id;
 }
 
-async function putToDar(darId: string | null, recordDao: RecordDao, url: string, dataset: CommonDataset) {
+/**
+ * Sends a PUT request to the DAR API.
+ * @param {string} darId The ID of the record in DAR.
+ * @param {Record} recordDao
+ * @param {string} url The source URL of the record on the remote repository.
+ * @param {CommonDataset} dataset Source data after mapping.
+ */
+async function putToDar(darId: string, recordDao: RecordDao, url: string, dataset: CommonDataset) {
   log('info', `PUT ${url} to Dar record with id ${darId}.`);
   const apiResponse = await fetch(`${API_URL}/${darId}`, {
     method: 'PUT',
