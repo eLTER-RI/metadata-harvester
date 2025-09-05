@@ -308,7 +308,13 @@ async function processFieldSitesDatasetUrls(urls: string[], recordDao: RecordDao
   await Promise.allSettled(processingPromises);
 }
 
-export async function harvestAndPostFieldSitesPage(pool: Pool, url: string) {
+/**
+ * The main function for harvesting and posting data from the SITES repository.
+ * It sets up a database transaction, triggers harvesting, and commits/rollbacks.
+ * @param {Pool} pool The PostgreSQL connection pool.
+ * @param {string} url The URL of the repository's sitemap.
+ */
+export async function startSitesSyncTransaction(pool: Pool, url: string) {
   log('info', `Fetching the dataset from: ${url}...`);
 
   const data = await fetchXml(url);
@@ -329,7 +335,6 @@ export async function harvestAndPostFieldSitesPage(pool: Pool, url: string) {
     client = await pool.connect();
     await client.query('BEGIN');
     log('info', `Connected to database. Starting transaction.`);
-
     log('info', `Found ${urls.length} URLs. Fetching individual records...\n`);
 
     // // Process individual records using the parser
@@ -508,7 +513,7 @@ export const startRepositorySync = async (pool: Pool, repositoryType: Repository
 
   const apiUrl = repoConfig.apiUrl;
   if (repositoryType === 'SITES') {
-    await harvestAndPostFieldSitesPage(pool, apiUrl);
+    await startSitesSyncTransaction(pool, apiUrl);
     log('info', `Harvesting for repository: ${repositoryType} finished`);
     return;
   }
