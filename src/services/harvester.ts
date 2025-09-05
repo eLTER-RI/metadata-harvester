@@ -48,6 +48,18 @@ function getUrlWithExternalSourceURIQuery(externalSourceURI: string): string {
   return `${API_URL}?q=&metadata_externalSourceInformation_externalSourceURI=${encodedURI}`;
 }
 
+/**
+ * CREATE or UPDATE of a record in the local database based on its existence and status of the synchronization.
+ * It handles creating a new record, updating an old version of a record, or simply updating an existing record's status.
+ * @param {string | null} darId The ID of the record in DAR. If set to null, it assumes record POST/PUT to dar was unsuccessful.
+ * @param {boolean} missingInDb.
+ * @param {RecordDao} recordDao
+ * @param {string} url The source URL of the record on the remote repository.
+ * @param {RepositoryType} repositoryType The type of the repository (e.g., 'ZENODO', 'B2SHARE_EUDAT'...).
+ * @param {string} sourceChecksum The checksum of the current source data.
+ * @param {CommonDataset} dataset Source data after mapping.
+ * @param {string} oldUrl (Optional) The old URL of the record if there is a new version but we have an older version with different sourceUrl.
+ */
 async function dbRecordUpsert(
   darId: string | null,
   missingInDb: boolean,
