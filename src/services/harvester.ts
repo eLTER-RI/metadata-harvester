@@ -235,19 +235,18 @@ async function handleChangedRecord(
   darChecksum: string,
 ) {
   const isDbRecordMissing = dbMatches.length === 0;
-  if (isDbRecordMissing) {
-    log('info', `No database record for the given DAR record. No checksum available, updating.`);
-  }
-  const isSourceChanged = dbMatches[0].source_checksum !== sourceChecksum;
-  const isDarChecksumChanged = dbMatches[0].dar_checksum !== darChecksum;
+  const isSourceChanged = dbMatches[0]?.source_checksum !== sourceChecksum;
+  const isDarChecksumChanged = dbMatches[0]?.dar_checksum !== darChecksum;
 
-  if (isSourceChanged) {
+  if (isDbRecordMissing) {
+    log('info', `No database record for ${sourceUrl}. No checksum available, updating.`);
+  } else if (isSourceChanged) {
     log(
       'info',
       `Source data changed for ${sourceUrl}, previous checksum: ${dbMatches[0].source_checksum}, current: ${sourceChecksum}.`,
     );
   } else if (isDarChecksumChanged) {
-    log('info', 'Implementation of mappers might have changed.');
+    log('info', `Implementation of mappers might have changed for ${sourceUrl}.`);
   }
 
   await putToDar(darId, recordDao, sourceUrl, dataset);
