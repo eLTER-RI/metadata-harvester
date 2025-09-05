@@ -382,7 +382,18 @@ const processOneRecordTask = async (
   await updateDarBasedOnDB(recordDao, sourceUrl, repositoryType, newSourceChecksum, mappedDataset);
 };
 
-async function processApiPageDatasetUrls(
+/**
+ * Scheduling processing of each individual record in one page of the repository's API results.
+ * This function also extracts the "self" url of all records.
+ * For given repositories, it uses a rate limiter to satisfy rate limits of different APIs.
+ *
+ * @param {string[]} hits An array of "hits" from the API response, where each hit represents a record.
+ * @param {RecordDao} recordDao
+ * @param {SiteReference[]} sites A list of DEIMS sites for matching.
+ * @param {string} selfLinkKey Location of the direct link to the record.
+ * @param {RepositoryType} repositoryType The type of the repository to process (e.g., 'ZENODO', 'B2SHARE_EUDAT'...).
+ */
+async function processApiHits(
   hits: string[],
   recordDao: RecordDao,
   sites: SiteReference[],
@@ -422,7 +433,7 @@ async function syncApiRepository(pool: Pool, repositoryType: RepositoryType, rep
     log('info', `Found ${hits.length} self links. Fetching individual records...\n`);
 
     // // Process individual records using the parser
-    await processApiPageDatasetUrls(hits, recordDao, sites, selfLinkKey, repositoryType);
+    await processApiHits(hits, recordDao, sites, selfLinkKey, repositoryType);
 
     if (hits.length === 0) {
       log('warn', `No records found on page ${page}. Stopping.`);
