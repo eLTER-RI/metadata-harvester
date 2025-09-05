@@ -50,11 +50,11 @@ function getUrlWithExternalSourceURIQuery(externalSourceURI: string): string {
 
 /**
  * Searches DAR for a record by its source URL.
- * @param {string} url The source URL of the record on the remote repository.
+ * @param {string} sourceUrl The source URL of the record on the remote repository.
  * @returns {string | null} The ID of the matching record in DAR, null if no record found.
  */
-async function findDarRecordBySourceURL(url: string): Promise<string | null> {
-  const response = await fetch(getUrlWithExternalSourceURIQuery(url), {
+async function findDarRecordBySourceURL(sourceUrl: string): Promise<string | null> {
+  const response = await fetch(getUrlWithExternalSourceURIQuery(sourceUrl), {
     method: 'GET',
     headers: { Authorization: AUTH_TOKEN, Accept: 'application/json' },
   });
@@ -72,7 +72,7 @@ async function findDarRecordBySourceURL(url: string): Promise<string | null> {
  * @param {string | null} darId The ID of the record in DAR. If set to null, it assumes record POST/PUT to dar was unsuccessful.
  * @param {boolean} missingInDb.
  * @param {RecordDao} recordDao
- * @param {string} url The source URL of the record on the remote repository.
+ * @param {string} sourceUrl The source URL of the record on the remote repository.
  * @param {RepositoryType} repositoryType The type of the repository (e.g., 'ZENODO', 'B2SHARE_EUDAT'...).
  * @param {string} sourceChecksum The checksum of the current source data.
  * @param {CommonDataset} dataset Source data after mapping.
@@ -82,14 +82,14 @@ async function dbRecordUpsert(
   darId: string | null,
   missingInDb: boolean,
   recordDao: RecordDao,
-  url: string,
+  sourceUrl: string,
   repositoryType: RepositoryType,
   sourceChecksum: string,
   dataset: CommonDataset,
   oldUrl?: string,
 ) {
   if (!darId) {
-    await recordDao.updateDarIdStatus(url, {
+    await recordDao.updateDarIdStatus(sourceUrl, {
       status: 'failed',
     });
     return;
@@ -97,9 +97,9 @@ async function dbRecordUpsert(
 
   const darChecksum = calculateChecksum(dataset);
   if (missingInDb) {
-    log('info', `Creating database record for ${url}`);
+    log('info', `Creating database record for ${sourceUrl}`);
     await recordDao.createRecord({
-      source_url: url,
+      source_url: sourceUrl,
       source_repository: repositoryType,
       source_checksum: sourceChecksum,
       dar_id: darId,
@@ -110,9 +110,9 @@ async function dbRecordUpsert(
   }
 
   if (oldUrl) {
-    log('info', `Record ${url} has an old version of ${oldUrl} in DAR with ${darId}`);
+    log('info', `Record ${sourceUrl} has an old version of ${oldUrl} in DAR with ${darId}`);
     await recordDao.updateRecordWithPrimaryKey(oldUrl, {
-      source_url: url,
+      source_url: sourceUrl,
       source_repository: repositoryType,
       source_checksum: sourceChecksum,
       dar_id: darId,
@@ -122,9 +122,9 @@ async function dbRecordUpsert(
     return;
   }
 
-  log('info', `Updating record in database for record ${url}, dar id ${darId}`);
-  await recordDao.updateRecord(url, {
-    source_url: url,
+  log('info', `Updating record in database for record ${sourceUrl}, dar id ${darId}`);
+  await recordDao.updateRecord(sourceUrl, {
+    source_url: sourceUrl,
     source_repository: repositoryType,
     source_checksum: sourceChecksum,
     dar_id: darId,
@@ -136,12 +136,12 @@ async function dbRecordUpsert(
 /**
  * Sends a POST request to the DAR API.
  * @param {Record} recordDao
- * @param {string} url The source URL of the record on the remote repository.
+ * @param {string} sourceUrl The source URL of the record on the remote repository.
  * @param {CommonDataset} dataset Source data after mapping.
  * @returns The ID of the newly created record in DAR, or null if the request fails.
  */
-async function postToDar(recordDao: RecordDao, url: string, dataset: CommonDataset): Promise<string | null> {
-  log('info', `Posting ${url} to Dar.`);
+async function postToDar(recordDao: RecordDao, sourceUrl: string, dataset: CommonDataset): Promise<string | null> {
+  log('info', `Posting ${sourceUrl} to Dar.`);
   const apiResponse = await fetch(API_URL!, {
     method: 'POST',
     headers: {
@@ -152,8 +152,8 @@ async function postToDar(recordDao: RecordDao, url: string, dataset: CommonDatas
   });
 
   if (!apiResponse) {
-    log('error', `Posting ${url} into dar failed`);
-    await recordDao.updateDarIdStatus(url, {
+    log('error', `Posting ${sourceUrl} into dar failed`);
+    await recordDao.updateDarIdStatus(sourceUrl, {
       dar_id: '',
       status: 'failed',
     });
@@ -162,8 +162,8 @@ async function postToDar(recordDao: RecordDao, url: string, dataset: CommonDatas
 
   if (!apiResponse.ok) {
     const responseText = await apiResponse.text().catch(() => 'Could not read error response.');
-    log('error', `Posting ${url} into dar failed with : ${apiResponse.status}: ${responseText}`);
-    await recordDao.updateDarIdStatus(url, {
+    log('error', `Posting ${sourceUrl} into dar failed with : ${apiResponse.status}: ${responseText}`);
+    await recordDao.updateDarIdStatus(sourceUrl, {
       dar_id: '',
       status: 'failed',
     });
@@ -177,11 +177,11 @@ async function postToDar(recordDao: RecordDao, url: string, dataset: CommonDatas
  * Sends a PUT request to the DAR API.
  * @param {string} darId The ID of the record in DAR.
  * @param {Record} recordDao
- * @param {string} url The source URL of the record on the remote repository.
+ * @param {string} sourceUrl The source URL of the record on the remote repository.
  * @param {CommonDataset} dataset Source data after mapping.
  */
-async function putToDar(darId: string, recordDao: RecordDao, url: string, dataset: CommonDataset) {
-  log('info', `PUT ${url} to Dar record with id ${darId}.`);
+async function putToDar(darId: string, recordDao: RecordDao, sourceUrl: string, dataset: CommonDataset) {
+  log('info', `PUT ${sourceUrl} to Dar record with id ${darId}.`);
   const apiResponse = await fetch(`${API_URL}/${darId}`, {
     method: 'PUT',
     headers: {
@@ -192,8 +192,8 @@ async function putToDar(darId: string, recordDao: RecordDao, url: string, datase
   });
 
   if (!apiResponse) {
-    log('error', `PUT request ${url} into dar failed`);
-    await recordDao.updateDarIdStatus(url, {
+    log('error', `PUT request ${sourceUrl} into dar failed`);
+    await recordDao.updateDarIdStatus(sourceUrl, {
       status: 'failed',
     });
     return;
@@ -201,14 +201,14 @@ async function putToDar(darId: string, recordDao: RecordDao, url: string, datase
 
   if (!apiResponse.ok) {
     const responseText = await apiResponse.text().catch(() => 'Could not read error response.');
-    log('error', `PUT request ${url} into dar failed with : ${apiResponse.status}: ${responseText}`);
-    await recordDao.updateDarIdStatus(url, {
+    log('error', `PUT request ${sourceUrl} into dar failed with : ${apiResponse.status}: ${responseText}`);
+    await recordDao.updateDarIdStatus(sourceUrl, {
       status: 'failed',
     });
     return;
   }
 
-  await recordDao.updateStatus(url, {
+  await recordDao.updateStatus(sourceUrl, {
     status: 'success',
   });
   return;
@@ -386,8 +386,8 @@ const processOneRecordTask = async (
       throw new Error(`Unknown repository: ${repositoryType}.`);
   }
   const newSourceChecksum = calculateChecksum(recordData);
-  const sourceUrl = mappedDataset.metadata.externalSourceInformation.externalSourceURI || sourceUrl;
-  await updateDarBasedOnDB(recordDao, sourceUrl, repositoryType, newSourceChecksum, mappedDataset);
+  const mappedSourceUrl = mappedDataset.metadata.externalSourceInformation.externalSourceURI || sourceUrl;
+  await updateDarBasedOnDB(recordDao, mappedSourceUrl, repositoryType, newSourceChecksum, mappedDataset);
 };
 
 /**
