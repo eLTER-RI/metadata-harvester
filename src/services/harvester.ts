@@ -316,6 +316,43 @@ export async function harvestAndPostFieldSitesPage(pool: Pool, url: string) {
   }
 }
 
+const processOneRecordTask = async (
+  recordUrl: string,
+  recordDao: RecordDao,
+  sites: SiteReference[],
+  repositoryType?: RepositoryType,
+) => {
+  let mappedDataset: CommonDataset;
+
+  const recordData = await fetchJson(recordUrl);
+  if (!recordData) return null;
+
+  switch (repositoryType) {
+    case 'B2SHARE_EUDAT':
+    case 'B2SHARE_JUELICH': {
+      const matchedSites = await getB2ShareMatchedSites(recordData, sites);
+      mappedDataset = await mapB2ShareToCommonDatasetMetadata(recordUrl, recordData, matchedSites, repositoryType);
+      break;
+    }
+    case 'DATAREGISTRY': {
+      const matchedSites = await getDataRegistryMatchedSites(recordData);
+      mappedDataset = await mapDataRegistryToCommonDatasetMetadata(recordUrl, recordData, matchedSites);
+      break;
+    }
+    case 'ZENODO':
+    case 'ZENODO_IT': {
+      const matchedSites = await getZenodoMatchedSites(recordData, sites);
+      mappedDataset = await mapZenodoToCommonDatasetMetadata(recordUrl, recordData, matchedSites);
+      break;
+    }
+    default:
+      throw new Error(`Unknown repository: ${repositoryType}.`);
+  }
+  const newSourceChecksum = calculateChecksum(recordData);
+  const sourceUrl = mappedDataset.metadata.externalSourceInformation.externalSourceURI || recordUrl;
+  await updateDarBasedOnDB(recordDao, sourceUrl, repositoryType, newSourceChecksum, mappedDataset);
+};
+
 async function processApiPageDatasetUrls(
   hits: string[],
   recordDao: RecordDao,
@@ -323,50 +360,14 @@ async function processApiPageDatasetUrls(
   selfLinkKey: string,
   repositoryType?: RepositoryType,
 ) {
-  let mappedDataset: CommonDataset;
   await Promise.all(
     hits.map(async (hit: any) => {
       if (!hit) return null;
-      const processOnePageTask = async () => {
-        let recordUrl = getNestedValue(hit, selfLinkKey);
-        const recordData = recordUrl ? await fetchJson(recordUrl) : hit;
-        if (!recordData) return null;
-
-        switch (repositoryType) {
-          case 'B2SHARE_EUDAT':
-          case 'B2SHARE_JUELICH': {
-            const matchedSites = await getB2ShareMatchedSites(recordData, sites);
-            mappedDataset = await mapB2ShareToCommonDatasetMetadata(
-              recordUrl,
-              recordData,
-              matchedSites,
-              repositoryType,
-            );
-            break;
-          }
-          case 'DATAREGISTRY': {
-            const matchedSites = await getDataRegistryMatchedSites(recordData);
-            mappedDataset = await mapDataRegistryToCommonDatasetMetadata(recordUrl, recordData, matchedSites);
-            break;
-          }
-          case 'ZENODO':
-          case 'ZENODO_IT': {
-            const matchedSites = await getZenodoMatchedSites(recordData, sites);
-            mappedDataset = await mapZenodoToCommonDatasetMetadata(recordUrl, recordData, matchedSites);
-            repositoryType = 'ZENODO';
-            break;
-          }
-          default:
-            throw new Error(`Unknown repository: ${repositoryType}.`);
-        }
-        const newSourceChecksum = calculateChecksum(recordData);
-        recordUrl = mappedDataset.metadata.externalSourceInformation.externalSourceURI;
-        await updateDarBasedOnDB(recordDao, recordUrl, repositoryType, newSourceChecksum, mappedDataset);
-      };
+      const recordUrl = getNestedValue(hit, selfLinkKey);
       if (repositoryType === 'ZENODO' || repositoryType === 'ZENODO_IT') {
-        return zenodoLimiter.schedule(() => processOnePageTask());
+        return zenodoLimiter.schedule(() => processOneRecordTask(recordUrl, recordDao, sites, repositoryType));
       }
-      return processOnePageTask();
+      return processOneRecordTask(recordUrl, recordDao, sites, repositoryType);
     }),
   );
 }
@@ -385,9 +386,6 @@ async function harvestAndPostApiPageWithTransaction(
   while (pageSize) {
     const pageUrl = `${apiUrl}&size=${pageSize}&page=${page}`;
     log('info', `Fetching the dataset from: ${pageUrl}...`);
-    // const deimsDao = new DeimsDao(pool);
-    // const sites = await deimsDao.getSitesForLookup();
-
     const data = await fetchJson(pageUrl);
     const hits: string[] = dataKey ? getNestedValue(data, dataKey) || [] : [];
     log('info', `Found ${hits.length} self links. Fetching individual records...\n`);
