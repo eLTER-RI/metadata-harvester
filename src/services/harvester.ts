@@ -401,7 +401,14 @@ async function processApiPageDatasetUrls(
   );
 }
 
-async function harvestAndPostApiPageWithTransaction(pool: Pool, repositoryType: RepositoryType, repoConfig: any) {
+/**
+ * Manages harvesting process for paginated API repositories.
+ * It fetches all the pages of records. For each page, calls a function to process all the individual records.
+ * @param {Pool} pool The PostgreSQL connection pool.
+ * @param {RepositoryType} repositoryType The type of the repository to process (e.g., 'ZENODO', 'B2SHARE_EUDAT'...).
+ * @param repoConfig The configuration object for the repository.
+ */
+async function syncApiRepository(pool: Pool, repositoryType: RepositoryType, repoConfig: any) {
   let page = 1;
   const { apiUrl, pageSize, selfLinkKey, dataKey } = repoConfig;
   const recordDao = new RecordDao(pool);
@@ -455,7 +462,7 @@ export async function startApiSyncTransaction(pool: Pool, repositoryType: Reposi
     client = await pool.connect();
     log('info', `Connected to database. Starting transaction.`);
     await client.query('BEGIN');
-    await harvestAndPostApiPageWithTransaction(pool, repositoryType, repoConfig);
+    await syncApiRepository(pool, repositoryType, repoConfig);
     await client.query('COMMIT');
     log('info', `Transaction for SITES committed successfully.`);
   } catch (e) {
