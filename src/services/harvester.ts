@@ -36,7 +36,14 @@ if (!API_URL || !AUTH_TOKEN) {
   );
 }
 
-function getSearchUrl(externalSourceURI: string): string {
+/**
+ * Constructs a search URL for the Data Registry (DAR) API to find a record by its external source URI.
+ *
+ * @param {string} externalSourceURI externalSourceURI used in the record's externalSourceInformation field in DAR.
+ *
+ * @returns {string} URL for querying for filtering based on externalSourceURI
+ */
+function getUrlWithExternalSourceURIQuery(externalSourceURI: string): string {
   const encodedURI = encodeURIComponent(externalSourceURI);
   return `${API_URL}?q=&metadata_externalSourceInformation_externalSourceURI=${encodedURI}`;
 }
@@ -173,7 +180,7 @@ async function putToDar(darId: string | null, recordDao: RecordDao, url: string,
 }
 
 async function findDarRecordBySourceURL(url: string): Promise<string | null> {
-  const response = await fetch(getSearchUrl(url), {
+  const response = await fetch(getUrlWithExternalSourceURIQuery(url), {
     method: 'GET',
     headers: { Authorization: AUTH_TOKEN, Accept: 'application/json' },
   });
