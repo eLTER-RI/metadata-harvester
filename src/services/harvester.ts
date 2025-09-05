@@ -12,7 +12,7 @@ import {
   getFieldSitesMatchedSites,
   getZenodoMatchedSites,
 } from '../utilities/matchDeimsId';
-import { RecordDao } from '../store/recordDao';
+import { DbRecord, RecordDao } from '../store/recordDao';
 import { mapB2ShareToCommonDatasetMetadata } from '../store/b2shareParser';
 import { mapDataRegistryToCommonDatasetMetadata } from '../store/dataregistryParser';
 import { mapZenodoToCommonDatasetMetadata } from '../store/zenodoParser';
@@ -75,7 +75,7 @@ async function findDarRecordBySourceURL(sourceUrl: string): Promise<string | nul
  * @param {string} sourceUrl The source URL of the record on the remote repository.
  * @param {RepositoryType} repositoryType The type of the repository (e.g., 'ZENODO', 'B2SHARE_EUDAT'...).
  * @param {string} sourceChecksum The checksum of the current source data.
- * @param {CommonDataset} dataset Source data after mapping.
+ * @param {string} darChecksum Source data checksum.
  * @param {string} oldUrl (Optional) The old URL of the record if there is a new version but we have an older version with different sourceUrl.
  */
 async function dbRecordUpsert(
@@ -85,7 +85,7 @@ async function dbRecordUpsert(
   sourceUrl: string,
   repositoryType: RepositoryType,
   sourceChecksum: string,
-  dataset: CommonDataset,
+  darChecksum: string,
   oldUrl?: string,
 ) {
   if (!darId) {
@@ -95,7 +95,6 @@ async function dbRecordUpsert(
     return;
   }
 
-  const darChecksum = calculateChecksum(dataset);
   if (missingInDb) {
     log('info', `Creating database record for ${sourceUrl}`);
     await recordDao.createRecord({
@@ -214,6 +213,47 @@ async function putToDar(darId: string, recordDao: RecordDao, sourceUrl: string, 
   return;
 }
 
+/**
+ * Logs how record had changed, sends PUT request to DAR, and upserts database.
+ * @param {DbRecord[]} dbMatches A list of records found in the local database matching the source URL.
+ * @param {string} sourceChecksum The checksum of the current source data.
+ * @param {string} sourceUrl The source URL of the record.
+ * @param {string} darId The ID of the record in DAR. If set to null, it assumes record POST/PUT to dar was unsuccessful.
+ * @param {RecordDao} recordDao
+ * @param {RepositoryType} repositoryType The type of the repository to process (e.g., 'ZENODO', 'B2SHARE_EUDAT'...).
+ * @param {CommonDataset} dataset Source data after mapping.
+ * @param {string} darChecksum Source data checksum.
+ */
+async function handleChangedRecord(
+  dbMatches: DbRecord[],
+  sourceChecksum: string,
+  sourceUrl: string,
+  darId: string,
+  recordDao: RecordDao,
+  repositoryType: RepositoryType,
+  dataset: CommonDataset,
+  darChecksum: string,
+) {
+  const isDbRecordMissing = dbMatches.length === 0;
+  if (isDbRecordMissing) {
+    log('info', `No database record for the given DAR record. No checksum available, updating.`);
+  }
+  const isSourceChanged = dbMatches[0].source_checksum !== sourceChecksum;
+  const isDarChecksumChanged = dbMatches[0].dar_checksum !== darChecksum;
+
+  if (isSourceChanged) {
+    log(
+      'info',
+      `Source data changed for ${sourceUrl}, previous checksum: ${dbMatches[0].source_checksum}, current: ${sourceChecksum}.`,
+    );
+  } else if (isDarChecksumChanged) {
+    log('info', 'Implementation of mappers might have changed.');
+  }
+
+  await putToDar(darId, recordDao, sourceUrl, dataset);
+  await dbRecordUpsert(darId, isDbRecordMissing, recordDao, sourceUrl, repositoryType, sourceChecksum, darChecksum);
+}
+
 async function updateDarBasedOnDB(
   recordDao: RecordDao,
   url: string,
@@ -227,27 +267,28 @@ async function updateDarBasedOnDB(
   if (dbMatches.length > 1) {
     throw new Error('More than one existing records of one dataset in the local database.');
   }
+  const isDbRecordMissing = dbMatches.length === 0;
+  const isSourceChanged = dbMatches[0]?.source_checksum !== sourceChecksum;
+  const isDarChecksumChanged = dbMatches[0]?.dar_checksum !== darChecksum;
+
   const oldVersions = dataset.metadata.relatedIdentifiers
     ?.filter((id) => id.relationType === 'IsNewVersionOf')
     .map((id) => id.relatedID);
 
+  // Scenario 1: Handle records that are new versions of existing ones.
   if (oldVersions && oldVersions.length > 0) {
-    // record missing in database or in dar
     oldVersions.forEach(async (oldUrl) => {
       const oldVersionsInDb = await recordDao.getRecordBySourceId(oldUrl);
       if (oldVersionsInDb.length > 0) {
-        // there is a record in dar that is an old version of this record
-        // we update the old record with our new data, and update our db record
-        // with a new source url and other data
         putToDar(oldVersionsInDb[0].dar_id, recordDao, url, dataset);
         dbRecordUpsert(
           oldVersionsInDb[0].dar_id,
-          dbMatches.length == 0,
+          isDbRecordMissing,
           recordDao,
           url,
           repositoryType,
           sourceChecksum,
-          dataset,
+          darChecksum,
           oldUrl,
         );
         return;
@@ -257,29 +298,9 @@ async function updateDarBasedOnDB(
 
   if (!darMatches) {
     const darId = await postToDar(recordDao, url, dataset);
-    await dbRecordUpsert(darId, dbMatches.length == 0, recordDao, url, repositoryType, sourceChecksum, dataset);
-    return;
-  }
-
-  if (
-    dbMatches.length == 0 ||
-    dbMatches[0].source_checksum != sourceChecksum ||
-    dbMatches[0].dar_checksum != darChecksum
-  ) {
-    // source data or mapping logic changed
-    if (dbMatches.length == 0) {
-      log('info', `No database record for the given dar record. No checksum available, updating.`);
-    } else if (dbMatches[0].source_checksum != sourceChecksum) {
-      log(
-        'info',
-        `Source data changed for ${url}, previous checksum: ${dbMatches[0].source_checksum}, current: ${sourceChecksum}.`,
-      );
-    } else {
-      log('info', 'Implementation of mappers might have changed.');
-    }
-    await putToDar(darMatches, recordDao, url, dataset);
-    await dbRecordUpsert(darMatches, dbMatches.length == 0, recordDao, url, repositoryType, sourceChecksum, dataset);
-    return;
+    await dbRecordUpsert(darId, isDbRecordMissing, recordDao, url, repositoryType, sourceChecksum, darChecksum);
+  } else if (isDbRecordMissing || isSourceChanged || isDarChecksumChanged) {
+    handleChangedRecord(dbMatches, sourceChecksum, url, darMatches, recordDao, repositoryType, dataset, darChecksum);
   }
 
   log('info', 'Record was up to date.');
