@@ -115,46 +115,44 @@ async function dbRecordUpsert(
   });
 }
 
-async function postToDar(
-  existingDarId: string | null,
-  recordDao: RecordDao,
-  url: string,
-  dataset: CommonDataset,
-): Promise<string | null> {
-  let darId = existingDarId;
-  if (!darId) {
-    log('info', `Posting ${url} to Dar.`);
-    const apiResponse = await fetch(API_URL!, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: AUTH_TOKEN,
-      },
-      body: JSON.stringify(dataset, null, 2),
+/**
+ * Sends a POST request to the DAR API.
+ * @param {Record} recordDao
+ * @param {string} url The source URL of the record on the remote repository.
+ * @param {CommonDataset} dataset Source data after mapping.
+ * @returns The ID of the newly created record in DAR, or null if the request fails.
+ */
+async function postToDar(recordDao: RecordDao, url: string, dataset: CommonDataset): Promise<string | null> {
+  log('info', `Posting ${url} to Dar.`);
+  const apiResponse = await fetch(API_URL!, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: AUTH_TOKEN,
+    },
+    body: JSON.stringify(dataset, null, 2),
+  });
+
+  if (!apiResponse) {
+    log('error', `Posting ${url} into dar failed`);
+    await recordDao.updateDarIdStatus(url, {
+      dar_id: '',
+      status: 'failed',
     });
-
-    if (!apiResponse) {
-      log('error', `Posting ${url} into dar failed`);
-      await recordDao.updateDarIdStatus(url, {
-        dar_id: '',
-        status: 'failed',
-      });
-      return darId;
-    }
-
-    if (!apiResponse.ok) {
-      const responseText = await apiResponse.text().catch(() => 'Could not read error response.');
-      log('error', `Posting ${url} into dar failed with : ${apiResponse.status}: ${responseText}`);
-      await recordDao.updateDarIdStatus(url, {
-        dar_id: '',
-        status: 'failed',
-      });
-      return darId;
-    }
-    const resp = await apiResponse.json();
-    darId = resp.id;
+    return null;
   }
-  return darId;
+
+  if (!apiResponse.ok) {
+    const responseText = await apiResponse.text().catch(() => 'Could not read error response.');
+    log('error', `Posting ${url} into dar failed with : ${apiResponse.status}: ${responseText}`);
+    await recordDao.updateDarIdStatus(url, {
+      dar_id: '',
+      status: 'failed',
+    });
+    return null;
+  }
+  const resp = await apiResponse.json();
+  return resp.id;
 }
 
 async function putToDar(darId: string | null, recordDao: RecordDao, url: string, dataset: CommonDataset) {
@@ -246,7 +244,7 @@ async function updateDarBasedOnDB(
   }
 
   if (!darMatches) {
-    const darId = await postToDar(null, recordDao, url, dataset);
+    const darId = await postToDar(recordDao, url, dataset);
     await dbRecordUpsert(darId, dbMatches.length == 0, recordDao, url, repositoryType, sourceChecksum, dataset);
     return;
   }
