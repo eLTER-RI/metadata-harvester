@@ -465,7 +465,13 @@ export async function harvestAndPostApiPage(pool: Pool, url: string, repositoryT
   }
 }
 
-export const harvestAndPost = async (pool: Pool, repositoryType: RepositoryType) => {
+/**
+ * Start the entire data harvesting and posting process for a specified repository type.
+ * Calls the appropriate harvesting function based on repository type.
+ * @param {Pool} pool The PostgreSQL connection pool.
+ * @param {RepositoryType} repositoryType The type of the repository to process (e.g., 'ZENODO', 'B2SHARE_EUDAT'...).
+ */
+export const startRepositorySync = async (pool: Pool, repositoryType: RepositoryType) => {
   log('info', `Starting harvesting job for repository: ${repositoryType}`);
   const repoConfig = CONFIG.REPOSITORIES[repositoryType];
   if (!repoConfig) {

@@ -4,7 +4,7 @@ import { Pool } from 'pg';
 import { log } from './serviceLogging';
 import { RepositoryType } from '../store/commonStructure';
 import { CONFIG } from '../../config';
-import { harvestAndPost } from './harvester';
+import { startRepositorySync } from './harvester';
 import { syncDeimsSites } from './syncDeimsSites';
 import { syncWithDar } from '../../scripts/localDarSync';
 
@@ -30,7 +30,7 @@ app.post('/harvest', async (req, res) => {
   }
 
   try {
-    await harvestAndPost(pool, repositoryType);
+    await startRepositorySync(pool, repositoryType);
     log('info', `Job for ${repositoryType} completed successfully.`);
   } catch (e) {
     log('error', `Job for ${repositoryType} failed with error: ${e}`);
