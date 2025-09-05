@@ -288,8 +288,15 @@ async function updateDarBasedOnDB(
   });
 }
 
-async function processFieldSitesDatasetUrls(urls: string[], recordDao: RecordDao) {
-  const processingPromises = urls.map((datasetUrl: string) => {
+/**
+ * Manages harvesting process for SITES repository.
+ * It fetches a list of records. For each record, calls a function to process it.
+ * It uses hardcoded DEIMS sites.
+ * @param {string[]} sourceUrls An array of field sites URLs.
+ * @param {RecordDao} recordDao The data access object for interacting with the local records table.
+ */
+async function syncSitesRepository(sourceUrls: string[], recordDao: RecordDao) {
+  const processingPromises = sourceUrls.map((datasetUrl: string) => {
     return fieldSitesLimiter.schedule(async () => {
       try {
         if (!datasetUrl) return null;
@@ -338,7 +345,7 @@ export async function startSitesSyncTransaction(pool: Pool, url: string) {
     log('info', `Found ${urls.length} URLs. Fetching individual records...\n`);
 
     // // Process individual records using the parser
-    await processFieldSitesDatasetUrls(urls, recordDao);
+    await syncSitesRepository(urls, recordDao);
 
     await client.query('COMMIT');
     log('info', `Transaction for SITES committed successfully.`);
