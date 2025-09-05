@@ -401,12 +401,7 @@ async function processApiPageDatasetUrls(
   );
 }
 
-async function harvestAndPostApiPageWithTransaction(
-  pool: Pool,
-  url: string,
-  repositoryType: RepositoryType,
-  repoConfig: any,
-) {
+async function harvestAndPostApiPageWithTransaction(pool: Pool, repositoryType: RepositoryType, repoConfig: any) {
   let page = 1;
   const { apiUrl, pageSize, selfLinkKey, dataKey } = repoConfig;
   const recordDao = new RecordDao(pool);
@@ -435,7 +430,13 @@ async function harvestAndPostApiPageWithTransaction(
   }
 }
 
-export async function harvestAndPostApiPage(pool: Pool, url: string, repositoryType: RepositoryType) {
+/**
+ * The main function for harvesting and posting data from an API-based repository.
+ * It sets up a database transaction, triggers harvesting, and commits/rollbacks.
+ * @param {Pool} pool The PostgreSQL connection pool.
+ * @param {RepositoryType} repositoryType The type of the repository to process (e.g., 'ZENODO', 'B2SHARE_EUDAT'...).
+ */
+export async function startApiSyncTransaction(pool: Pool, repositoryType: RepositoryType) {
   const repoConfig = CONFIG.REPOSITORIES[repositoryType];
   const selfLinkKey = repoConfig.selfLinkKey;
   if (!repoConfig) {
@@ -454,7 +455,7 @@ export async function harvestAndPostApiPage(pool: Pool, url: string, repositoryT
     client = await pool.connect();
     log('info', `Connected to database. Starting transaction.`);
     await client.query('BEGIN');
-    await harvestAndPostApiPageWithTransaction(pool, url, repositoryType, repoConfig);
+    await harvestAndPostApiPageWithTransaction(pool, repositoryType, repoConfig);
     await client.query('COMMIT');
     log('info', `Transaction for SITES committed successfully.`);
   } catch (e) {
@@ -486,6 +487,6 @@ export const startRepositorySync = async (pool: Pool, repositoryType: Repository
     return;
   }
 
-  await harvestAndPostApiPage(pool, apiUrl, repositoryType);
+  await startApiSyncTransaction(pool, repositoryType);
   log('info', `Harvesting for repository: ${repositoryType} finished`);
 };
