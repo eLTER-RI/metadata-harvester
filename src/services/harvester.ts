@@ -49,6 +49,24 @@ function getUrlWithExternalSourceURIQuery(externalSourceURI: string): string {
 }
 
 /**
+ * Searches DAR for a record by its source URL.
+ * @param {string} url The source URL of the record on the remote repository.
+ * @returns {string | null} The ID of the matching record in DAR, null if no record found.
+ */
+async function findDarRecordBySourceURL(url: string): Promise<string | null> {
+  const response = await fetch(getUrlWithExternalSourceURIQuery(url), {
+    method: 'GET',
+    headers: { Authorization: AUTH_TOKEN, Accept: 'application/json' },
+  });
+
+  const searchResult = (await response.json()) as any;
+  if (searchResult?.hits?.hits?.length > 0 && searchResult.hits.hits[0]?.id) {
+    return searchResult.hits.hits[0].id;
+  }
+  return null;
+}
+
+/**
  * CREATE or UPDATE of a record in the local database based on its existence and status of the synchronization.
  * It handles creating a new record, updating an old version of a record, or simply updating an existing record's status.
  * @param {string | null} darId The ID of the record in DAR. If set to null, it assumes record POST/PUT to dar was unsuccessful.
@@ -194,19 +212,6 @@ async function putToDar(darId: string, recordDao: RecordDao, url: string, datase
     status: 'success',
   });
   return;
-}
-
-async function findDarRecordBySourceURL(url: string): Promise<string | null> {
-  const response = await fetch(getUrlWithExternalSourceURIQuery(url), {
-    method: 'GET',
-    headers: { Authorization: AUTH_TOKEN, Accept: 'application/json' },
-  });
-
-  const searchResult = (await response.json()) as any;
-  if (searchResult?.hits?.hits?.length > 0 && searchResult.hits.hits[0]?.id) {
-    return searchResult.hits.hits[0].id;
-  }
-  return null;
 }
 
 async function updateDarBasedOnDB(
