@@ -345,40 +345,48 @@ export async function harvestAndPostFieldSitesPage(pool: Pool, url: string) {
   }
 }
 
+/**
+ * Processes a single record from an API based repository.
+ * It fetches the record data, uses mapping for the given repository type, and then calls a function to synchronize data.
+ * @param {string} sourceUrl The source URL of the record on the remote repository.
+ * @param {RecordDao} recordDao
+ * @param {SiteReference[]} sites A list of DEIMS sites for matching.
+ * @param {RepositoryType} repositoryType The type of the repository to process (e.g., 'ZENODO', 'B2SHARE_EUDAT'...).
+ */
 const processOneRecordTask = async (
-  recordUrl: string,
+  sourceUrl: string,
   recordDao: RecordDao,
   sites: SiteReference[],
   repositoryType?: RepositoryType,
 ) => {
   let mappedDataset: CommonDataset;
 
-  const recordData = await fetchJson(recordUrl);
+  const recordData = await fetchJson(sourceUrl);
   if (!recordData) return null;
 
   switch (repositoryType) {
     case 'B2SHARE_EUDAT':
     case 'B2SHARE_JUELICH': {
       const matchedSites = await getB2ShareMatchedSites(recordData, sites);
-      mappedDataset = await mapB2ShareToCommonDatasetMetadata(recordUrl, recordData, matchedSites, repositoryType);
+      mappedDataset = await mapB2ShareToCommonDatasetMetadata(sourceUrl, recordData, matchedSites, repositoryType);
       break;
     }
     case 'DATAREGISTRY': {
       const matchedSites = await getDataRegistryMatchedSites(recordData);
-      mappedDataset = await mapDataRegistryToCommonDatasetMetadata(recordUrl, recordData, matchedSites);
+      mappedDataset = await mapDataRegistryToCommonDatasetMetadata(sourceUrl, recordData, matchedSites);
       break;
     }
     case 'ZENODO':
     case 'ZENODO_IT': {
       const matchedSites = await getZenodoMatchedSites(recordData, sites);
-      mappedDataset = await mapZenodoToCommonDatasetMetadata(recordUrl, recordData, matchedSites);
+      mappedDataset = await mapZenodoToCommonDatasetMetadata(sourceUrl, recordData, matchedSites);
       break;
     }
     default:
       throw new Error(`Unknown repository: ${repositoryType}.`);
   }
   const newSourceChecksum = calculateChecksum(recordData);
-  const sourceUrl = mappedDataset.metadata.externalSourceInformation.externalSourceURI || recordUrl;
+  const sourceUrl = mappedDataset.metadata.externalSourceInformation.externalSourceURI || sourceUrl;
   await updateDarBasedOnDB(recordDao, sourceUrl, repositoryType, newSourceChecksum, mappedDataset);
 };
 
