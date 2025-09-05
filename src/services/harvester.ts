@@ -254,7 +254,28 @@ async function handleChangedRecord(
   await dbRecordUpsert(darId, isDbRecordMissing, recordDao, sourceUrl, repositoryType, sourceChecksum, darChecksum);
 }
 
-async function updateDarBasedOnDB(
+/**
+ * Synchronization of the record from source url with the local database and DAR.
+ * This function also handles missing record on both local DB side or DAR side.
+ *
+ * It handles the following scenarios:
+ *
+ * 1.  **New Version of an Existing Record**:
+ *      - If an old version of the record is found, it updates the old record (also updates it's source url).
+ * 2.  **New Record**:
+ *      - If no matching record is found in DAR, the function posts the new record to DAR.
+ *      - It then upserts the new record into the local database.
+ * 3.  **Changed Record**:
+ *      - If a matching record is found in DAR something has changed both DAR and local DB is updated.
+ * 4.  **Up-to-date record**:
+ *      - The function ignores the up-to-date record
+ * @param {RecordDao} recordDao The data access object for interacting with the local database records table.
+ * @param {string} url The source URL of the record.
+ * @param {RepositoryType} repositoryType The type of the repository (e.g., 'ZENODO', 'SITES').
+ * @param {string} sourceChecksum The checksum of the data from the external source.
+ * @param {CommonDataset} dataset The common dataset object to be processed.
+ */
+async function synchronizeRecord(
   recordDao: RecordDao,
   url: string,
   repositoryType: RepositoryType,
@@ -326,7 +347,7 @@ async function syncSitesRepository(sourceUrls: string[], recordDao: RecordDao) {
         const matchedSites = getFieldSitesMatchedSites(recordData);
         const mappedDataset = await mapFieldSitesToCommonDatasetMetadata(datasetUrl, recordData, matchedSites);
         const newSourceChecksum = calculateChecksum(recordData);
-        await updateDarBasedOnDB(recordDao, datasetUrl, 'SITES', newSourceChecksum, mappedDataset);
+        await synchronizeRecord(recordDao, datasetUrl, 'SITES', newSourceChecksum, mappedDataset);
       } catch (error) {
         log('error', `Failed to process record for ${'SITES'}: ${error}`);
         await recordDao.updateStatus(datasetUrl, { status: 'failed' });
@@ -420,7 +441,7 @@ const processOneRecordTask = async (
   }
   const newSourceChecksum = calculateChecksum(recordData);
   const mappedSourceUrl = mappedDataset.metadata.externalSourceInformation.externalSourceURI || sourceUrl;
-  await updateDarBasedOnDB(recordDao, mappedSourceUrl, repositoryType, newSourceChecksum, mappedDataset);
+  await synchronizeRecord(recordDao, mappedSourceUrl, repositoryType, newSourceChecksum, mappedDataset);
 };
 
 /**
