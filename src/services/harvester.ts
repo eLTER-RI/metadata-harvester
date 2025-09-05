@@ -130,6 +130,11 @@ async function dbRecordUpsert(
     dar_checksum: darChecksum,
     status: 'updating',
   });
+
+  log('info', 'Record was up to date.');
+  await recordDao.updateStatus(sourceUrl, {
+    status: 'success',
+  });
 }
 
 /**
@@ -319,14 +324,22 @@ async function synchronizeRecord(
   if (!darMatches) {
     const darId = await postToDar(recordDao, url, dataset);
     await dbRecordUpsert(darId, isDbRecordMissing, recordDao, url, repositoryType, sourceChecksum, darChecksum);
-  } else if (isDbRecordMissing || isSourceChanged || isDarChecksumChanged) {
-    handleChangedRecord(dbMatches, sourceChecksum, url, darMatches, recordDao, repositoryType, dataset, darChecksum);
+    return;
   }
 
-  log('info', 'Record was up to date.');
-  await recordDao.updateStatus(url, {
-    status: 'success',
-  });
+  if (isDbRecordMissing || isSourceChanged || isDarChecksumChanged) {
+    await handleChangedRecord(
+      dbMatches,
+      sourceChecksum,
+      url,
+      darMatches,
+      recordDao,
+      repositoryType,
+      dataset,
+      darChecksum,
+    );
+    return;
+  }
 }
 
 /**
