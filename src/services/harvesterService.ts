@@ -51,10 +51,13 @@ app.post('/sync/sites', async (req, res) => {
 
 app.post('/sync/records', async (req, res) => {
   const { repository, darCleanup = false } = req.body;
-  const repositoryType = repository.toUpperCase() as RepositoryType;
+  let repositoryType = repository.toUpperCase() as RepositoryType;
 
   if (!repository || !CONFIG.REPOSITORIES[repositoryType]) {
     return res.status(400).json({ error: `Invalid repository: '${repository}'.` });
+  }
+  if (repositoryType === 'ZENODO_IT') {
+    repositoryType = 'ZENODO';
   }
   await syncWithDar(repositoryType, pool, darCleanup).catch((e) => {
     log('error', `Error during syncWithDar for ${repositoryType}: ${e}`);
