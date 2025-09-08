@@ -340,6 +340,10 @@ async function synchronizeRecord(
     );
     return;
   }
+
+  await recordDao.updateStatus(url, {
+    status: 'success',
+  });
 }
 
 /**
