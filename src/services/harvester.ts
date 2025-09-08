@@ -347,6 +347,28 @@ async function synchronizeRecord(
 }
 
 /**
+ * Processes a single record from the SITES repository.
+ * It fetches the record, maps it to the common dataset format, calculates a checksum,
+ * and then calls the main synchronization function.
+ * @param {string} sourceUrl The source URL of the record on the remote repository.
+ * @param {RecordDao} recordDao
+ */
+const processOneSitesRecord = async (sourceUrl: string, recordDao: RecordDao) => {
+  try {
+    if (!sourceUrl) return null;
+    const recordData = await fetchJson(sourceUrl);
+    if (!recordData) return null;
+    const matchedSites = getFieldSitesMatchedSites(recordData);
+    const mappedDataset = await mapFieldSitesToCommonDatasetMetadata(sourceUrl, recordData, matchedSites);
+    const newSourceChecksum = calculateChecksum(recordData);
+    await synchronizeRecord(recordDao, sourceUrl, 'SITES', newSourceChecksum, mappedDataset);
+  } catch (error) {
+    log('error', `Failed to process record for SITES: ${error}`);
+    await recordDao.updateStatus(sourceUrl, { status: 'failed' });
+  }
+};
+
+/**
  * Manages harvesting process for SITES repository.
  * It fetches a list of records. For each record, calls a function to process it.
  * It uses hardcoded DEIMS sites.
@@ -356,18 +378,7 @@ async function synchronizeRecord(
 async function syncSitesRepository(sourceUrls: string[], recordDao: RecordDao) {
   const processingPromises = sourceUrls.map((datasetUrl: string) => {
     return fieldSitesLimiter.schedule(async () => {
-      try {
-        if (!datasetUrl) return null;
-        const recordData = await fetchJson(datasetUrl);
-        if (!recordData) return null;
-        const matchedSites = getFieldSitesMatchedSites(recordData);
-        const mappedDataset = await mapFieldSitesToCommonDatasetMetadata(datasetUrl, recordData, matchedSites);
-        const newSourceChecksum = calculateChecksum(recordData);
-        await synchronizeRecord(recordDao, datasetUrl, 'SITES', newSourceChecksum, mappedDataset);
-      } catch (error) {
-        log('error', `Failed to process record for ${'SITES'}: ${error}`);
-        await recordDao.updateStatus(datasetUrl, { status: 'failed' });
-      }
+      await processOneSitesRecord(datasetUrl, recordDao);
     });
   });
   await Promise.allSettled(processingPromises);
@@ -423,7 +434,7 @@ export async function startSitesSyncTransaction(pool: Pool, url: string) {
  * @param {SiteReference[]} sites A list of DEIMS sites for matching.
  * @param {RepositoryType} repositoryType The type of the repository to process (e.g., 'ZENODO', 'B2SHARE_EUDAT'...).
  */
-const processOneRecordTask = async (
+export const processOneRecordTask = async (
   sourceUrl: string,
   recordDao: RecordDao,
   sites: SiteReference[],
