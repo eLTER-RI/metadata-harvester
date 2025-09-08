@@ -446,6 +446,7 @@ const processOneRecordTask = async (
     case 'ZENODO_IT': {
       const matchedSites = await getZenodoMatchedSites(recordData, sites);
       mappedDataset = await mapZenodoToCommonDatasetMetadata(sourceUrl, recordData, matchedSites);
+      repositoryType = 'ZENODO';
       break;
     }
     default:
