@@ -23,6 +23,14 @@ const PORT = process.env.PORT || 3000;
 
 app.post('/harvest', async (req, res) => {
   const { repository } = req.body;
+  if (!repository) {
+    return res.status(400).json({ error: "Missing required field: 'repository'." });
+  }
+
+  if (typeof repository !== 'string') {
+    return res.status(400).json({ error: "Invalid data type for 'repository'. Expected a string." });
+  }
+
   const repositoryType = repository.toUpperCase() as RepositoryType;
 
   if (!repository || !CONFIG.REPOSITORIES[repositoryType]) {
