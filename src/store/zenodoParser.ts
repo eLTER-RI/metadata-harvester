@@ -1,3 +1,4 @@
+import { fetchJson } from '../services/pullAllData';
 import {
   AdditionalMetadata,
   AlternateIdentifier,
@@ -235,8 +236,38 @@ function getAdditionalMetadata(zenodo: any): AdditionalMetadata[] {
   return additional_metadata;
 }
 
-export async function mapZenodoToCommonDatasetMetadata(url: string, zenodo: any, sites: any): Promise<CommonDataset> {
+export async function getLatestZenodoVersionUrl(url: string, zenodo: any): Promise<any> {
+  if (zenodo.metadata.relations?.version[0]?.is_last || !zenodo.links?.versions) {
+    return [null, null];
+  }
+
+  try {
+    const versions = await fetchJson(zenodo.links.versions);
+    const latestVersion = versions.hits.hits.find((hit: any) => hit.metadata.relations?.version[0]?.is_last);
+
+    if (latestVersion) {
+      const newUrl = latestVersion.links.self;
+      const recordData = await fetchJson(newUrl);
+      if (!recordData) return [null, null];
+      console.log('!!!!!!!!!!!!!!!!!!!!', latestVersion.links.self);
+      return [latestVersion.links.self, recordData];
+    }
+  } catch {
+    return [null, null];
+  }
+}
+
+export async function mapZenodoToCommonDatasetMetadata(
+  sourceUrl: string,
+  recordData: any,
+  sites: any,
+): Promise<CommonDataset> {
+  // First, let's check if the record is not old
+  const [latestUrl, latestData] = await getLatestZenodoVersionUrl(sourceUrl, recordData);
+  const zenodo = latestData ?? recordData;
+  const url = latestUrl ?? sourceUrl;
   const licenses: License[] = [];
+
   if (zenodo.metadata?.license?.id) {
     licenses.push({
       licenseCode: zenodo.metadata?.license?.id,
