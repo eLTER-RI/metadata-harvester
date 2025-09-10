@@ -17,6 +17,7 @@ import { mapB2ShareToCommonDatasetMetadata } from '../store/b2shareParser';
 import { mapDataRegistryToCommonDatasetMetadata } from '../store/dataregistryParser';
 import { mapZenodoToCommonDatasetMetadata } from '../store/zenodoParser';
 import { fieldSitesLimiter, zenodoLimiter } from './rateLimiterConcurrency';
+import { dbValidationPhase } from './dbValidation';
 
 // Configurations
 const currentEnv = process.env.NODE_ENV;
@@ -353,7 +354,11 @@ async function synchronizeRecord(
  * @param {string} sourceUrl The source URL of the record on the remote repository.
  * @param {RecordDao} recordDao
  */
-const processOneSitesRecord = async (sourceUrl: string, recordDao: RecordDao) => {
+export const processOneSitesRecord = async (sourceUrl: string, recordDao: RecordDao) => {
+  const dbRecord = await recordDao.getRecordBySourceId(sourceUrl);
+  if (dbRecord && dbRecord[0].status === 'success') {
+    return;
+  }
   try {
     if (!sourceUrl) return null;
     const recordData = await fetchJson(sourceUrl);
@@ -390,7 +395,7 @@ async function syncSitesRepository(sourceUrls: string[], recordDao: RecordDao) {
  * @param {Pool} pool The PostgreSQL connection pool.
  * @param {string} url The URL of the repository's sitemap.
  */
-export async function startSitesSyncTransaction(pool: Pool, url: string) {
+export async function syncSitesRepositoryAll(url: string, recordDao: RecordDao) {
   log('info', `Fetching the dataset from: ${url}...`);
 
   const data = await fetchXml(url);
@@ -404,26 +409,7 @@ export async function startSitesSyncTransaction(pool: Pool, url: string) {
     urls.push(locElements[i].textContent || '');
   }
 
-  let client;
-  try {
-    const recordDao = new RecordDao(pool);
-    await recordDao.updateRepositoryToInProgress('SITES');
-    client = await pool.connect();
-    await client.query('BEGIN');
-    log('info', `Connected to database. Starting transaction.`);
-    log('info', `Found ${urls.length} URLs. Fetching individual records...\n`);
-
-    // // Process individual records using the parser
-    await syncSitesRepository(urls, recordDao);
-
-    await client.query('COMMIT');
-    log('info', `Transaction for SITES committed successfully.`);
-  } catch (e) {
-    if (client) await client.query('ROLLBACK');
-    log('error', `Harvesting process failed: ${e}`);
-  } finally {
-    if (client) client.release();
-  }
+  await syncSitesRepository(urls, recordDao);
 }
 
 /**
@@ -441,7 +427,10 @@ export const processOneRecordTask = async (
   repositoryType?: RepositoryType,
 ) => {
   let mappedDataset: CommonDataset;
-
+  const dbRecord = await recordDao.getRecordBySourceId(sourceUrl);
+  if (dbRecord && dbRecord[0].status === 'success') {
+    return;
+  }
   const recordData = await fetchJson(sourceUrl);
   if (!recordData) return null;
 
@@ -509,11 +498,10 @@ async function processApiHits(
  * @param {RepositoryType} repositoryType The type of the repository to process (e.g., 'ZENODO', 'B2SHARE_EUDAT'...).
  * @param repoConfig The configuration object for the repository.
  */
-async function syncApiRepository(pool: Pool, repositoryType: RepositoryType, repoConfig: any) {
+async function syncApiRepositoryAll(pool: Pool, repositoryType: RepositoryType, repoConfig: any) {
   let page = 1;
   const { apiUrl, pageSize, selfLinkKey, dataKey } = repoConfig;
   const recordDao = new RecordDao(pool);
-  await recordDao.updateRepositoryToInProgress(repositoryType);
   const sites = await fetchSites();
   while (pageSize) {
     const pageUrl = `${apiUrl}&size=${pageSize}&page=${page}`;
@@ -539,46 +527,10 @@ async function syncApiRepository(pool: Pool, repositoryType: RepositoryType, rep
 }
 
 /**
- * The main function for harvesting and posting data from an API-based repository.
- * It sets up a database transaction, triggers harvesting, and commits/rollbacks.
- * @param {Pool} pool The PostgreSQL connection pool.
- * @param {RepositoryType} repositoryType The type of the repository to process (e.g., 'ZENODO', 'B2SHARE_EUDAT'...).
- */
-export async function startApiSyncTransaction(pool: Pool, repositoryType: RepositoryType) {
-  const repoConfig = CONFIG.REPOSITORIES[repositoryType];
-  const selfLinkKey = repoConfig.selfLinkKey;
-  if (!repoConfig) {
-    log('error', `Configuration for repository '${repositoryType}' not available.`);
-    throw new Error(`Configuration for repository '${repositoryType}' not available.`);
-  }
-
-  if (!selfLinkKey) {
-    log('error', `Self link key not available.`);
-    return;
-  }
-
-  log('info', `Fetching from ${repositoryType}...`);
-  let client;
-  try {
-    client = await pool.connect();
-    log('info', `Connected to database. Starting transaction.`);
-    await client.query('BEGIN');
-    await syncApiRepository(pool, repositoryType, repoConfig);
-    await client.query('COMMIT');
-    log('info', `Transaction for SITES committed successfully.`);
-  } catch (e) {
-    if (client) await client.query('ROLLBACK');
-    log('error', `Harvesting process failed: ${e}`);
-  } finally {
-    if (client) client.release();
-  }
-}
-
-/**
  * Start the entire data harvesting and posting process for a specified repository type.
  * Calls the appropriate harvesting function based on repository type.
  * @param {Pool} pool The PostgreSQL connection pool.
- * @param {RepositoryType} repositoryType The type of the repository to process (e.g., 'ZENODO', 'B2SHARE_EUDAT'...).
+ * @param {RepositoryType} repositoryType The type of the repository (e.g., 'ZENODO', 'B2SHARE_EUDAT'...).
  */
 export const startRepositorySync = async (pool: Pool, repositoryType: RepositoryType) => {
   log('info', `Starting harvesting job for repository: ${repositoryType}`);
@@ -587,14 +539,34 @@ export const startRepositorySync = async (pool: Pool, repositoryType: Repository
     log('error', `Configuration for repository '${repositoryType}' not available.`);
     throw new Error(`Configuration for repository '${repositoryType}' not available.`);
   }
-
   const apiUrl = repoConfig.apiUrl;
-  if (repositoryType === 'SITES') {
-    await startSitesSyncTransaction(pool, apiUrl);
-    log('info', `Harvesting for repository: ${repositoryType} finished`);
-    return;
-  }
 
-  await startApiSyncTransaction(pool, repositoryType);
-  log('info', `Harvesting for repository: ${repositoryType} finished`);
+  let client;
+  try {
+    const recordDao = new RecordDao(pool);
+    client = await pool.connect();
+    await client.query('BEGIN');
+
+    // Phase 1: Local Database Validation
+    await recordDao.updateRepositoryToInProgress(repositoryType);
+    await dbValidationPhase(pool, repositoryType);
+    log('info', `Phase 1 completed for ${repositoryType}. Proceeding with Phase 2.`);
+
+    // Phase 2: Remote Synchronization
+    if (repositoryType === 'SITES') {
+      await syncSitesRepositoryAll(apiUrl, recordDao);
+    } else {
+      await syncApiRepositoryAll(pool, repositoryType, repoConfig);
+    }
+    log('info', `Phase 2 completed for ${repositoryType}.`);
+
+    await client.query('COMMIT');
+    log('info', `Harvesting for repository: ${repositoryType} finished successfully`);
+  } catch (e) {
+    if (client) await client.query('ROLLBACK');
+    log('error', `Harvesting for repository ${repositoryType} failed with error: ${e}`);
+    console.error(e);
+  } finally {
+    if (client) client.release();
+  }
 };

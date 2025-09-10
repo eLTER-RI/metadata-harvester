@@ -77,6 +77,12 @@ export class RecordDao {
     return result.rows.map((row) => row.dar_id).filter((row) => row != '');
   }
 
+  async listRecordsByRepository(repositoryType: RepositoryType): Promise<DbRecord[]> {
+    const query = `SELECT * FROM harvested_records WHERE source_repository = $1`;
+    const result = await this.pool.query(query, [repositoryType]);
+    return result.rows;
+  }
+
   async updateDarId(source_url: string, record: Partial<DbRecord>): Promise<void> {
     const query = `
             UPDATE harvested_records
