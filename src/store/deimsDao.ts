@@ -1,6 +1,6 @@
 import { Pool, QueryResult } from 'pg';
 
-export interface DeimsSiteRecord {
+export interface DeimsSiteDbRecord {
   id: string;
   site_data: any;
   name: string;
@@ -21,7 +21,7 @@ export class DeimsDao {
     this.pool = pool;
   }
 
-  async upsertSite(site: DeimsSiteRecord): Promise<QueryResult<any>> {
+  async upsertSite(site: DeimsSiteDbRecord): Promise<QueryResult<any>> {
     const query = `
             INSERT INTO deims_sites (id, name, shortname, site_data, checksum)
             VALUES ($1, $2, $3, $4, $5)
