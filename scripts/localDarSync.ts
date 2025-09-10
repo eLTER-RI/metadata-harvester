@@ -95,7 +95,6 @@ async function fetchDarRecords(darRepoQuery: string): Promise<string[]> {
       const darIds = data?.hits?.hits?.map((record) => record?.id);
       const next = data?.links?.next;
       if (darIds) allDarIds.push(...darIds);
-      log('info', 'pushed new stuff');
       if (!next) break;
       url = next;
     } catch (error) {
