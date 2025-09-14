@@ -1,5 +1,5 @@
 import { Pool } from 'pg';
-import { RepositoryType } from './commonStructure';
+import { RepositoryType } from '../commonStructure';
 
 export interface DbRecord {
   source_url: string;

@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import { Pool } from 'pg';
 import fetch from 'node-fetch';
-import { RecordDao } from '../src/store/recordDao';
+import { RecordDao } from '../src/store/dao/recordDao';
 import { RateLimiter } from '../src/services/rateLimiter';
 import { CONFIG } from '../config';
 import { RepositoryType } from '../src/store/commonStructure';

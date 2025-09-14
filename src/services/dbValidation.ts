@@ -1,7 +1,7 @@
 import { Pool } from 'pg';
 import { RepositoryType } from '../store/commonStructure';
 import { log } from './serviceLogging';
-import { RecordDao } from '../store/recordDao';
+import { RecordDao } from '../store/dao/recordDao';
 import { processOneRecordTask, processOneSitesRecord } from './harvester';
 import { fetchSites } from '../utilities/matchDeimsId';
 import { fieldSitesLimiter, zenodoLimiter } from './rateLimiterConcurrency';

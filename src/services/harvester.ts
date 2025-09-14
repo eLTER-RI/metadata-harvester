@@ -12,7 +12,7 @@ import {
   getFieldSitesMatchedSites,
   getZenodoMatchedSites,
 } from '../utilities/matchDeimsId';
-import { DbRecord, RecordDao } from '../store/recordDao';
+import { DbRecord, RecordDao } from '../store/dao/recordDao';
 import { mapB2ShareToCommonDatasetMetadata } from '../store/b2shareParser';
 import { mapDataRegistryToCommonDatasetMetadata } from '../store/dataregistryParser';
 import { mapZenodoToCommonDatasetMetadata } from '../store/zenodoParser';
