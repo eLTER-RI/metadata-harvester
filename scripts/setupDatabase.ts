@@ -50,9 +50,9 @@ async function init(): Promise<void> {
     port: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : 5432,
   });
   try {
-    process.stdout.write(`Creating table 'harvested_records'.\n`);
+    process.stdout.write(`Creating tables: \n`);
     await appClient.connect();
-    const createRecordsTableQuery = `
+    const allTablesCreate = `
       CREATE TABLE IF NOT EXISTS harvested_records (
         source_url TEXT PRIMARY KEY,
         source_repository TEXT NOT NULL,
@@ -62,22 +62,25 @@ async function init(): Promise<void> {
         status TEXT,
         last_harvested TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       );
-    `;
-    await appClient.query(createRecordsTableQuery);
-    process.stdout.write(`Successfully created table harvested_records.\n`);
 
-    const createSitesTableQuery = `
-    CREATE TABLE IF NOT EXISTS deims_sites (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    shortname TEXT,
-    site_data JSONB NOT NULL,
-    checksum TEXT NOT NULL
-    );
+      CREATE TABLE IF NOT EXISTS deims_sites (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        shortname TEXT,
+        site_data JSONB NOT NULL,
+        checksum TEXT NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS record_rules (
+        id SERIAL PRIMARY KEY,
+        dar_id VARCHAR(255) NOT NULL,
+        rule_type VARCHAR(50) NOT NULL,
+        target_path VARCHAR(255) NOT NULL,
+        new_value JSONB,
+        FOREIGN KEY (dar_id) REFERENCES harvested_records(dar_id)
+      );
   `;
-
-    await appClient.query(createSitesTableQuery);
-    process.stdout.write(`Successfully created table deims_sites.\n`);
+    await appClient.query(allTablesCreate);
+    process.stdout.write(`Successfully created all tables.\n`);
   } catch (error) {
     process.stderr.write('Error during table creationg: ' + error + '\n');
     throw error;
