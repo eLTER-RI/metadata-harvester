@@ -78,6 +78,16 @@ async function init(): Promise<void> {
         new_value JSONB,
         FOREIGN KEY (dar_id) REFERENCES harvested_records(dar_id)
       );
+
+      CREATE TABLE IF NOT EXISTS mapping_rules (
+        id SERIAL PRIMARY KEY,
+        repository_type VARCHAR(50) NOT NULL,
+        source_path TEXT NOT NULL,
+        target_path TEXT NOT NULL,
+        rule_type VARCHAR(50) NOT NULL,
+        options JSONB,
+        condition JSONB
+      );
   `;
     await appClient.query(allTablesCreate);
     process.stdout.write(`Successfully created all tables.\n`);
