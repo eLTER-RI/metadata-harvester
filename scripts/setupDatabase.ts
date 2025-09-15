@@ -70,14 +70,6 @@ async function init(): Promise<void> {
         site_data JSONB NOT NULL,
         checksum TEXT NOT NULL
       );
-      CREATE TABLE IF NOT EXISTS record_rules (
-        id SERIAL PRIMARY KEY,
-        dar_id VARCHAR(255) NOT NULL,
-        rule_type VARCHAR(50) NOT NULL,
-        target_path VARCHAR(255) NOT NULL,
-        new_value JSONB,
-        FOREIGN KEY (dar_id) REFERENCES harvested_records(dar_id)
-      );
 
       CREATE TABLE IF NOT EXISTS mapping_rules (
         id SERIAL PRIMARY KEY,
