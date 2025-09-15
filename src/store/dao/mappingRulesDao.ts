@@ -1,4 +1,4 @@
-import { Pool } from 'pg';
+import { Pool, QueryResult } from 'pg';
 import { RepositoryType } from '../commonStructure';
 
 export interface MappingRule {
@@ -10,6 +10,7 @@ export interface MappingRule {
   options?: {
     transform_function?: string;
     defaultValue?: any;
+    args?: any;
   };
   condition?: {
     path: string;
@@ -23,5 +24,11 @@ export class MappingRulesDao {
 
   constructor(pool: Pool) {
     this.pool = pool;
+  }
+
+  async getRulesByRepository(repositoryType: RepositoryType): Promise<MappingRule[]> {
+    const query = 'SELECT * FROM mapping_rules WHERE repository_type = $1 ORDER BY id';
+    const result: QueryResult<MappingRule> = await this.pool.query(query, [repositoryType]);
+    return result.rows;
   }
 }
