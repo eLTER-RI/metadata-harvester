@@ -31,4 +31,21 @@ export class MappingRulesDao {
     const result: QueryResult<MappingRule> = await this.pool.query(query, [repositoryType]);
     return result.rows;
   }
+
+  async createRule(rule: Omit<MappingRule, 'id'>): Promise<MappingRule> {
+    const query = `
+      INSERT INTO mapping_rules (repository_type, source_path, target_path, rule_type, options, condition)
+      VALUES ($1, $2, $3, $4, $5, $6)
+    `;
+    const values = [
+      rule.repository_type,
+      rule.source_path,
+      rule.target_path,
+      rule.rule_type,
+      rule.options,
+      rule.condition,
+    ];
+    const result = await this.pool.query(query, values);
+    return result.rows[0];
+  }
 }
