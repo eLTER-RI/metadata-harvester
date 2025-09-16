@@ -18,6 +18,8 @@ import { mapDataRegistryToCommonDatasetMetadata } from '../store/dataregistryPar
 import { mapZenodoToCommonDatasetMetadata } from '../store/zenodoParser';
 import { fieldSitesLimiter, zenodoLimiter } from './rateLimiterConcurrency';
 import { dbValidationPhase } from './dbValidation';
+import { MappingRulesDao } from '../store/dao/mappingRulesDao';
+import { applyRuleToDataset, checkCondition } from '../utilities/mapping';
 
 // Configurations
 const currentEnv = process.env.NODE_ENV;
@@ -413,27 +415,21 @@ export async function syncSitesRepositoryAll(url: string, recordDao: RecordDao) 
 }
 
 /**
- * Processes a single record from an API based repository.
- * It fetches the record data, uses mapping for the given repository type, and then calls a function to synchronize data.
+ * Maps the recordData expected to be fetched json into a CommonDataset and applies any rules that user chose.
  * @param {string} sourceUrl The source URL of the record on the remote repository.
- * @param {RecordDao} recordDao
- * @param {SiteReference[]} sites A list of DEIMS sites for matching.
+ * @param {any} recordData
  * @param {RepositoryType} repositoryType The type of the repository to process (e.g., 'ZENODO', 'B2SHARE_EUDAT'...).
+ * @param {SiteReference[]} sites A list of DEIMS sites for matching.
+ * @param {MappingRulesDao[]} mappingRulesDao
  */
-export const processOneRecordTask = async (
+async function mapAndApplyRules(
   sourceUrl: string,
-  recordDao: RecordDao,
+  recordData: any,
+  repositoryType: RepositoryType,
   sites: SiteReference[],
-  repositoryType?: RepositoryType,
-) => {
+  mappingRulesDao: MappingRulesDao,
+): Promise<CommonDataset> {
   let mappedDataset: CommonDataset;
-  const dbRecord = await recordDao.getRecordBySourceId(sourceUrl);
-  if (dbRecord && dbRecord[0].status === 'success') {
-    return;
-  }
-  const recordData = await fetchJson(sourceUrl);
-  if (!recordData) return null;
-
   switch (repositoryType) {
     case 'B2SHARE_EUDAT':
     case 'B2SHARE_JUELICH': {
@@ -456,9 +452,45 @@ export const processOneRecordTask = async (
     default:
       throw new Error(`Unknown repository: ${repositoryType}.`);
   }
+
+  const repoRules = await mappingRulesDao.getRulesByRepository(repositoryType);
+  for (const rule of repoRules) {
+    if (checkCondition(recordData, rule.condition)) {
+      const sourceValue = getNestedValue(recordData, rule.source_path);
+      applyRuleToDataset(mappedDataset, sourceValue, rule);
+    }
+  }
+
+  return mappedDataset;
+}
+
+/**
+ * Processes a single record from an API based repository.
+ * It fetches the record data, gets mapping for the given repository type, and then calls a function to synchronize data.
+ * @param {string} sourceUrl The source URL of the record on the remote repository.
+ * @param {RecordDao} recordDao
+ * @param {SiteReference[]} sites A list of DEIMS sites for matching.
+ * @param {RepositoryType} repositoryType The type of the repository to process (e.g., 'ZENODO', 'B2SHARE_EUDAT'...).
+ */
+export const processOneRecordTask = async (
+  sourceUrl: string,
+  recordDao: RecordDao,
+  mappingRulesDao: MappingRulesDao,
+  sites: SiteReference[],
+  repositoryType: RepositoryType,
+) => {
+  const dbRecord = await recordDao.getRecordBySourceId(sourceUrl);
+  if (dbRecord && dbRecord[0].status === 'success') {
+    return;
+  }
+  const recordData = await fetchJson(sourceUrl);
+  if (!recordData) return null;
+
+  const finalMappedDataset = await mapAndApplyRules(sourceUrl, recordData, repositoryType, sites, mappingRulesDao);
+
   const newSourceChecksum = calculateChecksum(recordData);
-  const mappedSourceUrl = mappedDataset.metadata.externalSourceInformation.externalSourceURI || sourceUrl;
-  await synchronizeRecord(recordDao, mappedSourceUrl, repositoryType, newSourceChecksum, mappedDataset);
+  const mappedSourceUrl = finalMappedDataset.metadata.externalSourceInformation.externalSourceURI || sourceUrl;
+  await synchronizeRecord(recordDao, mappedSourceUrl, repositoryType, newSourceChecksum, finalMappedDataset);
 };
 
 /**
@@ -475,18 +507,21 @@ export const processOneRecordTask = async (
 async function processApiHits(
   hits: string[],
   recordDao: RecordDao,
+  mappingRulesDao: MappingRulesDao,
   sites: SiteReference[],
   selfLinkKey: string,
-  repositoryType?: RepositoryType,
+  repositoryType: RepositoryType,
 ) {
   await Promise.all(
     hits.map(async (hit: any) => {
       if (!hit) return null;
       const recordUrl = getNestedValue(hit, selfLinkKey);
       if (repositoryType === 'ZENODO' || repositoryType === 'ZENODO_IT') {
-        return zenodoLimiter.schedule(() => processOneRecordTask(recordUrl, recordDao, sites, repositoryType));
+        return zenodoLimiter.schedule(() =>
+          processOneRecordTask(recordUrl, recordDao, mappingRulesDao, sites, repositoryType),
+        );
       }
-      return processOneRecordTask(recordUrl, recordDao, sites, repositoryType);
+      return processOneRecordTask(recordUrl, recordDao, mappingRulesDao, sites, repositoryType);
     }),
   );
 }
@@ -502,6 +537,7 @@ async function syncApiRepositoryAll(pool: Pool, repositoryType: RepositoryType, 
   let page = 1;
   const { apiUrl, pageSize, selfLinkKey, dataKey } = repoConfig;
   const recordDao = new RecordDao(pool);
+  const mappingRulesDao = new MappingRulesDao(pool);
   const sites = await fetchSites();
   while (pageSize) {
     const pageUrl = `${apiUrl}&size=${pageSize}&page=${page}`;
@@ -511,7 +547,7 @@ async function syncApiRepositoryAll(pool: Pool, repositoryType: RepositoryType, 
     log('info', `Found ${hits.length} self links. Fetching individual records...\n`);
 
     // // Process individual records using the parser
-    await processApiHits(hits, recordDao, sites, selfLinkKey, repositoryType);
+    await processApiHits(hits, recordDao, mappingRulesDao, sites, selfLinkKey, repositoryType);
 
     if (hits.length === 0) {
       log('warn', `No records found on page ${page}. Stopping.`);
