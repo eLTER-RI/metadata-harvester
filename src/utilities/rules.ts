@@ -1,5 +1,6 @@
 import { getNestedValue } from '../services/pullAllData';
 import { CommonDataset } from '../store/commonStructure';
+import { RecordRewriteRule } from '../store/dao/recordRewriteRulesDao';
 import { RepositoryMappingRule } from '../store/dao/repositoryMappingRulesDao';
 import { executeTransformer } from './transformFunctions';
 
@@ -118,6 +119,20 @@ export function applyRuleToDataset(dataset: CommonDataset, sourceValue: any, rul
       if (getNestedValue(dataset, rule.target_path) === undefined) {
         setNestedValue(dataset, rule.target_path, rule?.options?.defaultValue);
       }
+      break;
+  }
+}
+
+export function applyRuleToRecord(dataset: CommonDataset, sourceValue: any, rule: RecordRewriteRule): void {
+  switch (rule.rule_type) {
+    case 'REPLACE':
+      setNestedValue(dataset, rule.target_path, sourceValue);
+      break;
+    case 'ADD':
+      appendValue(dataset, rule.target_path, sourceValue);
+      break;
+    case 'REMOVE':
+      setNestedValue(dataset, rule.target_path, undefined);
       break;
   }
 }

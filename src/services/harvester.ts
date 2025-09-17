@@ -19,7 +19,7 @@ import { mapZenodoToCommonDatasetMetadata } from '../store/zenodoParser';
 import { fieldSitesLimiter, zenodoLimiter } from './rateLimiterConcurrency';
 import { dbValidationPhase } from './dbValidation';
 import { RepositoryMappingRulesDao } from '../store/dao/repositoryMappingRulesDao';
-import { applyRuleToDataset, checkCondition } from '../utilities/mapping';
+import { applyRuleToDataset, checkCondition } from '../utilities/rules';
 
 // Configurations
 const currentEnv = process.env.NODE_ENV;
