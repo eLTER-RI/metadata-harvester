@@ -1,4 +1,4 @@
-import { fetchJson } from '../utilities/fetchJsonFromRemote';
+import { fetchJson } from '../../utilities/fetchJsonFromRemote';
 import {
   AdditionalMetadata,
   AlternateIdentifier,
@@ -14,7 +14,7 @@ import {
   Relation,
   ResponsibleOrganizations,
   TemporalCoverage,
-} from './commonStructure';
+} from '../commonStructure';
 
 const ZENODO_ASSET_TYPE_MAP = new Map<string, IdentifierType>([
   ['poster', 'Other'],

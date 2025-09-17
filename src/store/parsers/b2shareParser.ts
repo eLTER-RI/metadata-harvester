@@ -1,4 +1,4 @@
-import { B2ShareExtractedSchema } from './b2shareApi';
+import { B2ShareExtractedSchema } from '../../../api/schema/b2shareApi';
 import {
   AlternateIdentifier,
   Geolocation,
@@ -19,7 +19,7 @@ import {
   formatDate,
   getLicenseURI,
   getChecksum,
-} from './commonStructure';
+} from '../commonStructure';
 
 function extractB2ShareGeolocation(input: any): Geolocation[] {
   const coverages: Geolocation[] = [];

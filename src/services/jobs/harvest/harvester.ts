@@ -2,7 +2,7 @@ import { CommonDataset, RepositoryType, SiteReference } from '../../../store/com
 import { log } from '../../serviceLogging';
 import { CONFIG } from '../../../../config';
 import { Pool } from 'pg';
-import { mapFieldSitesToCommonDatasetMetadata } from '../../../store/sitesParser';
+import { mapFieldSitesToCommonDatasetMetadata } from '../../../store/parsers/sitesParser';
 import { fetchJson, fetchXml } from '../../../utilities/fetchJsonFromRemote';
 import { getNestedValue } from '../../../utilities/rules';
 import { calculateChecksum } from '../../../utilities/checksum';
@@ -14,9 +14,9 @@ import {
   getZenodoMatchedSites,
 } from '../../../utilities/matchDeimsId';
 import { DbRecord, RecordDao } from '../../../store/dao/recordDao';
-import { mapB2ShareToCommonDatasetMetadata } from '../../../store/b2shareParser';
-import { mapDataRegistryToCommonDatasetMetadata } from '../../../store/dataregistryParser';
-import { mapZenodoToCommonDatasetMetadata } from '../../../store/zenodoParser';
+import { mapB2ShareToCommonDatasetMetadata } from '../../../store/parsers/b2shareParser';
+import { mapDataRegistryToCommonDatasetMetadata } from '../../../store/parsers/dataregistryParser';
+import { mapZenodoToCommonDatasetMetadata } from '../../../store/parsers/zenodoParser';
 import { fieldSitesLimiter, zenodoLimiter } from '../../rateLimiterConcurrency';
 import { dbValidationPhase } from './dbValidation';
 import { RepositoryMappingRulesDao } from '../../../store/dao/repositoryMappingRulesDao';

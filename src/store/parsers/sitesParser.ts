@@ -11,7 +11,7 @@ import {
   EntityIdentifier,
   getLicenseURI,
   getChecksum,
-} from './commonStructure';
+} from '../commonStructure';
 
 function extractSitesGeolocation(input: any): Geolocation[] {
   const coverages: Geolocation[] = [];
