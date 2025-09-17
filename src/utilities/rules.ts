@@ -1,8 +1,19 @@
-import { getNestedValue } from '../services/pullAllData';
 import { CommonDataset } from '../store/commonStructure';
 import { RecordRewriteRule } from '../store/dao/recordRewriteRulesDao';
 import { RepositoryMappingRule } from '../store/dao/repositoryMappingRulesDao';
 import { executeTransformer } from './transformFunctions';
+
+function getNestedValue(obj: any, path: string): any {
+  const objectParts = path.split('.');
+  let currentPart = obj;
+  for (const part of objectParts) {
+    if (currentPart === null || currentPart === undefined) {
+      return undefined;
+    }
+    currentPart = currentPart[part];
+  }
+  return currentPart;
+}
 
 export function checkCondition(recordData: CommonDataset, condition: any): boolean {
   if (!condition) return true;
