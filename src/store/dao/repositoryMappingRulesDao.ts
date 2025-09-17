@@ -1,7 +1,7 @@
 import { Pool, QueryResult } from 'pg';
 import { RepositoryType } from '../commonStructure';
 
-export interface MappingRule {
+export interface RepositoryMappingRule {
   id: number;
   repository_type: RepositoryType;
   source_path: string;
@@ -19,22 +19,22 @@ export interface MappingRule {
   };
 }
 
-export class MappingRulesDao {
+export class RepositoryMappingRulesDao {
   private pool: Pool;
 
   constructor(pool: Pool) {
     this.pool = pool;
   }
 
-  async getRulesByRepository(repositoryType: RepositoryType): Promise<MappingRule[]> {
-    const query = 'SELECT * FROM mapping_rules WHERE repository_type = $1 ORDER BY id';
-    const result: QueryResult<MappingRule> = await this.pool.query(query, [repositoryType]);
+  async getRulesByRepository(repositoryType: RepositoryType): Promise<RepositoryMappingRule[]> {
+    const query = 'SELECT * FROM repository_mapping_rules WHERE repository_type = $1 ORDER BY id';
+    const result: QueryResult<RepositoryMappingRule> = await this.pool.query(query, [repositoryType]);
     return result.rows;
   }
 
-  async createRule(rule: Omit<MappingRule, 'id'>): Promise<MappingRule> {
+  async createRule(rule: Omit<RepositoryMappingRule, 'id'>): Promise<RepositoryMappingRule> {
     const query = `
-      INSERT INTO mapping_rules (repository_type, source_path, target_path, rule_type, options, condition)
+      INSERT INTO repository_mapping_rules (repository_type, source_path, target_path, rule_type, options, condition)
       VALUES ($1, $2, $3, $4, $5, $6)
     `;
     const values = [

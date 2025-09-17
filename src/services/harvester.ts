@@ -18,7 +18,7 @@ import { mapDataRegistryToCommonDatasetMetadata } from '../store/dataregistryPar
 import { mapZenodoToCommonDatasetMetadata } from '../store/zenodoParser';
 import { fieldSitesLimiter, zenodoLimiter } from './rateLimiterConcurrency';
 import { dbValidationPhase } from './dbValidation';
-import { MappingRulesDao } from '../store/dao/mappingRulesDao';
+import { RepositoryMappingRulesDao } from '../store/dao/repositoryMappingRulesDao';
 import { applyRuleToDataset, checkCondition } from '../utilities/mapping';
 
 // Configurations
@@ -420,14 +420,14 @@ export async function syncSitesRepositoryAll(url: string, recordDao: RecordDao) 
  * @param {any} recordData
  * @param {RepositoryType} repositoryType The type of the repository to process (e.g., 'ZENODO', 'B2SHARE_EUDAT'...).
  * @param {SiteReference[]} sites A list of DEIMS sites for matching.
- * @param {MappingRulesDao[]} mappingRulesDao
+ * @param {RepositoryMappingRulesDao[]} mappingRulesDao
  */
 async function mapAndApplyRules(
   sourceUrl: string,
   recordData: any,
   repositoryType: RepositoryType,
   sites: SiteReference[],
-  mappingRulesDao: MappingRulesDao,
+  repositoryMappingRulesDao: RepositoryMappingRulesDao,
 ): Promise<CommonDataset> {
   let mappedDataset: CommonDataset;
   switch (repositoryType) {
@@ -453,7 +453,7 @@ async function mapAndApplyRules(
       throw new Error(`Unknown repository: ${repositoryType}.`);
   }
 
-  const repoRules = await mappingRulesDao.getRulesByRepository(repositoryType);
+  const repoRules = await repositoryMappingRulesDao.getRulesByRepository(repositoryType);
   for (const rule of repoRules) {
     if (checkCondition(recordData, rule.condition)) {
       const sourceValue = getNestedValue(recordData, rule.source_path);
@@ -475,7 +475,7 @@ async function mapAndApplyRules(
 export const processOneRecordTask = async (
   sourceUrl: string,
   recordDao: RecordDao,
-  mappingRulesDao: MappingRulesDao,
+  repositoryMappingRulesDao: RepositoryMappingRulesDao,
   sites: SiteReference[],
   repositoryType: RepositoryType,
 ) => {
@@ -486,7 +486,13 @@ export const processOneRecordTask = async (
   const recordData = await fetchJson(sourceUrl);
   if (!recordData) return null;
 
-  const finalMappedDataset = await mapAndApplyRules(sourceUrl, recordData, repositoryType, sites, mappingRulesDao);
+  const finalMappedDataset = await mapAndApplyRules(
+    sourceUrl,
+    recordData,
+    repositoryType,
+    sites,
+    repositoryMappingRulesDao,
+  );
 
   const newSourceChecksum = calculateChecksum(recordData);
   const mappedSourceUrl = finalMappedDataset.metadata.externalSourceInformation.externalSourceURI || sourceUrl;
@@ -507,7 +513,7 @@ export const processOneRecordTask = async (
 async function processApiHits(
   hits: string[],
   recordDao: RecordDao,
-  mappingRulesDao: MappingRulesDao,
+  repositoryMappingRulesDao: RepositoryMappingRulesDao,
   sites: SiteReference[],
   selfLinkKey: string,
   repositoryType: RepositoryType,
@@ -518,10 +524,10 @@ async function processApiHits(
       const recordUrl = getNestedValue(hit, selfLinkKey);
       if (repositoryType === 'ZENODO' || repositoryType === 'ZENODO_IT') {
         return zenodoLimiter.schedule(() =>
-          processOneRecordTask(recordUrl, recordDao, mappingRulesDao, sites, repositoryType),
+          processOneRecordTask(recordUrl, recordDao, repositoryMappingRulesDao, sites, repositoryType),
         );
       }
-      return processOneRecordTask(recordUrl, recordDao, mappingRulesDao, sites, repositoryType);
+      return processOneRecordTask(recordUrl, recordDao, repositoryMappingRulesDao, sites, repositoryType);
     }),
   );
 }
@@ -537,7 +543,7 @@ async function syncApiRepositoryAll(pool: Pool, repositoryType: RepositoryType, 
   let page = 1;
   const { apiUrl, pageSize, selfLinkKey, dataKey } = repoConfig;
   const recordDao = new RecordDao(pool);
-  const mappingRulesDao = new MappingRulesDao(pool);
+  const repositoryMappingRulesDao = new RepositoryMappingRulesDao(pool);
   const sites = await fetchSites();
   while (pageSize) {
     const pageUrl = `${apiUrl}&size=${pageSize}&page=${page}`;
@@ -547,7 +553,7 @@ async function syncApiRepositoryAll(pool: Pool, repositoryType: RepositoryType, 
     log('info', `Found ${hits.length} self links. Fetching individual records...\n`);
 
     // // Process individual records using the parser
-    await processApiHits(hits, recordDao, mappingRulesDao, sites, selfLinkKey, repositoryType);
+    await processApiHits(hits, recordDao, repositoryMappingRulesDao, sites, selfLinkKey, repositoryType);
 
     if (hits.length === 0) {
       log('warn', `No records found on page ${page}. Stopping.`);

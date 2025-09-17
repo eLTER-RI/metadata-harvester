@@ -5,6 +5,7 @@ import { RecordDao } from '../store/dao/recordDao';
 import { processOneRecordTask, processOneSitesRecord } from './harvester';
 import { fetchSites } from '../utilities/matchDeimsId';
 import { fieldSitesLimiter, zenodoLimiter } from './rateLimiterConcurrency';
+import { RepositoryMappingRulesDao } from '../store/dao/repositoryMappingRulesDao';
 
 // for example, for zenodo, we can find out if it "is_last" - if it is, just upsert and put
 // if it's not, fetch versions, get latest, and run it for it
@@ -21,6 +22,7 @@ import { fieldSitesLimiter, zenodoLimiter } from './rateLimiterConcurrency';
  */
 export async function dbValidationPhase(pool: Pool, repositoryType: RepositoryType) {
   const recordDao = new RecordDao(pool);
+  const mappingRulesDao = new RepositoryMappingRulesDao(pool);
   const dbRecords = await recordDao.listRecordsByRepository(repositoryType);
   log('info', `Validation of database data for ${repositoryType}. Found ${dbRecords.length} records in the database.`);
   const sites = await fetchSites();
@@ -34,10 +36,10 @@ export async function dbValidationPhase(pool: Pool, repositoryType: RepositoryTy
       if (repositoryType === 'ZENODO' || repositoryType === 'ZENODO_IT') {
         if (dbRecord.source_url)
           return zenodoLimiter.schedule(() =>
-            processOneRecordTask(dbRecord.source_url, recordDao, sites, repositoryType),
+            processOneRecordTask(dbRecord.source_url, recordDao, mappingRulesDao, sites, repositoryType),
           );
       }
-      return processOneRecordTask(dbRecord.source_url, recordDao, sites, repositoryType);
+      return processOneRecordTask(dbRecord.source_url, recordDao, mappingRulesDao, sites, repositoryType);
     }),
   );
 }

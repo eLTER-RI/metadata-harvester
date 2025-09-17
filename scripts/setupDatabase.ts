@@ -71,7 +71,7 @@ async function init(): Promise<void> {
         checksum TEXT NOT NULL
       );
 
-      CREATE TABLE IF NOT EXISTS mapping_rules (
+      CREATE TABLE IF NOT EXISTS repository_mapping_rules (
         id SERIAL PRIMARY KEY,
         repository_type VARCHAR(50) NOT NULL,
         source_path TEXT NOT NULL,

@@ -1,6 +1,6 @@
 import { getNestedValue } from '../services/pullAllData';
 import { CommonDataset } from '../store/commonStructure';
-import { MappingRule } from '../store/dao/mappingRulesDao';
+import { RepositoryMappingRule } from '../store/dao/repositoryMappingRulesDao';
 import { executeTransformer } from './transformFunctions';
 
 export function checkCondition(recordData: CommonDataset, condition: any): boolean {
@@ -103,7 +103,7 @@ export function appendValue(obj: any, path: string, value: any): void {
  * @param {any} sourceValue New value to set into the dataset's destination.
  * @param {MappingRule} rule Specific rule to apply.
  */
-export function applyRuleToDataset(dataset: CommonDataset, sourceValue: any, rule: MappingRule): void {
+export function applyRuleToDataset(dataset: CommonDataset, sourceValue: any, rule: RepositoryMappingRule): void {
   switch (rule.rule_type) {
     case 'COPY':
       setNestedValue(dataset, rule.target_path, sourceValue);
