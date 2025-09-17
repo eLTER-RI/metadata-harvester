@@ -1,11 +1,11 @@
 import { Pool } from 'pg';
-import { RepositoryType } from '../store/commonStructure';
-import { log } from './serviceLogging';
-import { RecordDao } from '../store/dao/recordDao';
+import { RepositoryType } from '../../../store/commonStructure';
+import { log } from './../../serviceLogging';
+import { RecordDao } from '../../../store/dao/recordDao';
 import { processOneRecordTask, processOneSitesRecord } from './harvester';
-import { fetchSites } from '../utilities/matchDeimsId';
-import { fieldSitesLimiter, zenodoLimiter } from './rateLimiterConcurrency';
-import { RepositoryMappingRulesDao } from '../store/dao/repositoryMappingRulesDao';
+import { fetchSites } from '../../../utilities/matchDeimsId';
+import { fieldSitesLimiter, zenodoLimiter } from './../../rateLimiterConcurrency';
+import { RepositoryMappingRulesDao } from '../../../store/dao/repositoryMappingRulesDao';
 
 // for example, for zenodo, we can find out if it "is_last" - if it is, just upsert and put
 // if it's not, fetch versions, get latest, and run it for it

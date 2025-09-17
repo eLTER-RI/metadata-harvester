@@ -1,11 +1,11 @@
 import 'dotenv/config';
 import { Pool } from 'pg';
 import fetch from 'node-fetch';
-import { RecordDao } from '../src/store/dao/recordDao';
-import { RateLimiter } from '../src/services/rateLimiter';
-import { CONFIG } from '../config';
-import { RepositoryType } from '../src/store/commonStructure';
-import { log } from '../src/services/serviceLogging';
+import { RecordDao } from '../../../store/dao/recordDao';
+import { RateLimiter } from '../../rateLimiter';
+import { CONFIG } from '../../../../config';
+import { RepositoryType } from '../../../store/commonStructure';
+import { log } from '../../serviceLogging';
 
 const currentEnv = process.env.NODE_ENV;
 if (currentEnv !== 'prod' && currentEnv !== 'dev') {

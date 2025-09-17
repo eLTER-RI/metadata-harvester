@@ -4,9 +4,9 @@ import { Pool } from 'pg';
 import { log } from './serviceLogging';
 import { RepositoryType } from '../store/commonStructure';
 import { CONFIG } from '../../config';
-import { startRepositorySync } from './harvester';
-import { syncDeimsSites } from './syncDeimsSites';
-import { syncWithDar } from '../../scripts/localDarSync';
+import { startRepositorySync } from './jobs/harvest/harvester';
+import { syncDeimsSites } from './jobs/deimsSync/syncDeimsSites';
+import { syncWithDar } from './jobs/syncDbWithRemote/localDarSync';
 
 const pool = new Pool({
   user: process.env.DB_USER,

@@ -1,9 +1,9 @@
 import 'dotenv/config';
-import { calculateChecksum } from '../utilities/checksum';
-import { fetchSites } from '../utilities/matchDeimsId';
-import { log } from './serviceLogging';
+import { calculateChecksum } from '../../../utilities/checksum';
+import { fetchSites } from '../../../utilities/matchDeimsId';
+import { log } from '../../serviceLogging';
 import { Pool } from 'pg';
-import { DeimsDao } from '../store/dao/deimsDao';
+import { DeimsDao } from '../../../store/dao/deimsDao';
 
 export async function syncDeimsSites(pool: Pool): Promise<void> {
   console.log('Starting DEIMS site synchronization...');
