@@ -1,4 +1,4 @@
-import { fetchJson } from '../services/pullAllData';
+import { fetchJson } from '../utilities/fetchJsonFromRemote';
 import {
   AdditionalMetadata,
   AlternateIdentifier,

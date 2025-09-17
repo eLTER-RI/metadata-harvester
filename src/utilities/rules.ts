@@ -3,7 +3,7 @@ import { RecordRewriteRule } from '../store/dao/recordRewriteRulesDao';
 import { RepositoryMappingRule } from '../store/dao/repositoryMappingRulesDao';
 import { executeTransformer } from './transformFunctions';
 
-function getNestedValue(obj: any, path: string): any {
+export function getNestedValue(obj: any, path: string): any {
   const objectParts = path.split('.');
   let currentPart = obj;
   for (const part of objectParts) {

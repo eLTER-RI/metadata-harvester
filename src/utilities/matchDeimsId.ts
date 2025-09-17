@@ -1,5 +1,5 @@
 import { CONFIG } from '../../config';
-import { fetchJson } from '../services/pullAllData';
+import { fetchJson } from '../utilities/fetchJsonFromRemote';
 import { SiteReference } from '../store/commonStructure';
 
 export async function fetchSites(): Promise<any> {

@@ -3,7 +3,8 @@ import { log } from './serviceLogging';
 import { CONFIG } from '../../config';
 import { Pool } from 'pg';
 import { mapFieldSitesToCommonDatasetMetadata } from '../store/sitesParser';
-import { fetchJson, fetchXml, getNestedValue } from './pullAllData';
+import { fetchJson, fetchXml } from '../utilities/fetchJsonFromRemote';
+import { getNestedValue } from '../utilities/rules';
 import { calculateChecksum } from '../utilities/checksum';
 import {
   fetchSites,
