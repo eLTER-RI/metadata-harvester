@@ -83,7 +83,6 @@ async function findDarRecordBySourceURL(sourceUrl: string): Promise<string | nul
  */
 async function dbRecordUpsert(
   darId: string | null,
-  missingInDb: boolean,
   recordDao: RecordDao,
   sourceUrl: string,
   repositoryType: RepositoryType,
@@ -91,6 +90,8 @@ async function dbRecordUpsert(
   darChecksum: string,
   oldUrl?: string,
 ) {
+  const dbMatches = await recordDao.getRecordBySourceId(sourceUrl);
+  const missingInDb = dbMatches.length === 0;
   if (!darId) {
     await recordDao.updateDarIdStatus(sourceUrl, {
       status: 'failed',
@@ -258,7 +259,7 @@ async function handleChangedRecord(
   }
 
   await putToDar(darId, recordDao, sourceUrl, dataset);
-  await dbRecordUpsert(darId, isDbRecordMissing, recordDao, sourceUrl, repositoryType, sourceChecksum, darChecksum);
+  await dbRecordUpsert(darId, recordDao, sourceUrl, repositoryType, sourceChecksum, darChecksum);
 }
 
 /**
@@ -309,16 +310,7 @@ async function synchronizeRecord(
       const oldVersionsInDb = await recordDao.getRecordBySourceId(oldUrl);
       if (oldVersionsInDb.length > 0) {
         putToDar(oldVersionsInDb[0].dar_id, recordDao, url, dataset);
-        dbRecordUpsert(
-          oldVersionsInDb[0].dar_id,
-          isDbRecordMissing,
-          recordDao,
-          url,
-          repositoryType,
-          sourceChecksum,
-          darChecksum,
-          oldUrl,
-        );
+        dbRecordUpsert(oldVersionsInDb[0].dar_id, recordDao, url, repositoryType, sourceChecksum, darChecksum, oldUrl);
         return;
       }
     });
@@ -326,7 +318,7 @@ async function synchronizeRecord(
 
   if (!darMatches) {
     const darId = await postToDar(recordDao, url, dataset);
-    await dbRecordUpsert(darId, isDbRecordMissing, recordDao, url, repositoryType, sourceChecksum, darChecksum);
+    await dbRecordUpsert(darId, recordDao, url, repositoryType, sourceChecksum, darChecksum);
     return;
   }
 
