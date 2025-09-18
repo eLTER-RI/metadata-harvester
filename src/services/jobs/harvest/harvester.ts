@@ -93,13 +93,7 @@ export class HarvesterContext {
     const recordData = await fetchJson(sourceUrl);
     if (!recordData) return null;
 
-    const finalMappedDataset = await mapAndApplyRules(
-      sourceUrl,
-      recordData,
-      this.repositoryType,
-      this.sites,
-      this.repositoryMappingRulesDao,
-    );
+    const finalMappedDataset = await this.mapAndApplyRules(sourceUrl, recordData);
 
     const newSourceChecksum = calculateChecksum(recordData);
     const mappedSourceUrl = finalMappedDataset.metadata.externalSourceInformation.externalSourceURI || sourceUrl;
@@ -110,6 +104,48 @@ export class HarvesterContext {
       newSourceChecksum,
       finalMappedDataset,
     );
+  }
+
+  /**
+   * Maps the recordData expected to be fetched json into a CommonDataset and applies any rules that user chose.
+   * @param {string} sourceUrl The source URL of the record on the remote repository.
+   * @param {any} recordData
+   */
+  public async mapAndApplyRules(sourceUrl: string, recordData: any): Promise<CommonDataset> {
+    let mappedDataset: CommonDataset;
+    let repositoryType = this.repositoryType;
+    switch (repositoryType) {
+      case 'B2SHARE_EUDAT':
+      case 'B2SHARE_JUELICH': {
+        const matchedSites = await getB2ShareMatchedSites(recordData, this.sites);
+        mappedDataset = await mapB2ShareToCommonDatasetMetadata(sourceUrl, recordData, matchedSites, repositoryType);
+        break;
+      }
+      case 'DATAREGISTRY': {
+        const matchedSites = await getDataRegistryMatchedSites(recordData);
+        mappedDataset = await mapDataRegistryToCommonDatasetMetadata(sourceUrl, recordData, matchedSites);
+        break;
+      }
+      case 'ZENODO':
+      case 'ZENODO_IT': {
+        const matchedSites = await getZenodoMatchedSites(recordData, this.sites);
+        mappedDataset = await mapZenodoToCommonDatasetMetadata(sourceUrl, recordData, matchedSites);
+        repositoryType = 'ZENODO';
+        break;
+      }
+      default:
+        throw new Error(`Unknown repository: ${repositoryType}.`);
+    }
+
+    const repoRules = await this.repositoryMappingRulesDao.getRulesByRepository(repositoryType);
+    for (const rule of repoRules) {
+      if (checkCondition(recordData, rule.condition)) {
+        const sourceValue = getNestedValue(recordData, rule.source_path);
+        applyRuleToDataset(mappedDataset, sourceValue, rule);
+      }
+    }
+
+    return mappedDataset;
   }
 
   /**
@@ -496,56 +532,6 @@ export const processOneSitesRecord = async (sourceUrl: string, recordDao: Record
     await recordDao.updateStatus(sourceUrl, { status: 'failed' });
   }
 };
-
-/**
- * Maps the recordData expected to be fetched json into a CommonDataset and applies any rules that user chose.
- * @param {string} sourceUrl The source URL of the record on the remote repository.
- * @param {any} recordData
- * @param {RepositoryType} repositoryType The type of the repository to process (e.g., 'ZENODO', 'B2SHARE_EUDAT'...).
- * @param {SiteReference[]} sites A list of DEIMS sites for matching.
- * @param {RepositoryMappingRulesDao[]} mappingRulesDao
- */
-async function mapAndApplyRules(
-  sourceUrl: string,
-  recordData: any,
-  repositoryType: RepositoryType,
-  sites: SiteReference[],
-  repositoryMappingRulesDao: RepositoryMappingRulesDao,
-): Promise<CommonDataset> {
-  let mappedDataset: CommonDataset;
-  switch (repositoryType) {
-    case 'B2SHARE_EUDAT':
-    case 'B2SHARE_JUELICH': {
-      const matchedSites = await getB2ShareMatchedSites(recordData, sites);
-      mappedDataset = await mapB2ShareToCommonDatasetMetadata(sourceUrl, recordData, matchedSites, repositoryType);
-      break;
-    }
-    case 'DATAREGISTRY': {
-      const matchedSites = await getDataRegistryMatchedSites(recordData);
-      mappedDataset = await mapDataRegistryToCommonDatasetMetadata(sourceUrl, recordData, matchedSites);
-      break;
-    }
-    case 'ZENODO':
-    case 'ZENODO_IT': {
-      const matchedSites = await getZenodoMatchedSites(recordData, sites);
-      mappedDataset = await mapZenodoToCommonDatasetMetadata(sourceUrl, recordData, matchedSites);
-      repositoryType = 'ZENODO';
-      break;
-    }
-    default:
-      throw new Error(`Unknown repository: ${repositoryType}.`);
-  }
-
-  const repoRules = await repositoryMappingRulesDao.getRulesByRepository(repositoryType);
-  for (const rule of repoRules) {
-    if (checkCondition(recordData, rule.condition)) {
-      const sourceValue = getNestedValue(recordData, rule.source_path);
-      applyRuleToDataset(mappedDataset, sourceValue, rule);
-    }
-  }
-
-  return mappedDataset;
-}
 
 /**
  * Start the entire data harvesting and posting process for a specified repository type.
