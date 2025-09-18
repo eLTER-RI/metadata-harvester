@@ -70,7 +70,7 @@ async function findDarRecordBySourceURL(sourceUrl: string): Promise<string | nul
   return null;
 }
 
-class HarvesterContext {
+export class HarvesterContext {
   constructor(
     public readonly pool: Pool,
     public readonly recordDao: RecordDao,
@@ -597,8 +597,8 @@ export const startRepositorySync = async (pool: Pool, repositoryType: Repository
     await client.query('BEGIN');
 
     // Phase 1: Local Database Validation
-    await recordDao.updateRepositoryToInProgress(repositoryType);
-    await dbValidationPhase(pool, repositoryType);
+    await recordDao.updateRepositoryToInProgress(context.repositoryType);
+    await dbValidationPhase(context);
     log('info', `Phase 1 completed for ${repositoryType}. Proceeding with Phase 2.`);
 
     // Phase 2: Remote Synchronization
