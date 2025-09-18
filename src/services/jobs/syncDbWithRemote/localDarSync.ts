@@ -30,6 +30,12 @@ interface DarApiResponse {
   };
 }
 
+/**
+ * This function deletes records from DAR based on the list of ids.
+ * It uses a rate limiter in order to respect rate limits of DAR.
+ *
+ * @param {string[]} ids A list of DAR ids to be deleted.
+ */
 async function deleteDarRecordsByIds(ids: string[]) {
   const deletePromises = ids.map((id) => {
     return darLimiter.schedule(() => {
@@ -71,6 +77,12 @@ async function deleteDarRecordsByIds(ids: string[]) {
   }
 }
 
+/**
+ * Fetches a list of all DAR records.
+ * It uses a rate limiter in order to respect rate limits of DAR.
+ * @param {string} darRepoQuery The initial URL for the DAR API query.
+ * @returns {Promise<string[]>} A promise that resolves to an array of IDs of all records in DAR.
+ */
 async function fetchDarRecords(darRepoQuery: string): Promise<string[]> {
   const allDarIds: string[] = [];
   let url = darRepoQuery;
@@ -111,6 +123,14 @@ async function fetchDarRecords(darRepoQuery: string): Promise<string[]> {
   return allDarIds;
 }
 
+/**
+ * This function compares records in the local database versus DAR records, and logs these in arrays.
+ * If the `darCleanup` flag is set to true, it also deletes extra remote records.
+ *
+ * @param {RepositoryType} repositoryType The type of the repository to synchronize.
+ * @param {Pool} pool The PostgreSQL connection pool.
+ * @param {boolean} darCleanup A flag that if set to true triggers a cleanup job of DAR ids that are extra in comparison to the database.
+ */
 export async function syncWithDar(repositoryType: RepositoryType, pool: Pool, darCleanup: boolean): Promise<void> {
   console.log(`Starting DAR sync for repository: ${repositoryType}.`);
 
