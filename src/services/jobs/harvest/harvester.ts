@@ -70,6 +70,16 @@ async function findDarRecordBySourceURL(sourceUrl: string): Promise<string | nul
   return null;
 }
 
+class HarvesterContext {
+  constructor(
+    public readonly pool: Pool,
+    public readonly recordDao: RecordDao,
+    public readonly repositoryMappingRulesDao: RepositoryMappingRulesDao,
+    public readonly sites: SiteReference[],
+    public readonly repositoryType: RepositoryType,
+    public readonly repoConfig: any,
+  ) {}
+}
 /**
  * CREATE or UPDATE of a record in the local database based on its existence and status of the synchronization.
  * It handles creating a new record, updating an old version of a record, or simply updating an existing record's status.
@@ -579,6 +589,10 @@ export const startRepositorySync = async (pool: Pool, repositoryType: Repository
   let client;
   try {
     const recordDao = new RecordDao(pool);
+    const repositoryMappingRulesDao = new RepositoryMappingRulesDao(pool);
+    const sites = await fetchSites();
+    const context = new HarvesterContext(pool, recordDao, repositoryMappingRulesDao, sites, repositoryType, repoConfig);
+
     client = await pool.connect();
     await client.query('BEGIN');
 
