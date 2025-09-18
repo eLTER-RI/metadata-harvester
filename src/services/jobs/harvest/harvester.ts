@@ -79,6 +79,43 @@ export class HarvesterContext {
     public readonly repositoryType: RepositoryType,
     public readonly repoConfig: any,
   ) {}
+
+  /**
+   * Manages harvesting process for SITES repository.
+   * It fetches a list of records. For each record, calls a function to process it.
+   * It uses hardcoded DEIMS sites.
+   * @param {string[]} sourceUrls An array of field sites URLs.
+   */
+  public async syncSitesRepository(sourceUrls: string[]) {
+    const processingPromises = sourceUrls.map((datasetUrl: string) => {
+      return fieldSitesLimiter.schedule(async () => {
+        await processOneSitesRecord(datasetUrl, this.recordDao);
+      });
+    });
+    await Promise.allSettled(processingPromises);
+  }
+
+  /**
+   * The main function for harvesting and posting data from the SITES repository.
+   * It sets up a database transaction, triggers harvesting, and commits/rollbacks.
+   * @param {string} url The URL of the repository's sitemap.
+   */
+  public async syncSitesRepositoryAll(url: string) {
+    log('info', `Fetching the dataset from: ${url}...`);
+
+    const data = await fetchXml(url);
+    if (!data) {
+      log('error', 'Failed to fetch or parse sitemap XML.');
+      return [];
+    }
+    const locElements = data.getElementsByTagName('loc');
+    const urls: string[] = [];
+    for (let i = 0; i < locElements.length; i++) {
+      urls.push(locElements[i].textContent || '');
+    }
+
+    await this.syncSitesRepository(urls);
+  }
 }
 /**
  * CREATE or UPDATE of a record in the local database based on its existence and status of the synchronization.
@@ -379,45 +416,6 @@ export const processOneSitesRecord = async (sourceUrl: string, recordDao: Record
 };
 
 /**
- * Manages harvesting process for SITES repository.
- * It fetches a list of records. For each record, calls a function to process it.
- * It uses hardcoded DEIMS sites.
- * @param {string[]} sourceUrls An array of field sites URLs.
- * @param {RecordDao} recordDao The data access object for interacting with the local records table.
- */
-async function syncSitesRepository(sourceUrls: string[], recordDao: RecordDao) {
-  const processingPromises = sourceUrls.map((datasetUrl: string) => {
-    return fieldSitesLimiter.schedule(async () => {
-      await processOneSitesRecord(datasetUrl, recordDao);
-    });
-  });
-  await Promise.allSettled(processingPromises);
-}
-
-/**
- * The main function for harvesting and posting data from the SITES repository.
- * It sets up a database transaction, triggers harvesting, and commits/rollbacks.
- * @param {Pool} pool The PostgreSQL connection pool.
- * @param {string} url The URL of the repository's sitemap.
- */
-export async function syncSitesRepositoryAll(url: string, recordDao: RecordDao) {
-  log('info', `Fetching the dataset from: ${url}...`);
-
-  const data = await fetchXml(url);
-  if (!data) {
-    log('error', 'Failed to fetch or parse sitemap XML.');
-    return [];
-  }
-  const locElements = data.getElementsByTagName('loc');
-  const urls: string[] = [];
-  for (let i = 0; i < locElements.length; i++) {
-    urls.push(locElements[i].textContent || '');
-  }
-
-  await syncSitesRepository(urls, recordDao);
-}
-
-/**
  * Maps the recordData expected to be fetched json into a CommonDataset and applies any rules that user chose.
  * @param {string} sourceUrl The source URL of the record on the remote repository.
  * @param {any} recordData
@@ -603,7 +601,7 @@ export const startRepositorySync = async (pool: Pool, repositoryType: Repository
 
     // Phase 2: Remote Synchronization
     if (repositoryType === 'SITES') {
-      await syncSitesRepositoryAll(apiUrl, recordDao);
+      await context.syncSitesRepositoryAll(apiUrl);
     } else {
       await syncApiRepositoryAll(pool, repositoryType, repoConfig);
     }
