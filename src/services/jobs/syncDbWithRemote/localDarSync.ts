@@ -2,10 +2,10 @@ import 'dotenv/config';
 import { Pool } from 'pg';
 import fetch from 'node-fetch';
 import { RecordDao } from '../../../store/dao/recordDao';
-import { RateLimiter } from '../../rateLimiter';
 import { CONFIG } from '../../../../config';
 import { RepositoryType } from '../../../store/commonStructure';
 import { log } from '../../serviceLogging';
+import { darLimiter } from '../../rateLimiterConcurrency';
 
 const currentEnv = process.env.NODE_ENV;
 if (currentEnv !== 'prod' && currentEnv !== 'dev') {
@@ -32,25 +32,27 @@ interface DarApiResponse {
 
 async function deleteDarRecordsByIds(ids: string[]) {
   const deletePromises = ids.map((id) => {
-    const url = `${API_URL}/${id}`;
+    return darLimiter.schedule(() => {
+      const url = `${API_URL}/${id}`;
 
-    log('info', `Starting with deletion of a record with ID: ${id}`);
+      log('info', `Starting with deletion of a record with ID: ${id}`);
 
-    return fetch(url, {
-      method: 'DELETE',
-      headers: {
-        Authorization: AUTH_TOKEN,
-      },
-    }).then((response) => {
-      if (!response.ok) {
-        const errorMessage = `
+      return fetch(url, {
+        method: 'DELETE',
+        headers: {
+          Authorization: AUTH_TOKEN,
+        },
+      }).then((response) => {
+        if (!response.ok) {
+          const errorMessage = `
           Error deleting record with id ${id}.
           Request failed with status: ${response.status} ${response.statusText}
           URL: ${response.url}
         `;
-        throw new Error(errorMessage);
-      }
-      log('info', `Successfully deleted a record with ID: ${id}`);
+          throw new Error(errorMessage);
+        }
+        log('info', `Successfully deleted a record with ID: ${id}`);
+      });
     });
   });
 
@@ -71,38 +73,41 @@ async function deleteDarRecordsByIds(ids: string[]) {
 
 async function fetchDarRecords(darRepoQuery: string): Promise<string[]> {
   const allDarIds: string[] = [];
-  const rateLimiter = new RateLimiter(100);
   let url = darRepoQuery;
   while (true) {
-    await rateLimiter.waitForRequest();
-    log('info', `Fetching DAR records from: ${url}`);
+    await darLimiter.schedule(async () => {
+      log('info', `Fetching DAR records from: ${url}`);
 
-    try {
-      const response = await fetch(`${url}`, {
-        method: 'GET',
-        headers: {
-          Authorization: AUTH_TOKEN,
-          Accept: 'application/json',
-        },
-      });
+      try {
+        const response = await fetch(`${url}`, {
+          method: 'GET',
+          headers: {
+            Authorization: AUTH_TOKEN,
+            Accept: 'application/json',
+          },
+        });
 
-      if (!response.ok) {
-        log('info', `Error fetching DAR records: ${response.status} ${response.statusText}`);
-        break;
+        if (!response.ok) {
+          log('info', `Error fetching DAR records: ${response.status} ${response.statusText}`);
+          url = '';
+        }
+
+        const data: DarApiResponse = (await response.json()) as DarApiResponse;
+        const darIds = data?.hits?.hits?.map((record) => record?.id);
+        const next = data?.links?.next;
+        if (darIds) allDarIds.push(...darIds);
+        if (!next) {
+          url = '';
+        } else {
+          url = next;
+        }
+      } catch (error) {
+        log('error', `Network error fetching from DAR: ${error}`);
+        url = '';
       }
-
-      const data: DarApiResponse = (await response.json()) as DarApiResponse;
-      const darIds = data?.hits?.hits?.map((record) => record?.id);
-      const next = data?.links?.next;
-      if (darIds) allDarIds.push(...darIds);
-      if (!next) break;
-      url = next;
-    } catch (error) {
-      log('error', `Network error fetching from DAR: ${error}`);
-      break;
-    }
+    });
+    if (!url) break;
   }
-
   return allDarIds;
 }
 
