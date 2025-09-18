@@ -81,6 +81,42 @@ export class HarvesterContext {
   ) {}
 
   /**
+   * Manages harvesting process for paginated API repositories.
+   */
+  public async syncApiRepositoryAll() {
+    let page = 1;
+    const { apiUrl, pageSize, selfLinkKey, dataKey } = this.repoConfig;
+    while (pageSize) {
+      const pageUrl = `${apiUrl}&size=${pageSize}&page=${page}`;
+      log('info', `Fetching the dataset from: ${pageUrl}...`);
+      const data = await fetchJson(pageUrl);
+      const hits: string[] = dataKey ? getNestedValue(data, dataKey) || [] : [];
+      log('info', `Found ${hits.length} self links. Fetching individual records...\n`);
+
+      // // Process individual records using the parser
+      await processApiHits(
+        hits,
+        this.recordDao,
+        this.repositoryMappingRulesDao,
+        this.sites,
+        selfLinkKey,
+        this.repositoryType,
+      );
+
+      if (hits.length === 0) {
+        log('warn', `No records found on page ${page}. Stopping.`);
+        break;
+      }
+
+      if (hits.length < pageSize) {
+        log('info', 'Last page reached.');
+        break;
+      }
+      page++;
+    }
+  }
+
+  /**
    * Manages harvesting process for SITES repository.
    * It fetches a list of records. For each record, calls a function to process it.
    * It uses hardcoded DEIMS sites.
@@ -531,42 +567,6 @@ async function processApiHits(
       return processOneRecordTask(recordUrl, recordDao, repositoryMappingRulesDao, sites, repositoryType);
     }),
   );
-}
-
-/**
- * Manages harvesting process for paginated API repositories.
- * It fetches all the pages of records. For each page, calls a function to process all the individual records.
- * @param {Pool} pool The PostgreSQL connection pool.
- * @param {RepositoryType} repositoryType The type of the repository to process (e.g., 'ZENODO', 'B2SHARE_EUDAT'...).
- * @param repoConfig The configuration object for the repository.
- */
-async function syncApiRepositoryAll(pool: Pool, repositoryType: RepositoryType, repoConfig: any) {
-  let page = 1;
-  const { apiUrl, pageSize, selfLinkKey, dataKey } = repoConfig;
-  const recordDao = new RecordDao(pool);
-  const repositoryMappingRulesDao = new RepositoryMappingRulesDao(pool);
-  const sites = await fetchSites();
-  while (pageSize) {
-    const pageUrl = `${apiUrl}&size=${pageSize}&page=${page}`;
-    log('info', `Fetching the dataset from: ${pageUrl}...`);
-    const data = await fetchJson(pageUrl);
-    const hits: string[] = dataKey ? getNestedValue(data, dataKey) || [] : [];
-    log('info', `Found ${hits.length} self links. Fetching individual records...\n`);
-
-    // // Process individual records using the parser
-    await processApiHits(hits, recordDao, repositoryMappingRulesDao, sites, selfLinkKey, repositoryType);
-
-    if (hits.length === 0) {
-      log('warn', `No records found on page ${page}. Stopping.`);
-      break;
-    }
-
-    if (hits.length < pageSize) {
-      log('info', 'Last page reached.');
-      break;
-    }
-    page++;
-  }
 }
 
 /**
