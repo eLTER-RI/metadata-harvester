@@ -12,8 +12,7 @@ import { fieldSitesLimiter, zenodoLimiter } from './../../rateLimiterConcurrency
 /**
  * This function validates the records present in the local database against the source.
  * It checks if the source URLs are still valid and if the source data has changed by comparing checksums.
- * @param {Pool} pool The PostgreSQL connection pool.
- * @param {RepositoryType} repositoryType The type of the repository to validate.
+ * @param {HarvesterContext} ctx Context of the job.
  */
 export async function dbValidationPhase(ctx: HarvesterContext) {
   const { recordDao, repositoryType } = ctx;
