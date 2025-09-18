@@ -4,6 +4,7 @@ import { fetchSites } from '../../../utilities/matchDeimsId';
 import { log } from '../../serviceLogging';
 import { Pool } from 'pg';
 import { DeimsDao } from '../../../store/dao/deimsDao';
+import { deimsLimiter } from '../../rateLimiterConcurrency';
 
 export async function syncDeimsSites(pool: Pool): Promise<void> {
   console.log('Starting DEIMS site synchronization...');
@@ -20,26 +21,28 @@ export async function syncDeimsSites(pool: Pool): Promise<void> {
 
     const deimsDao = new DeimsDao(pool);
     const upsertPromises = sites.map(async (site: any) => {
-      if (!site.id || !site.id.suffix) {
-        console.warn('Skipping site due to missing ID:', site);
-        return;
-      }
-      const siteId = site.id.suffix;
-      const siteName = site.title;
-      const siteData = JSON.stringify(site);
-      const checksum = calculateChecksum(siteData);
+      return deimsLimiter.schedule(async () => {
+        if (!site.id || !site.id.suffix) {
+          console.warn('Skipping site due to missing ID:', site);
+          return;
+        }
+        const siteId = site.id.suffix;
+        const siteName = site.title;
+        const siteData = JSON.stringify(site);
+        const checksum = calculateChecksum(siteData);
 
-      const result = await deimsDao.upsertSite({
-        id: siteId,
-        name: siteName,
-        shortname: site.shortName || null,
-        site_data: siteData,
-        checksum: checksum,
+        const result = await deimsDao.upsertSite({
+          id: siteId,
+          name: siteName,
+          shortname: site.shortName || null,
+          site_data: siteData,
+          checksum: checksum,
+        });
+
+        if (result.rowCount != 0) {
+          changes++;
+        }
       });
-
-      if (result.rowCount != 0) {
-        changes++;
-      }
     });
 
     await Promise.all(upsertPromises);

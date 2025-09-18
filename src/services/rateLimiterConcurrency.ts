@@ -7,3 +7,7 @@ export const zenodoLimiter = new Bottleneck({
 export const fieldSitesLimiter = new Bottleneck({
   minTime: 60000 / 80, // 80 requests per minute = 750ms between requests
 });
+
+export const deimsLimiter = new Bottleneck({
+  minTime: 60000 / 80, // 80 requests per minute = 750ms between requests
+});
