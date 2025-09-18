@@ -1,6 +1,5 @@
 import { log } from './../../serviceLogging';
-import { HarvesterContext, processOneRecordTask, processOneSitesRecord } from './harvester';
-import { fetchSites } from '../../../utilities/matchDeimsId';
+import { HarvesterContext, processOneSitesRecord } from './harvester';
 import { fieldSitesLimiter, zenodoLimiter } from './../../rateLimiterConcurrency';
 
 // for example, for zenodo, we can find out if it "is_last" - if it is, just upsert and put
@@ -17,10 +16,9 @@ import { fieldSitesLimiter, zenodoLimiter } from './../../rateLimiterConcurrency
  * @param {RepositoryType} repositoryType The type of the repository to validate.
  */
 export async function dbValidationPhase(ctx: HarvesterContext) {
-  const { recordDao, repositoryType, repositoryMappingRulesDao } = ctx;
+  const { recordDao, repositoryType } = ctx;
   const dbRecords = await recordDao.listRecordsByRepository(repositoryType);
   log('info', `Validation of database data for ${repositoryType}. Found ${dbRecords.length} records in the database.`);
-  const sites = await fetchSites();
   await Promise.all(
     dbRecords.map(async (dbRecord) => {
       if (dbRecord.source_repository === 'SITES') {
@@ -29,12 +27,9 @@ export async function dbValidationPhase(ctx: HarvesterContext) {
         });
       }
       if (repositoryType === 'ZENODO' || repositoryType === 'ZENODO_IT') {
-        if (dbRecord.source_url)
-          return zenodoLimiter.schedule(() =>
-            processOneRecordTask(dbRecord.source_url, recordDao, repositoryMappingRulesDao, sites, repositoryType),
-          );
+        if (dbRecord.source_url) return zenodoLimiter.schedule(() => ctx.processOneRecordTask(dbRecord.source_url));
       }
-      return processOneRecordTask(dbRecord.source_url, recordDao, repositoryMappingRulesDao, sites, repositoryType);
+      return ctx.processOneRecordTask(dbRecord.source_url);
     }),
   );
 }

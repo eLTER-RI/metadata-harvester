@@ -81,11 +81,64 @@ export class HarvesterContext {
   ) {}
 
   /**
+   * Processes a single record from an API based repository.
+   * It fetches the record data, gets mapping for the given repository type, and then calls a function to synchronize data.
+   * @param {string} sourceUrl The source URL of the record on the remote repository.
+   */
+  public async processOneRecordTask(sourceUrl: string) {
+    const dbRecord = await this.recordDao.getRecordBySourceId(sourceUrl);
+    if (dbRecord && dbRecord[0].status === 'success') {
+      return;
+    }
+    const recordData = await fetchJson(sourceUrl);
+    if (!recordData) return null;
+
+    const finalMappedDataset = await mapAndApplyRules(
+      sourceUrl,
+      recordData,
+      this.repositoryType,
+      this.sites,
+      this.repositoryMappingRulesDao,
+    );
+
+    const newSourceChecksum = calculateChecksum(recordData);
+    const mappedSourceUrl = finalMappedDataset.metadata.externalSourceInformation.externalSourceURI || sourceUrl;
+    await synchronizeRecord(
+      this.recordDao,
+      mappedSourceUrl,
+      this.repositoryType,
+      newSourceChecksum,
+      finalMappedDataset,
+    );
+  }
+
+  /**
+   * Scheduling processing of each individual record in one page of the repository's API results.
+   * This function also extracts the "self" url of all records.
+   * For given repositories, it uses a rate limiter to satisfy rate limits of different APIs.
+   *
+   * @param {string[]} hits An array of "hits" from the API response, where each hit represents a record.
+   */
+  public async processApiHits(hits: string[]) {
+    const { selfLinkKey } = this.repoConfig;
+    await Promise.all(
+      hits.map(async (hit: any) => {
+        if (!hit) return null;
+        const recordUrl = getNestedValue(hit, selfLinkKey);
+        if (this.repositoryType === 'ZENODO' || this.repositoryType === 'ZENODO_IT') {
+          return zenodoLimiter.schedule(() => this.processOneRecordTask(recordUrl));
+        }
+        return this.processOneRecordTask(recordUrl);
+      }),
+    );
+  }
+
+  /**
    * Manages harvesting process for paginated API repositories.
    */
   public async syncApiRepositoryAll() {
     let page = 1;
-    const { apiUrl, pageSize, selfLinkKey, dataKey } = this.repoConfig;
+    const { apiUrl, pageSize, dataKey } = this.repoConfig;
     while (pageSize) {
       const pageUrl = `${apiUrl}&size=${pageSize}&page=${page}`;
       log('info', `Fetching the dataset from: ${pageUrl}...`);
@@ -94,14 +147,7 @@ export class HarvesterContext {
       log('info', `Found ${hits.length} self links. Fetching individual records...\n`);
 
       // // Process individual records using the parser
-      await processApiHits(
-        hits,
-        this.recordDao,
-        this.repositoryMappingRulesDao,
-        this.sites,
-        selfLinkKey,
-        this.repositoryType,
-      );
+      await this.processApiHits(hits);
 
       if (hits.length === 0) {
         log('warn', `No records found on page ${page}. Stopping.`);
@@ -502,74 +548,6 @@ async function mapAndApplyRules(
 }
 
 /**
- * Processes a single record from an API based repository.
- * It fetches the record data, gets mapping for the given repository type, and then calls a function to synchronize data.
- * @param {string} sourceUrl The source URL of the record on the remote repository.
- * @param {RecordDao} recordDao
- * @param {SiteReference[]} sites A list of DEIMS sites for matching.
- * @param {RepositoryType} repositoryType The type of the repository to process (e.g., 'ZENODO', 'B2SHARE_EUDAT'...).
- */
-export const processOneRecordTask = async (
-  sourceUrl: string,
-  recordDao: RecordDao,
-  repositoryMappingRulesDao: RepositoryMappingRulesDao,
-  sites: SiteReference[],
-  repositoryType: RepositoryType,
-) => {
-  const dbRecord = await recordDao.getRecordBySourceId(sourceUrl);
-  if (dbRecord && dbRecord[0].status === 'success') {
-    return;
-  }
-  const recordData = await fetchJson(sourceUrl);
-  if (!recordData) return null;
-
-  const finalMappedDataset = await mapAndApplyRules(
-    sourceUrl,
-    recordData,
-    repositoryType,
-    sites,
-    repositoryMappingRulesDao,
-  );
-
-  const newSourceChecksum = calculateChecksum(recordData);
-  const mappedSourceUrl = finalMappedDataset.metadata.externalSourceInformation.externalSourceURI || sourceUrl;
-  await synchronizeRecord(recordDao, mappedSourceUrl, repositoryType, newSourceChecksum, finalMappedDataset);
-};
-
-/**
- * Scheduling processing of each individual record in one page of the repository's API results.
- * This function also extracts the "self" url of all records.
- * For given repositories, it uses a rate limiter to satisfy rate limits of different APIs.
- *
- * @param {string[]} hits An array of "hits" from the API response, where each hit represents a record.
- * @param {RecordDao} recordDao
- * @param {SiteReference[]} sites A list of DEIMS sites for matching.
- * @param {string} selfLinkKey Location of the direct link to the record.
- * @param {RepositoryType} repositoryType The type of the repository to process (e.g., 'ZENODO', 'B2SHARE_EUDAT'...).
- */
-async function processApiHits(
-  hits: string[],
-  recordDao: RecordDao,
-  repositoryMappingRulesDao: RepositoryMappingRulesDao,
-  sites: SiteReference[],
-  selfLinkKey: string,
-  repositoryType: RepositoryType,
-) {
-  await Promise.all(
-    hits.map(async (hit: any) => {
-      if (!hit) return null;
-      const recordUrl = getNestedValue(hit, selfLinkKey);
-      if (repositoryType === 'ZENODO' || repositoryType === 'ZENODO_IT') {
-        return zenodoLimiter.schedule(() =>
-          processOneRecordTask(recordUrl, recordDao, repositoryMappingRulesDao, sites, repositoryType),
-        );
-      }
-      return processOneRecordTask(recordUrl, recordDao, repositoryMappingRulesDao, sites, repositoryType);
-    }),
-  );
-}
-
-/**
  * Start the entire data harvesting and posting process for a specified repository type.
  * Calls the appropriate harvesting function based on repository type.
  * @param {Pool} pool The PostgreSQL connection pool.
@@ -603,7 +581,7 @@ export const startRepositorySync = async (pool: Pool, repositoryType: Repository
     if (repositoryType === 'SITES') {
       await context.syncSitesRepositoryAll(apiUrl);
     } else {
-      await syncApiRepositoryAll(pool, repositoryType, repoConfig);
+      await context.syncApiRepositoryAll();
     }
     log('info', `Phase 2 completed for ${repositoryType}.`);
 
