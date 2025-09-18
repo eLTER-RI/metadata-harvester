@@ -1,5 +1,5 @@
 import { log } from './../../serviceLogging';
-import { HarvesterContext, processOneSitesRecord } from './harvester';
+import { HarvesterContext } from './harvester';
 import { fieldSitesLimiter, zenodoLimiter } from './../../rateLimiterConcurrency';
 
 // for example, for zenodo, we can find out if it "is_last" - if it is, just upsert and put
@@ -23,7 +23,7 @@ export async function dbValidationPhase(ctx: HarvesterContext) {
     dbRecords.map(async (dbRecord) => {
       if (dbRecord.source_repository === 'SITES') {
         return fieldSitesLimiter.schedule(async () => {
-          await processOneSitesRecord(dbRecord.source_url, recordDao);
+          await ctx.processOneSitesRecord(dbRecord.source_url);
         });
       }
       if (repositoryType === 'ZENODO' || repositoryType === 'ZENODO_IT') {

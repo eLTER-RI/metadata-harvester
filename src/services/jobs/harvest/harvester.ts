@@ -81,6 +81,76 @@ export class HarvesterContext {
   ) {}
 
   /**
+   * Synchronization of the record from source url with the local database and DAR.
+   * This function also handles missing record on both local DB side or DAR side.
+   *
+   * It handles the following scenarios:
+   *
+   * 1.  **New Version of an Existing Record**:
+   *      - If an old version of the record is found, it updates the old record (also updates it's source url).
+   * 2.  **New Record**:
+   *      - If no matching record is found in DAR, the function posts the new record to DAR.
+   *      - It then upserts the new record into the local database.
+   * 3.  **Changed Record**:
+   *      - If a matching record is found in DAR something has changed both DAR and local DB is updated.
+   * 4.  **Up-to-date record**:
+   *      - The function ignores the up-to-date record
+   * @param {string} url The source URL of the record.
+   * @param {string} sourceChecksum The checksum of the data from the external source.
+   * @param {CommonDataset} dataset The common dataset object to be processed.
+   */
+  private async synchronizeRecord(url: string, sourceChecksum: string, dataset: CommonDataset) {
+    const darChecksum = calculateChecksum(dataset);
+    const darMatches = await findDarRecordBySourceURL(url);
+    const dbMatches = await this.recordDao.getRecordBySourceId(url);
+    if (dbMatches.length > 1) {
+      throw new Error('More than one existing records of one dataset in the local database.');
+    }
+    const isDbRecordMissing = dbMatches.length === 0;
+    const isSourceChanged = dbMatches[0]?.source_checksum !== sourceChecksum;
+    const isDarChecksumChanged = dbMatches[0]?.dar_checksum !== darChecksum;
+
+    const oldVersions = dataset.metadata.relatedIdentifiers
+      ?.filter((id) => id.relationType === 'IsNewVersionOf')
+      .map((id) => id.relatedID);
+
+    // Scenario 1: Handle records that are new versions of existing ones.
+    if (oldVersions && oldVersions.length > 0) {
+      oldVersions.forEach(async (oldUrl) => {
+        const oldVersionsInDb = await this.recordDao.getRecordBySourceId(oldUrl);
+        if (oldVersionsInDb.length > 0) {
+          putToDar(oldVersionsInDb[0].dar_id, this.recordDao, url, dataset);
+          dbRecordUpsert(
+            oldVersionsInDb[0].dar_id,
+            this.recordDao,
+            url,
+            this.repositoryType,
+            sourceChecksum,
+            darChecksum,
+            oldUrl,
+          );
+          return;
+        }
+      });
+    }
+
+    if (!darMatches) {
+      const darId = await postToDar(this.recordDao, url, dataset);
+      await dbRecordUpsert(darId, this.recordDao, url, this.repositoryType, sourceChecksum, darChecksum);
+      return;
+    }
+
+    if (isDbRecordMissing || isSourceChanged || isDarChecksumChanged) {
+      await this.handleChangedRecord(dbMatches, sourceChecksum, url, darMatches, dataset, darChecksum);
+      return;
+    }
+
+    await this.recordDao.updateStatus(url, {
+      status: 'success',
+    });
+  }
+
+  /**
    * Processes a single record from an API based repository.
    * It fetches the record data, gets mapping for the given repository type, and then calls a function to synchronize data.
    * @param {string} sourceUrl The source URL of the record on the remote repository.
@@ -97,13 +167,7 @@ export class HarvesterContext {
 
     const newSourceChecksum = calculateChecksum(recordData);
     const mappedSourceUrl = finalMappedDataset.metadata.externalSourceInformation.externalSourceURI || sourceUrl;
-    await synchronizeRecord(
-      this.recordDao,
-      mappedSourceUrl,
-      this.repositoryType,
-      newSourceChecksum,
-      finalMappedDataset,
-    );
+    await this.synchronizeRecord(mappedSourceUrl, newSourceChecksum, finalMappedDataset);
   }
 
   /**
@@ -146,6 +210,42 @@ export class HarvesterContext {
     }
 
     return mappedDataset;
+  }
+
+  /**
+   * Logs how record had changed, sends PUT request to DAR, and upserts database.
+   * @param {DbRecord[]} dbMatches A list of records found in the local database matching the source URL.
+   * @param {string} sourceChecksum The checksum of the current source data.
+   * @param {string} sourceUrl The source URL of the record.
+   * @param {string} darId The ID of the record in DAR. If set to null, it assumes record POST/PUT to dar was unsuccessful.
+   * @param {CommonDataset} dataset Source data after mapping.
+   * @param {string} darChecksum Source data checksum.
+   */
+  private async handleChangedRecord(
+    dbMatches: DbRecord[],
+    sourceChecksum: string,
+    sourceUrl: string,
+    darId: string,
+    dataset: CommonDataset,
+    darChecksum: string,
+  ) {
+    const isDbRecordMissing = dbMatches.length === 0;
+    const isSourceChanged = dbMatches[0]?.source_checksum !== sourceChecksum;
+    const isDarChecksumChanged = dbMatches[0]?.dar_checksum !== darChecksum;
+
+    if (isDbRecordMissing) {
+      log('info', `No database record for ${sourceUrl}. No checksum available, updating.`);
+    } else if (isSourceChanged) {
+      log(
+        'info',
+        `Source data changed for ${sourceUrl}, previous checksum: ${dbMatches[0].source_checksum}, current: ${sourceChecksum}.`,
+      );
+    } else if (isDarChecksumChanged) {
+      log('info', `Implementation of mappers might have changed for ${sourceUrl}.`);
+    }
+
+    await putToDar(darId, this.recordDao, sourceUrl, dataset);
+    await dbRecordUpsert(darId, this.recordDao, sourceUrl, this.repositoryType, sourceChecksum, darChecksum);
   }
 
   /**
@@ -207,7 +307,7 @@ export class HarvesterContext {
   public async syncSitesRepository(sourceUrls: string[]) {
     const processingPromises = sourceUrls.map((datasetUrl: string) => {
       return fieldSitesLimiter.schedule(async () => {
-        await processOneSitesRecord(datasetUrl, this.recordDao);
+        await this.processOneSitesRecord(datasetUrl);
       });
     });
     await Promise.allSettled(processingPromises);
@@ -234,7 +334,34 @@ export class HarvesterContext {
 
     await this.syncSitesRepository(urls);
   }
+
+  /**
+   * Processes a single record from the SITES repository.
+   * It fetches the record, maps it to the common dataset format, calculates a checksum,
+   * and then calls the main synchronization function.
+   * @param {string} sourceUrl The source URL of the record on the remote repository.
+   * @param {RecordDao} recordDao
+   */
+  public async processOneSitesRecord(sourceUrl: string) {
+    const dbRecord = await this.recordDao.getRecordBySourceId(sourceUrl);
+    if (dbRecord && dbRecord[0].status === 'success') {
+      return;
+    }
+    try {
+      if (!sourceUrl) return null;
+      const recordData = await fetchJson(sourceUrl);
+      if (!recordData) return null;
+      const matchedSites = getFieldSitesMatchedSites(recordData);
+      const mappedDataset = await mapFieldSitesToCommonDatasetMetadata(sourceUrl, recordData, matchedSites);
+      const newSourceChecksum = calculateChecksum(recordData);
+      await this.synchronizeRecord(sourceUrl, newSourceChecksum, mappedDataset);
+    } catch (error) {
+      log('error', `Failed to process record for SITES: ${error}`);
+      await this.recordDao.updateStatus(sourceUrl, { status: 'failed' });
+    }
+  }
 }
+
 /**
  * CREATE or UPDATE of a record in the local database based on its existence and status of the synchronization.
  * It handles creating a new record, updating an old version of a record, or simply updating an existing record's status.
@@ -387,151 +514,6 @@ async function putToDar(darId: string, recordDao: RecordDao, sourceUrl: string, 
   });
   return;
 }
-
-/**
- * Logs how record had changed, sends PUT request to DAR, and upserts database.
- * @param {DbRecord[]} dbMatches A list of records found in the local database matching the source URL.
- * @param {string} sourceChecksum The checksum of the current source data.
- * @param {string} sourceUrl The source URL of the record.
- * @param {string} darId The ID of the record in DAR. If set to null, it assumes record POST/PUT to dar was unsuccessful.
- * @param {RecordDao} recordDao
- * @param {RepositoryType} repositoryType The type of the repository to process (e.g., 'ZENODO', 'B2SHARE_EUDAT'...).
- * @param {CommonDataset} dataset Source data after mapping.
- * @param {string} darChecksum Source data checksum.
- */
-async function handleChangedRecord(
-  dbMatches: DbRecord[],
-  sourceChecksum: string,
-  sourceUrl: string,
-  darId: string,
-  recordDao: RecordDao,
-  repositoryType: RepositoryType,
-  dataset: CommonDataset,
-  darChecksum: string,
-) {
-  const isDbRecordMissing = dbMatches.length === 0;
-  const isSourceChanged = dbMatches[0]?.source_checksum !== sourceChecksum;
-  const isDarChecksumChanged = dbMatches[0]?.dar_checksum !== darChecksum;
-
-  if (isDbRecordMissing) {
-    log('info', `No database record for ${sourceUrl}. No checksum available, updating.`);
-  } else if (isSourceChanged) {
-    log(
-      'info',
-      `Source data changed for ${sourceUrl}, previous checksum: ${dbMatches[0].source_checksum}, current: ${sourceChecksum}.`,
-    );
-  } else if (isDarChecksumChanged) {
-    log('info', `Implementation of mappers might have changed for ${sourceUrl}.`);
-  }
-
-  await putToDar(darId, recordDao, sourceUrl, dataset);
-  await dbRecordUpsert(darId, recordDao, sourceUrl, repositoryType, sourceChecksum, darChecksum);
-}
-
-/**
- * Synchronization of the record from source url with the local database and DAR.
- * This function also handles missing record on both local DB side or DAR side.
- *
- * It handles the following scenarios:
- *
- * 1.  **New Version of an Existing Record**:
- *      - If an old version of the record is found, it updates the old record (also updates it's source url).
- * 2.  **New Record**:
- *      - If no matching record is found in DAR, the function posts the new record to DAR.
- *      - It then upserts the new record into the local database.
- * 3.  **Changed Record**:
- *      - If a matching record is found in DAR something has changed both DAR and local DB is updated.
- * 4.  **Up-to-date record**:
- *      - The function ignores the up-to-date record
- * @param {RecordDao} recordDao The data access object for interacting with the local database records table.
- * @param {string} url The source URL of the record.
- * @param {RepositoryType} repositoryType The type of the repository (e.g., 'ZENODO', 'SITES').
- * @param {string} sourceChecksum The checksum of the data from the external source.
- * @param {CommonDataset} dataset The common dataset object to be processed.
- */
-async function synchronizeRecord(
-  recordDao: RecordDao,
-  url: string,
-  repositoryType: RepositoryType,
-  sourceChecksum: string,
-  dataset: CommonDataset,
-) {
-  const darChecksum = calculateChecksum(dataset);
-  const darMatches = await findDarRecordBySourceURL(url);
-  const dbMatches = await recordDao.getRecordBySourceId(url);
-  if (dbMatches.length > 1) {
-    throw new Error('More than one existing records of one dataset in the local database.');
-  }
-  const isDbRecordMissing = dbMatches.length === 0;
-  const isSourceChanged = dbMatches[0]?.source_checksum !== sourceChecksum;
-  const isDarChecksumChanged = dbMatches[0]?.dar_checksum !== darChecksum;
-
-  const oldVersions = dataset.metadata.relatedIdentifiers
-    ?.filter((id) => id.relationType === 'IsNewVersionOf')
-    .map((id) => id.relatedID);
-
-  // Scenario 1: Handle records that are new versions of existing ones.
-  if (oldVersions && oldVersions.length > 0) {
-    oldVersions.forEach(async (oldUrl) => {
-      const oldVersionsInDb = await recordDao.getRecordBySourceId(oldUrl);
-      if (oldVersionsInDb.length > 0) {
-        putToDar(oldVersionsInDb[0].dar_id, recordDao, url, dataset);
-        dbRecordUpsert(oldVersionsInDb[0].dar_id, recordDao, url, repositoryType, sourceChecksum, darChecksum, oldUrl);
-        return;
-      }
-    });
-  }
-
-  if (!darMatches) {
-    const darId = await postToDar(recordDao, url, dataset);
-    await dbRecordUpsert(darId, recordDao, url, repositoryType, sourceChecksum, darChecksum);
-    return;
-  }
-
-  if (isDbRecordMissing || isSourceChanged || isDarChecksumChanged) {
-    await handleChangedRecord(
-      dbMatches,
-      sourceChecksum,
-      url,
-      darMatches,
-      recordDao,
-      repositoryType,
-      dataset,
-      darChecksum,
-    );
-    return;
-  }
-
-  await recordDao.updateStatus(url, {
-    status: 'success',
-  });
-}
-
-/**
- * Processes a single record from the SITES repository.
- * It fetches the record, maps it to the common dataset format, calculates a checksum,
- * and then calls the main synchronization function.
- * @param {string} sourceUrl The source URL of the record on the remote repository.
- * @param {RecordDao} recordDao
- */
-export const processOneSitesRecord = async (sourceUrl: string, recordDao: RecordDao) => {
-  const dbRecord = await recordDao.getRecordBySourceId(sourceUrl);
-  if (dbRecord && dbRecord[0].status === 'success') {
-    return;
-  }
-  try {
-    if (!sourceUrl) return null;
-    const recordData = await fetchJson(sourceUrl);
-    if (!recordData) return null;
-    const matchedSites = getFieldSitesMatchedSites(recordData);
-    const mappedDataset = await mapFieldSitesToCommonDatasetMetadata(sourceUrl, recordData, matchedSites);
-    const newSourceChecksum = calculateChecksum(recordData);
-    await synchronizeRecord(recordDao, sourceUrl, 'SITES', newSourceChecksum, mappedDataset);
-  } catch (error) {
-    log('error', `Failed to process record for SITES: ${error}`);
-    await recordDao.updateStatus(sourceUrl, { status: 'failed' });
-  }
-};
 
 /**
  * Start the entire data harvesting and posting process for a specified repository type.
