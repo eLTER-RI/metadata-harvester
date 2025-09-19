@@ -1,9 +1,18 @@
+"""
+This script can help to collect information about data present in different fields of a given repository.
+So far, it can only work with repositories that have the structure of { hits: { hits: [] } }
+This can make writing the mapper significantly easier in terms of developer being able to see contents of all repositories fields.
+"""
+
 import requests
 import json
 import sys
 import os
 
 def fetch_all_links():
+    """
+    This function fetches links to all records of the B2SHARE API.
+    """
     base_url = "https://b2share.eudat.eu/api/records/?q=community:d952913c-451e-4b5c-817e-d578dc8a4469&sort=oldest&size=1123"
     page = 1
     links = []
@@ -26,6 +35,16 @@ def fetch_all_links():
     return links
 
 def fetch_subfield(links, subfield):
+    """
+    This function get a specific subfield from a list of links to records.
+
+    Parameters
+    ----------
+    links: str[]
+        List of links leading to records of any repository.
+    subfield: st
+        Field to be collected from each of the records.
+    """
     results = {}
     for link in links:
         response = requests.get(link)
