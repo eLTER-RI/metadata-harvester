@@ -22,13 +22,19 @@ app.use(express.json());
 const PORT = process.env.PORT || 3000;
 
 app.post('/harvest', async (req, res) => {
-  const { repository } = req.body;
+  const { repository, checkHarvestChanges = true } = req.body;
   if (!repository) {
     return res.status(400).json({ error: "Missing required field: 'repository'." });
   }
 
   if (typeof repository !== 'string') {
     return res.status(400).json({ error: "Invalid data type for 'repository'. Expected a string." });
+  }
+
+  // if changes to harvesting not expected, set to false
+  // gives up effort of changes detection if source is not changed
+  if (typeof checkHarvestChanges !== 'boolean') {
+    return res.status(400).json({ error: "Invalid data type for 'rewriteAll'. Expected a boolean." });
   }
 
   const repositoryType = repository.toUpperCase() as RepositoryType;
@@ -38,7 +44,7 @@ app.post('/harvest', async (req, res) => {
   }
 
   try {
-    await startRepositorySync(pool, repositoryType);
+    await startRepositorySync(pool, repositoryType, checkHarvestChanges);
     log('info', `Job for ${repositoryType} completed successfully.`);
   } catch (e) {
     log('error', `Job for ${repositoryType} failed with error: ${e}`);

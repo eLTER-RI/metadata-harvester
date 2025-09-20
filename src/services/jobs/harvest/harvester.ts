@@ -78,6 +78,7 @@ export class HarvesterContext {
     public readonly sites: SiteReference[],
     public readonly repositoryType: RepositoryType,
     public readonly repoConfig: any,
+    public readonly checkHarvestChanges: boolean,
   ) {}
 
   /**
@@ -106,10 +107,7 @@ export class HarvesterContext {
     if (dbMatches.length > 1) {
       throw new Error('More than one existing records of one dataset in the local database.');
     }
-    const isDbRecordMissing = dbMatches.length === 0;
-    const isSourceChanged = dbMatches[0]?.source_checksum !== sourceChecksum;
-    const isDarChecksumChanged = dbMatches[0]?.dar_checksum !== darChecksum;
-
+    const rewriteRecord = dbMatches.length === 0 || dbMatches[0]?.dar_checksum !== darChecksum;
     const oldVersions = dataset.metadata.relatedIdentifiers
       ?.filter((id) => id.relationType === 'IsNewVersionOf')
       .map((id) => id.relatedID);
@@ -140,7 +138,7 @@ export class HarvesterContext {
       return;
     }
 
-    if (isDbRecordMissing || isSourceChanged || isDarChecksumChanged) {
+    if (rewriteRecord) {
       await this.handleChangedRecord(dbMatches, sourceChecksum, url, darMatches, dataset, darChecksum);
       return;
     }
@@ -162,10 +160,11 @@ export class HarvesterContext {
     }
     const recordData = await fetchJson(sourceUrl);
     if (!recordData) return null;
+    const newSourceChecksum = calculateChecksum(recordData);
+    const isSourceChanged = dbRecord[0]?.source_checksum !== newSourceChecksum;
+    if (!this.checkHarvestChanges && !isSourceChanged) return;
 
     const finalMappedDataset = await this.mapAndApplyRules(sourceUrl, recordData);
-
-    const newSourceChecksum = calculateChecksum(recordData);
     const mappedSourceUrl = finalMappedDataset.metadata.externalSourceInformation.externalSourceURI || sourceUrl;
     await this.synchronizeRecord(mappedSourceUrl, newSourceChecksum, finalMappedDataset);
   }
@@ -521,7 +520,7 @@ async function putToDar(darId: string, recordDao: RecordDao, sourceUrl: string, 
  * @param {Pool} pool The PostgreSQL connection pool.
  * @param {RepositoryType} repositoryType The type of the repository (e.g., 'ZENODO', 'B2SHARE_EUDAT'...).
  */
-export const startRepositorySync = async (pool: Pool, repositoryType: RepositoryType) => {
+export const startRepositorySync = async (pool: Pool, repositoryType: RepositoryType, checkHarvestChanges: boolean) => {
   log('info', `Starting harvesting job for repository: ${repositoryType}`);
   const repoConfig = CONFIG.REPOSITORIES[repositoryType];
   if (!repoConfig) {
@@ -535,7 +534,15 @@ export const startRepositorySync = async (pool: Pool, repositoryType: Repository
     const recordDao = new RecordDao(pool);
     const repositoryMappingRulesDao = new RepositoryMappingRulesDao(pool);
     const sites = await fetchSites();
-    const context = new HarvesterContext(pool, recordDao, repositoryMappingRulesDao, sites, repositoryType, repoConfig);
+    const context = new HarvesterContext(
+      pool,
+      recordDao,
+      repositoryMappingRulesDao,
+      sites,
+      repositoryType,
+      repoConfig,
+      checkHarvestChanges,
+    );
 
     client = await pool.connect();
     await client.query('BEGIN');
