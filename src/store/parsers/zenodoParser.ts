@@ -249,12 +249,28 @@ export async function getLatestZenodoVersionUrl(url: string, zenodo: any): Promi
       const newUrl = latestVersion.links.self;
       const recordData = await fetchJson(newUrl);
       if (!recordData) return [null, null];
-      console.log('!!!!!!!!!!!!!!!!!!!!', latestVersion.links.self);
       return [latestVersion.links.self, recordData];
     }
   } catch {
     return [null, null];
   }
+}
+
+function sortCommunities(recordData: any) {
+  const records = recordData?.metadata?.communities;
+  if (!records || !records.length) return [];
+  records.sort((a: any, b: any) => {
+    const idA = a.metadata.communities.length > 0 ? a.metadata.communities[0].id : '';
+    const idB = b.metadata.communities.length > 0 ? b.metadata.communities[0].id : '';
+
+    if (idA < idB) {
+      return -1;
+    }
+    if (idA > idB) {
+      return 1;
+    }
+    return 0;
+  });
 }
 
 export async function mapZenodoToCommonDatasetMetadata(
@@ -266,6 +282,7 @@ export async function mapZenodoToCommonDatasetMetadata(
   const [latestUrl, latestData] = await getLatestZenodoVersionUrl(sourceUrl, recordData);
   const zenodo = latestData ?? recordData;
   const url = latestUrl ?? sourceUrl;
+  const communities = sortCommunities(zenodo.metadata.communities);
   const licenses: License[] = [];
 
   if (zenodo.metadata?.license?.id) {
@@ -316,7 +333,7 @@ export async function mapZenodoToCommonDatasetMetadata(
     temporalCoverages.push({ startDate: publicationDate, endDate: publicationDate });
   }
 
-  const projects: Project[] = mapZenodoCommunitiesToProjects(zenodo.metadata?.communities);
+  const projects: Project[] = mapZenodoCommunitiesToProjects(communities);
   if (zenodo.metadata?.grants && Array.isArray(zenodo.metadata.grants)) {
     zenodo.metadata.grants.forEach((grant: any) => {
       if (grant.title) {
