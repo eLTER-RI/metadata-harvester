@@ -1,7 +1,5 @@
 import { CommonDataset } from '../store/commonStructure';
-import { RecordRewriteRule } from '../store/dao/recordRewriteRulesDao';
-import { RepositoryMappingRule } from '../store/dao/repositoryMappingRulesDao';
-import { executeTransformer } from './transformFunctions';
+import { RuleDbRecord } from '../store/dao/rulesDao';
 
 export function getNestedValue(obj: any, path: string): any {
   const objectParts = path.split('.');
@@ -13,25 +11,6 @@ export function getNestedValue(obj: any, path: string): any {
     currentPart = currentPart[part];
   }
   return currentPart;
-}
-
-export function checkCondition(recordData: CommonDataset, condition: any): boolean {
-  if (!condition) return true;
-
-  const valueToCheck = getNestedValue(recordData, condition.path);
-
-  switch (condition.operator) {
-    case 'equals':
-      return valueToCheck === condition.value;
-    case 'contains':
-      return Array.isArray(valueToCheck)
-        ? valueToCheck.includes(condition.value)
-        : String(valueToCheck).includes(String(condition.value));
-    case 'starts_with':
-      return String(valueToCheck).startsWith(String(condition.value));
-    default:
-      return false;
-  }
 }
 
 /**
@@ -111,39 +90,26 @@ export function appendValue(obj: any, path: string, value: any): void {
 
 /**
  * Applies given rule set by users.
- * @param {CommonDataset} dataset The object that the function is supposed to rewrite.
- * @param {any} sourceValue New value to set into the dataset's destination.
- * @param {MappingRule} rule Specific rule to apply.
+ * @param {CommonDataset} record The object that the function is supposed to rewrite.
+ * @param {RuleDbRecord} rule Specific rule to apply.
  */
-export function applyRuleToDataset(dataset: CommonDataset, sourceValue: any, rule: RepositoryMappingRule): void {
-  switch (rule.rule_type) {
-    case 'COPY':
-      setNestedValue(dataset, rule.target_path, sourceValue);
-      break;
-    case 'TRANSFORM':
-      if (rule.options?.transform_function) {
-        const transformedValue = executeTransformer(rule.options.transform_function, sourceValue, rule.options.args);
-        setNestedValue(dataset, rule.target_path, transformedValue);
-      }
-      break;
-    case 'DEFAULT_VALUE':
-      if (getNestedValue(dataset, rule.target_path) === undefined) {
-        setNestedValue(dataset, rule.target_path, rule?.options?.defaultValue);
-      }
-      break;
+export function applyRuleToRecord(record: CommonDataset, rule: RuleDbRecord): boolean {
+  const targetValue = getNestedValue(record, rule.target_path);
+  if (JSON.stringify(targetValue) !== JSON.stringify(rule.orig_value)) {
+    return false;
   }
-}
 
-export function applyRuleToRecord(dataset: CommonDataset, sourceValue: any, rule: RecordRewriteRule): void {
   switch (rule.rule_type) {
     case 'REPLACE':
-      setNestedValue(dataset, rule.target_path, sourceValue);
+      setNestedValue(record, rule.target_path, rule.new_value);
       break;
     case 'ADD':
-      appendValue(dataset, rule.target_path, sourceValue);
+      appendValue(record, rule.target_path, rule.new_value);
       break;
     case 'REMOVE':
-      setNestedValue(dataset, rule.target_path, undefined);
+      setNestedValue(record, rule.target_path, undefined);
       break;
   }
+
+  return true;
 }

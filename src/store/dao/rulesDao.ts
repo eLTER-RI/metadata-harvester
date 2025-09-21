@@ -4,7 +4,8 @@ export interface RuleDbRecord {
   dar_id: string;
   rule_type: 'REPLACE' | 'ADD' | 'REMOVE';
   target_path: string;
-  new_value?: any;
+  orig_value: any;
+  new_value?: any; // null if rule_type is remove
 }
 
 export class RuleDao {
@@ -19,8 +20,8 @@ export class RuleDao {
     try {
       await client.query('BEGIN');
       const insertQuery = `
-        INSERT INTO record_rules (dar_id, rule_type, target_path, new_value)
-        VALUES ($1, $2, $3, $4);
+        INSERT INTO record_rules (dar_id, rule_type, target_path, orig_value, new_value)
+        VALUES ($1, $2, $3, $4, $5);
       `;
 
       for (const rule of rules) {
@@ -44,8 +45,17 @@ export class RuleDao {
 
   async getRulesForRecord(darId: string): Promise<RuleDbRecord[]> {
     const query = `
-      SELECT dar_id, rule_type, target_path, new_value
+      SELECT dar_id, rule_type, target_path, orig_value, new_value
       FROM record_rules
+      WHERE dar_id = $1;
+    `;
+    const result = await this.pool.query(query, [darId]);
+    return result.rows;
+  }
+
+  async deleteRuleForRecord(darId: string): Promise<RuleDbRecord[]> {
+    const query = `
+      DELETE FROM record_rules
       WHERE dar_id = $1;
     `;
     const result = await this.pool.query(query, [darId]);

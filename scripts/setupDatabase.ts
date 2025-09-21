@@ -57,7 +57,7 @@ async function init(): Promise<void> {
         source_url TEXT PRIMARY KEY,
         source_repository TEXT NOT NULL,
         source_checksum TEXT NOT NULL,
-        dar_id TEXT,
+        dar_id TEXT UNIQUE,
         dar_checksum TEXT,
         status TEXT,
         last_harvested TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -71,14 +71,13 @@ async function init(): Promise<void> {
         checksum TEXT NOT NULL
       );
 
-      CREATE TABLE IF NOT EXISTS repository_mapping_rules (
+      CREATE TABLE IF NOT EXISTS record_rules (
         id SERIAL PRIMARY KEY,
-        repository_type VARCHAR(50) NOT NULL,
-        source_path TEXT NOT NULL,
-        target_path TEXT NOT NULL,
+        dar_id TEXT NOT NULL REFERENCES harvested_records(dar_id),
         rule_type VARCHAR(50) NOT NULL,
-        options JSONB,
-        condition JSONB
+        target_path TEXT NOT NULL,
+        orig_value JSONB NOT NULL,
+        new_value JSONB NULL
       );
   `;
     await appClient.query(allTablesCreate);

@@ -4,7 +4,7 @@ import { CONFIG } from '../../../../config';
 import { Pool } from 'pg';
 import { mapFieldSitesToCommonDatasetMetadata } from '../../../store/parsers/sitesParser';
 import { fetchJson, fetchXml } from '../../../utilities/fetchJsonFromRemote';
-import { getNestedValue } from '../../../utilities/rules';
+import { applyRuleToRecord, getNestedValue } from '../../../utilities/rules';
 import { calculateChecksum } from '../../../utilities/checksum';
 import {
   fetchSites,
@@ -19,8 +19,7 @@ import { mapDataRegistryToCommonDatasetMetadata } from '../../../store/parsers/d
 import { mapZenodoToCommonDatasetMetadata } from '../../../store/parsers/zenodoParser';
 import { fieldSitesLimiter, zenodoLimiter } from '../../rateLimiterConcurrency';
 import { dbValidationPhase } from './dbValidation';
-import { RepositoryMappingRulesDao } from '../../../store/dao/repositoryMappingRulesDao';
-import { applyRuleToDataset, checkCondition } from '../../../utilities/rules';
+import { RuleDao } from '../../../store/dao/rulesDao';
 
 // Configurations
 const currentEnv = process.env.NODE_ENV;
@@ -74,7 +73,7 @@ export class HarvesterContext {
   constructor(
     public readonly pool: Pool,
     public readonly recordDao: RecordDao,
-    public readonly repositoryMappingRulesDao: RepositoryMappingRulesDao,
+    public readonly ruleDao: RuleDao,
     public readonly sites: SiteReference[],
     public readonly repositoryType: RepositoryType,
     public readonly repoConfig: any,
@@ -164,17 +163,21 @@ export class HarvesterContext {
     const isSourceChanged = dbRecord[0]?.source_checksum !== newSourceChecksum;
     if (!this.checkHarvestChanges && !isSourceChanged) return;
 
-    const finalMappedDataset = await this.mapAndApplyRules(sourceUrl, recordData);
+    const finalMappedDataset = await this.mapToCommonStructure(sourceUrl, recordData);
     const mappedSourceUrl = finalMappedDataset.metadata.externalSourceInformation.externalSourceURI || sourceUrl;
+    if (dbRecord) {
+      const darId = dbRecord[0].dar_id;
+      this.applyRulesToRecord(finalMappedDataset, darId);
+    }
     await this.synchronizeRecord(mappedSourceUrl, newSourceChecksum, finalMappedDataset);
   }
 
   /**
-   * Maps the recordData expected to be fetched json into a CommonDataset and applies any rules that user chose.
+   * Maps the recordData expected to be fetched json into a CommonDataset.
    * @param {string} sourceUrl The source URL of the record on the remote repository.
    * @param {any} recordData
    */
-  public async mapAndApplyRules(sourceUrl: string, recordData: any): Promise<CommonDataset> {
+  public async mapToCommonStructure(sourceUrl: string, recordData: any): Promise<CommonDataset> {
     let mappedDataset: CommonDataset;
     let repositoryType = this.repositoryType;
     switch (repositoryType) {
@@ -200,15 +203,22 @@ export class HarvesterContext {
         throw new Error(`Unknown repository: ${repositoryType}.`);
     }
 
-    const repoRules = await this.repositoryMappingRulesDao.getRulesByRepository(repositoryType);
+    return mappedDataset;
+  }
+
+  /**
+   * Checks rules for dataset, deletes the ones where original value has changed, and applies all other.
+   * @param {CommonDataset} record The source URL of the record on the remote repository.
+   * @param {string} darId
+   */
+  public async applyRulesToRecord(record: CommonDataset, darId: string): Promise<void> {
+    const repoRules = await this.ruleDao.getRulesForRecord(darId);
     for (const rule of repoRules) {
-      if (checkCondition(recordData, rule.condition)) {
-        const sourceValue = getNestedValue(recordData, rule.source_path);
-        applyRuleToDataset(mappedDataset, sourceValue, rule);
+      const ruleApplied = applyRuleToRecord(record, rule);
+      if (ruleApplied) {
+        await this.ruleDao.deleteRuleForRecord(darId);
       }
     }
-
-    return mappedDataset;
   }
 
   /**
@@ -532,12 +542,12 @@ export const startRepositorySync = async (pool: Pool, repositoryType: Repository
   let client;
   try {
     const recordDao = new RecordDao(pool);
-    const repositoryMappingRulesDao = new RepositoryMappingRulesDao(pool);
+    const ruleDao = new RuleDao(pool);
     const sites = await fetchSites();
     const context = new HarvesterContext(
       pool,
       recordDao,
-      repositoryMappingRulesDao,
+      ruleDao,
       sites,
       repositoryType,
       repoConfig,
