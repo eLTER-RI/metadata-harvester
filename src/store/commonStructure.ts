@@ -276,7 +276,21 @@ const validContributorTypeArray = [
 
 const validEntityIdSchemas = new Set<string>(['ror', 'orcid', 'wos', 'scopus']);
 
-export type ContributorType = (typeof validContributorTypeArray)[number];
+export type ContributorType =
+  | 'ContactPerson'
+  | 'DataCollector'
+  | 'DataCurator'
+  | 'DataManager'
+  | 'MetadataProvider'
+  | 'Producer'
+  | 'ProjectLeader'
+  | 'ProjectManager'
+  | 'ProjectMember'
+  | 'RegistrationAuthority'
+  | 'RelatedPerson'
+  | 'Researcher'
+  | 'ResearchGroup'
+  | 'Other';
 
 export const validContributorTypes: Set<ContributorType> = new Set(validContributorTypeArray);
 
