@@ -95,6 +95,7 @@ export function appendValue(obj: any, path: string, value: any): void {
  */
 export function applyRuleToRecord(record: CommonDataset, rule: RuleDbRecord): boolean {
   const targetValue = getNestedValue(record, rule.target_path);
+
   if (JSON.stringify(targetValue) !== JSON.stringify(rule.orig_value)) {
     return false;
   }

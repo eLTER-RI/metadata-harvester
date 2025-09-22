@@ -165,21 +165,22 @@ export class HarvesterContext {
    * @param {string} sourceUrl The source URL of the record on the remote repository.
    */
   public async processOneRecordTask(sourceUrl: string) {
-    const dbRecord = await this.recordDao.getRecordBySourceId(sourceUrl);
-    if (dbRecord && dbRecord[0].status === 'success') {
+    let dbRecord = await this.recordDao.getRecordBySourceId(sourceUrl);
+    if (dbRecord && dbRecord[0] && dbRecord[0].status === 'success') {
       return;
     }
     const recordData = await fetchJson(sourceUrl);
-    if (!recordData) return null;
+    if (!recordData) return;
     const newSourceChecksum = calculateChecksum(recordData);
     const isSourceChanged = dbRecord[0]?.source_checksum !== newSourceChecksum;
     if (!this.checkHarvestChanges && !isSourceChanged) return;
 
     const finalMappedDataset = await this.mapToCommonStructure(sourceUrl, recordData);
     const mappedSourceUrl = finalMappedDataset.metadata.externalSourceInformation.externalSourceURI || sourceUrl;
-    if (dbRecord) {
+    dbRecord = await this.recordDao.getRecordBySourceId(mappedSourceUrl);
+    if (dbRecord && dbRecord[0]) {
       const darId = dbRecord[0].dar_id;
-      this.applyRulesToRecord(finalMappedDataset, darId);
+      await this.applyRulesToRecord(finalMappedDataset, darId);
     }
     await this.synchronizeRecord(mappedSourceUrl, newSourceChecksum, finalMappedDataset);
   }
@@ -227,7 +228,7 @@ export class HarvesterContext {
     const repoRules = await this.ruleDao.getRulesForRecord(darId);
     for (const rule of repoRules) {
       const ruleApplied = applyRuleToRecord(record, rule);
-      if (ruleApplied) {
+      if (!ruleApplied) {
         await this.ruleDao.deleteRuleForRecord(darId);
       }
     }
@@ -572,7 +573,46 @@ export const startRepositorySync = async (ctx: HarvesterContext) => {
   } catch (e) {
     if (client) await client.query('ROLLBACK');
     log('error', `Harvesting for repository ${ctx.repositoryType} failed with error: ${e}`);
-    console.error(e);
+    throw e;
+  } finally {
+    if (client) client.release();
+  }
+};
+
+/**
+ * Processes a single record from a repository..
+ * @param {HarvesterContext} ctx
+ * @param {string} sourceUrl The source URL of the record on the remote repository.
+ */
+export const startRecordSync = async (ctx: HarvesterContext, sourceUrl: string) => {
+  log('info', `Starting harvesting job for one record ${sourceUrl} from ${ctx.repositoryType}`);
+  let client;
+  try {
+    client = await ctx.pool.connect();
+    await client.query('BEGIN');
+    // Process just one record
+    if (ctx.repositoryType === 'SITES') {
+      await ctx.processOneSitesRecord(sourceUrl);
+    } else {
+      const { selfLinkKey } = ctx.repoConfig;
+      const recordData = await fetchJson(sourceUrl);
+      if (!recordData) return null;
+      const recordUrl = getNestedValue(recordData, selfLinkKey);
+      if (recordUrl != sourceUrl) {
+        log('info', `Found a different url: harvesting from ${recordUrl}`);
+      }
+      await ctx.recordDao.updateStatus(recordUrl, {
+        status: 'in_progress',
+      });
+      await ctx.processOneRecordTask(recordUrl);
+    }
+
+    await client.query('COMMIT');
+    log('info', `Harvesting for record ${sourceUrl} finished successfully.`);
+  } catch (e) {
+    if (client) await client.query('ROLLBACK');
+    log('error', `Harvesting for record ${sourceUrl} failed with error: ${e}`);
+    throw e;
   } finally {
     if (client) client.release();
   }
