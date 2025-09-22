@@ -73,7 +73,7 @@ async function init(): Promise<void> {
 
       CREATE TABLE IF NOT EXISTS record_rules (
         id SERIAL PRIMARY KEY,
-        dar_id TEXT NOT NULL REFERENCES harvested_records(dar_id),
+        dar_id TEXT NOT NULL REFERENCES harvested_records(dar_id) ON DELETE CASCADE,
         rule_type VARCHAR(50) NOT NULL,
         target_path TEXT NOT NULL,
         orig_value JSONB NOT NULL,
