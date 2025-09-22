@@ -79,6 +79,13 @@ async function init(): Promise<void> {
         orig_value JSONB NOT NULL,
         new_value JSONB NULL
       );
+
+      CREATE TABLE IF NOT EXISTS resolved_records (
+        id SERIAL PRIMARY KEY,
+        dar_id TEXT NOT NULL REFERENCES harvested_records(dar_id) ON DELETE CASCADE,
+        resolved_by TEXT,
+        resolved_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
   `;
     await appClient.query(allTablesCreate);
     process.stdout.write(`Successfully created all tables.\n`);
