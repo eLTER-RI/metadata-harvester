@@ -80,6 +80,18 @@ export class HarvesterContext {
     public readonly checkHarvestChanges: boolean,
   ) {}
 
+  public static async create(
+    pool: Pool,
+    repositoryType: RepositoryType,
+    checkHarvestChanges: boolean,
+  ): Promise<HarvesterContext> {
+    const recordDao = new RecordDao(pool);
+    const ruleDao = new RuleDao(pool);
+    const sites = await fetchSites();
+    const repoConfig = CONFIG.REPOSITORIES[repositoryType];
+    return new HarvesterContext(pool, recordDao, ruleDao, sites, repositoryType, repoConfig, checkHarvestChanges);
+  }
+
   /**
    * Synchronization of the record from source url with the local database and DAR.
    * This function also handles missing record on both local DB side or DAR side.
@@ -527,54 +539,39 @@ async function putToDar(darId: string, recordDao: RecordDao, sourceUrl: string, 
 /**
  * Start the entire data harvesting and posting process for a specified repository type.
  * Calls the appropriate harvesting function based on repository type.
- * @param {Pool} pool The PostgreSQL connection pool.
- * @param {RepositoryType} repositoryType The type of the repository (e.g., 'ZENODO', 'B2SHARE_EUDAT'...).
+ * @param {HarvesterContext} ctx
  */
-export const startRepositorySync = async (pool: Pool, repositoryType: RepositoryType, checkHarvestChanges: boolean) => {
-  log('info', `Starting harvesting job for repository: ${repositoryType}`);
-  const repoConfig = CONFIG.REPOSITORIES[repositoryType];
-  if (!repoConfig) {
-    log('error', `Configuration for repository '${repositoryType}' not available.`);
-    throw new Error(`Configuration for repository '${repositoryType}' not available.`);
-  }
-  const apiUrl = repoConfig.apiUrl;
+export const startRepositorySync = async (ctx: HarvesterContext) => {
+  log('info', `Starting harvesting job for repository: ${ctx.repositoryType}`);
 
   let client;
   try {
-    const recordDao = new RecordDao(pool);
-    const ruleDao = new RuleDao(pool);
-    const sites = await fetchSites();
-    const context = new HarvesterContext(
-      pool,
-      recordDao,
-      ruleDao,
-      sites,
-      repositoryType,
-      repoConfig,
-      checkHarvestChanges,
-    );
-
-    client = await pool.connect();
+    if (!ctx.repoConfig) {
+      log('error', `Configuration for repository '${ctx.repositoryType}' not available.`);
+      throw new Error(`Configuration for repository '${ctx.repositoryType}' not available.`);
+    }
+    const apiUrl = ctx.repoConfig.apiUrl;
+    client = await ctx.pool.connect();
     await client.query('BEGIN');
 
     // Phase 1: Local Database Validation
-    await recordDao.updateRepositoryToInProgress(context.repositoryType);
-    await dbValidationPhase(context);
-    log('info', `Phase 1 completed for ${repositoryType}. Proceeding with Phase 2.`);
+    await ctx.recordDao.updateRepositoryToInProgress(ctx.repositoryType);
+    await dbValidationPhase(ctx);
+    log('info', `Phase 1 completed for ${ctx.repositoryType}. Proceeding with Phase 2.`);
 
     // Phase 2: Remote Synchronization
-    if (repositoryType === 'SITES') {
-      await context.syncSitesRepositoryAll(apiUrl);
+    if (ctx.repositoryType === 'SITES') {
+      await ctx.syncSitesRepositoryAll(apiUrl);
     } else {
-      await context.syncApiRepositoryAll();
+      await ctx.syncApiRepositoryAll();
     }
-    log('info', `Phase 2 completed for ${repositoryType}.`);
+    log('info', `Phase 2 completed for ${ctx.repositoryType}.`);
 
     await client.query('COMMIT');
-    log('info', `Harvesting for repository: ${repositoryType} finished successfully`);
+    log('info', `Harvesting for repository: ${ctx.repositoryType} finished successfully`);
   } catch (e) {
     if (client) await client.query('ROLLBACK');
-    log('error', `Harvesting for repository ${repositoryType} failed with error: ${e}`);
+    log('error', `Harvesting for repository ${ctx.repositoryType} failed with error: ${e}`);
     console.error(e);
   } finally {
     if (client) client.release();

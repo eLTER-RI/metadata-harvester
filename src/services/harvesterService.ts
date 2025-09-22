@@ -4,7 +4,7 @@ import { Pool } from 'pg';
 import { log } from './serviceLogging';
 import { RepositoryType } from '../store/commonStructure';
 import { CONFIG } from '../../config';
-import { startRepositorySync } from './jobs/harvest/harvester';
+import { HarvesterContext, startRepositorySync } from './jobs/harvest/harvester';
 import { syncDeimsSites } from './jobs/deimsSync/syncDeimsSites';
 import { syncWithDar } from './jobs/syncDbWithRemote/localDarSync';
 
@@ -43,8 +43,9 @@ app.post('/harvest', async (req, res) => {
     return res.status(400).json({ error: `Invalid repository: '${repository}'.` });
   }
 
+  const context = await HarvesterContext.create(pool, repositoryType, checkHarvestChanges);
   try {
-    await startRepositorySync(pool, repositoryType, checkHarvestChanges);
+    await startRepositorySync(context);
     log('info', `Job for ${repositoryType} completed successfully.`);
   } catch (e) {
     log('error', `Job for ${repositoryType} failed with error: ${e}`);
