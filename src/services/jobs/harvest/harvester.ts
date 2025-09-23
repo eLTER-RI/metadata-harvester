@@ -22,6 +22,7 @@ import { dbValidationPhase } from './dbValidation';
 import { RuleDao } from '../../../store/dao/rulesDao';
 import { postToDar, putToDar } from '../../../../api/darApi';
 import { dbRecordUpsert } from './dbRecordSync';
+import { ResolvedRecordDao } from '../../../store/dao/resolvedRecordsDao';
 
 // Configurations
 const currentEnv = process.env.NODE_ENV;
@@ -76,6 +77,7 @@ export class HarvesterContext {
     public readonly pool: Pool,
     public readonly recordDao: RecordDao,
     public readonly ruleDao: RuleDao,
+    public readonly resolvedRecordsDao: ResolvedRecordDao,
     public readonly sites: SiteReference[],
     public readonly repositoryType: RepositoryType,
     public readonly repoConfig: any,
@@ -89,9 +91,19 @@ export class HarvesterContext {
   ): Promise<HarvesterContext> {
     const recordDao = new RecordDao(pool);
     const ruleDao = new RuleDao(pool);
+    const resolvedRecordsDao = new ResolvedRecordDao(pool);
     const sites = await fetchSites();
     const repoConfig = CONFIG.REPOSITORIES[repositoryType];
-    return new HarvesterContext(pool, recordDao, ruleDao, sites, repositoryType, repoConfig, checkHarvestChanges);
+    return new HarvesterContext(
+      pool,
+      recordDao,
+      ruleDao,
+      resolvedRecordsDao,
+      sites,
+      repositoryType,
+      repoConfig,
+      checkHarvestChanges,
+    );
   }
 
   /**
@@ -152,6 +164,7 @@ export class HarvesterContext {
     }
 
     if (rewriteRecord) {
+      await this.resolvedRecordsDao.delete(darMatches);
       await this.handleChangedRecord(dbMatches, sourceChecksum, url, darMatches, dataset, darChecksum);
       return;
     }
