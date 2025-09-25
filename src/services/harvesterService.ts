@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
+import cors from 'cors';
 import { Pool } from 'pg';
 import { log } from './serviceLogging';
 import { RepositoryType } from '../store/commonStructure';
@@ -7,6 +8,7 @@ import { CONFIG } from '../../config';
 import { HarvesterContext, startRecordSync, startRepositorySync } from './jobs/harvest/harvester';
 import { syncDeimsSites } from './jobs/deimsSync/syncDeimsSites';
 import { syncWithDar } from './jobs/syncDbWithRemote/localDarSync';
+import { RecordDao } from '../store/dao/recordDao';
 
 const pool = new Pool({
   user: process.env.DB_USER,
@@ -18,8 +20,28 @@ const pool = new Pool({
 
 const app = express();
 app.use(express.json());
+app.use(cors());
 
 const PORT = process.env.PORT || 3000;
+
+app.get('/records', async (req, res) => {
+  try {
+    const recordDao = new RecordDao(pool);
+    const repository = req.query.repository as RepositoryType;
+
+    let records;
+    if (repository) {
+      records = await recordDao.listRecordsByRepository(repository);
+    } else {
+      records = await recordDao.listRecords();
+    }
+
+    res.status(200).json(records);
+  } catch (error) {
+    log('error', `Failed to retrieve records: ${error}`);
+    res.status(500).json({ error: 'Failed to retrieve records.' });
+  }
+});
 
 app.post('/harvest', async (req, res) => {
   const { repository, checkHarvestChanges = true } = req.body;
