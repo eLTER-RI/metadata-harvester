@@ -9,6 +9,7 @@ export interface DbRecord {
   dar_checksum: string;
   status: string;
   last_harvested: Date;
+  title: string | null;
 }
 
 export class RecordDao {
@@ -20,8 +21,8 @@ export class RecordDao {
 
   async createRecord(record: Omit<DbRecord, 'last_harvested'>): Promise<void> {
     const query = `
-            INSERT INTO harvested_records (source_url, source_repository, source_checksum, dar_id, dar_checksum, status, last_harvested)
-            VALUES ($1, $2, $3, $4, $5, $6, NOW())
+            INSERT INTO harvested_records (source_url, source_repository, source_checksum, dar_id, dar_checksum, status, last_harvested, title)
+            VALUES ($1, $2, $3, $4, $5, $6, NOW(), $7)
         `;
     const values = [
       record.source_url,
@@ -30,6 +31,7 @@ export class RecordDao {
       record.dar_id,
       record.dar_checksum,
       record.status,
+      record.title,
     ];
     await this.pool.query(query, values);
   }
@@ -37,8 +39,8 @@ export class RecordDao {
   async updateRecord(source_url: string, record: Partial<DbRecord>): Promise<void> {
     const query = `
             UPDATE harvested_records
-            SET source_repository = $1, source_checksum = $2, dar_id = $3, dar_checksum = $4, status = $5, last_harvested = NOW()
-            WHERE source_url = $6
+            SET source_repository = $1, source_checksum = $2, dar_id = $3, dar_checksum = $4, status = $5, last_harvested = NOW(), title = $6
+            WHERE source_url = $7
         `;
     const values = [
       record.source_repository,
@@ -46,6 +48,7 @@ export class RecordDao {
       record.dar_id,
       record.dar_checksum,
       record.status,
+      record.title,
       source_url,
     ];
     await this.pool.query(query, values);
@@ -69,6 +72,12 @@ export class RecordDao {
         `;
     const values = [source_url, record.status];
     await this.pool.query(query, values);
+  }
+
+  async listRecords(): Promise<DbRecord[]> {
+    const query = `SELECT * FROM harvested_records`;
+    const result = await this.pool.query(query);
+    return result.rows;
   }
 
   async listRepositoryDarIds(repositoryType: RepositoryType): Promise<string[]> {
@@ -98,10 +107,17 @@ export class RecordDao {
   async updateRecordWithPrimaryKey(source_url: string, record: Partial<DbRecord>): Promise<void> {
     const query = `
             UPDATE harvested_records
-            SET source_url = $1, source_checksum = $2, dar_checksum = $3, status = $4, last_harvested = NOW()
-            WHERE source_url = $5
+            SET source_url = $1, source_checksum = $2, dar_checksum = $3, status = $4, last_harvested = NOW(), title = $5
+            WHERE source_url = $6
         `;
-    const values = [record.source_url, record.source_checksum, record.dar_checksum, record.status, source_url];
+    const values = [
+      record.source_url,
+      record.source_checksum,
+      record.dar_checksum,
+      record.status,
+      record.title,
+      source_url,
+    ];
     await this.pool.query(query, values);
   }
 

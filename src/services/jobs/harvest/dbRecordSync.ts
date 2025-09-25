@@ -21,6 +21,7 @@ export async function dbRecordUpsert(
   repositoryType: RepositoryType,
   sourceChecksum: string,
   darChecksum: string,
+  title: string | null,
   oldUrl?: string,
 ) {
   const dbMatches = await recordDao.getRecordBySourceId(sourceUrl);
@@ -41,6 +42,7 @@ export async function dbRecordUpsert(
       dar_id: darId,
       dar_checksum: darChecksum,
       status: 'success',
+      title: title,
     });
     return;
   }
@@ -54,6 +56,7 @@ export async function dbRecordUpsert(
       dar_id: darId,
       dar_checksum: darChecksum,
       status: 'updating',
+      title: title,
     });
     return;
   }
@@ -66,6 +69,7 @@ export async function dbRecordUpsert(
     dar_id: darId,
     dar_checksum: darChecksum,
     status: 'updating',
+    title: title,
   });
 
   log('info', 'Record was up to date.');

@@ -60,7 +60,8 @@ async function init(): Promise<void> {
         dar_id TEXT UNIQUE,
         dar_checksum TEXT,
         status TEXT,
-        last_harvested TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+        last_harvested TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        title TEXT
       );
 
       CREATE TABLE IF NOT EXISTS deims_sites (

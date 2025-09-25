@@ -129,6 +129,7 @@ export class HarvesterContext {
     const darChecksum = calculateChecksum(dataset);
     const darMatches = await findDarRecordBySourceURL(url);
     const dbMatches = await this.recordDao.getRecordBySourceId(url);
+    const datasetTitle = dataset.metadata.titles ? dataset.metadata.titles[0].titleText : null;
     if (dbMatches.length > 1) {
       throw new Error('More than one existing records of one dataset in the local database.');
     }
@@ -150,6 +151,7 @@ export class HarvesterContext {
             this.repositoryType,
             sourceChecksum,
             darChecksum,
+            datasetTitle,
             oldUrl,
           );
           return;
@@ -159,7 +161,7 @@ export class HarvesterContext {
 
     if (!darMatches) {
       const darId = await postToDar(this.recordDao, url, dataset);
-      await dbRecordUpsert(darId, this.recordDao, url, this.repositoryType, sourceChecksum, darChecksum);
+      await dbRecordUpsert(darId, this.recordDao, url, this.repositoryType, sourceChecksum, darChecksum, datasetTitle);
       return;
     }
 
@@ -269,6 +271,7 @@ export class HarvesterContext {
     const isDbRecordMissing = dbMatches.length === 0;
     const isSourceChanged = dbMatches[0]?.source_checksum !== sourceChecksum;
     const isDarChecksumChanged = dbMatches[0]?.dar_checksum !== darChecksum;
+    const datasetTitle = dataset.metadata.titles ? dataset.metadata.titles[0].titleText : '';
 
     if (isDbRecordMissing) {
       log('info', `No database record for ${sourceUrl}. No checksum available, updating.`);
@@ -282,7 +285,15 @@ export class HarvesterContext {
     }
 
     await putToDar(darId, this.recordDao, sourceUrl, dataset);
-    await dbRecordUpsert(darId, this.recordDao, sourceUrl, this.repositoryType, sourceChecksum, darChecksum);
+    await dbRecordUpsert(
+      darId,
+      this.recordDao,
+      sourceUrl,
+      this.repositoryType,
+      sourceChecksum,
+      darChecksum,
+      datasetTitle,
+    );
   }
 
   /**
