@@ -74,12 +74,6 @@ export class RecordDao {
     await this.pool.query(query, values);
   }
 
-  async listRecords(): Promise<DbRecord[]> {
-    const query = `SELECT * FROM harvested_records`;
-    const result = await this.pool.query(query);
-    return result.rows;
-  }
-
   async listRepositoryDarIds(repositoryType: RepositoryType): Promise<string[]> {
     const query = `SELECT dar_id FROM harvested_records WHERE source_repository = $1`;
     const result = await this.pool.query(query, [repositoryType]);
@@ -89,6 +83,50 @@ export class RecordDao {
   async listRecordsByRepository(repositoryType: RepositoryType): Promise<DbRecord[]> {
     const query = `SELECT * FROM harvested_records WHERE source_repository = $1`;
     const result = await this.pool.query(query, [repositoryType]);
+    return result.rows;
+  }
+
+  async listRecords(options?: { resolved?: boolean; repository?: RepositoryType }): Promise<DbRecord[]> {
+    const values = [];
+    const conditions = [];
+    let paramCount = 1;
+
+    let selectColumns = `h.source_url, h.source_repository, h.dar_id, h.last_harvested, h.title`;
+    const fromTable = `harvested_records h`;
+    let joinTable = '';
+
+    if (options?.resolved === true) {
+      selectColumns = `
+        h.source_url, h.source_repository, h.dar_id, h.last_harvested, h.title,
+        r.resolved_by, r.resolved_at
+      `;
+      joinTable = `JOIN resolved_records r ON h.dar_id = r.dar_id`;
+    } else if (options?.resolved === false) {
+      // Find records in harvested but not in resolved
+      conditions.push(`h.dar_id NOT IN (SELECT dar_id FROM resolved_records)`);
+    }
+
+    if (options?.repository) {
+      conditions.push(`h.source_repository = $${paramCount}`);
+      values.push(options.repository);
+      paramCount++;
+    }
+
+    let query = `
+      SELECT
+        ${selectColumns}
+      FROM
+        ${fromTable}
+      ${joinTable}
+    `;
+
+    if (conditions.length > 0) {
+      query += ` WHERE ${conditions.join(' AND ')}`;
+    }
+
+    query += ` ORDER BY h.last_harvested DESC`;
+
+    const result = await this.pool.query(query, values);
     return result.rows;
   }
 
