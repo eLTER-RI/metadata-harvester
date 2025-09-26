@@ -3,21 +3,22 @@ import { useState } from 'react';
 import { Dropdown } from 'semantic-ui-react';
 
 interface ActionButtonProps {
-  darId: string;
-  isResolved: boolean;
+  record: any;
+  fetchRecords: any;
 }
 
-export const ActionButton = ({ darId, isResolved }: ActionButtonProps) => {
+export const ActionButton = ({ record, fetchRecords }: ActionButtonProps) => {
   const [isResolving, setIsResolving] = useState(false);
 
   const handleResolve = async () => {
     setIsResolving(true);
 
     try {
-      await axios.patch(`http://localhost:3000/api/records/${darId}/status`, {
-        status: isResolved ? 'unresolved' : 'resolved',
+      await axios.patch(`http://localhost:3000/api/records/${record.dar_id}/status`, {
+        status: record.is_resolved ? 'unresolved' : 'resolved',
         resolvedBy: 'admin',
       });
+      fetchRecords();
     } finally {
       setIsResolving(false);
     }
@@ -29,8 +30,8 @@ export const ActionButton = ({ darId, isResolved }: ActionButtonProps) => {
         <Dropdown.Item key={'edit'} icon={'edit'} text="Edit" />
         <Dropdown.Item
           key={'resolve'}
-          icon={isResolved ? 'x' : 'check'}
-          text="Resolve"
+          icon={record.is_resolved ? 'x' : 'check'}
+          text={record.is_resolved ? 'Unresolve' : 'Resolve'}
           disabled={isResolving}
           onClick={() => handleResolve()}
         />
@@ -38,7 +39,7 @@ export const ActionButton = ({ darId, isResolved }: ActionButtonProps) => {
           key={'detail'}
           icon={'eye'}
           text="Detail"
-          href={`https://dar.elter-ri.eu/external-datasets/${darId}`}
+          href={`https://dar.elter-ri.eu/external-datasets/${record.dar_id}`}
           target="_blank"
           rel="noopener noreferrer"
         />
