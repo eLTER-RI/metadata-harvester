@@ -23,7 +23,7 @@ export const RecordsList = ({ selectedRepository }: RecordsListProps) => {
     const fetchRecords = async () => {
       setIsLoading(true);
       try {
-        let url = `${BASE_API_URL}/records`;
+        let url = `${BASE_API_URL}/records/`;
         if (selectedRepository) {
           url += `?repository=${selectedRepository}`;
         }
@@ -66,7 +66,7 @@ export const RecordsList = ({ selectedRepository }: RecordsListProps) => {
       <Header as="h1">Harvested Records</Header>
       <Item.Group divided>
         {records.map((record, index) => (
-          <RecordCard key={index} title={record.title} darId={record.dar_id} sourceUrl={record.source_url} />
+          <RecordCard key={index} record={record} />
         ))}
       </Item.Group>
     </Container>
