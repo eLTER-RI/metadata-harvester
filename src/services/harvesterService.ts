@@ -28,14 +28,15 @@ const PORT = process.env.PORT || 3000;
 app.get('/records', async (req, res) => {
   try {
     const recordDao = new RecordDao(pool);
+    const resolvedParam = req.query.resolved as string;
     const repository = req.query.repository as RepositoryType;
 
-    let records;
-    if (repository) {
-      records = await recordDao.listRecordsByRepository(repository);
-    } else {
-      records = await recordDao.listRecords();
-    }
+    const options = {
+      resolved: resolvedParam ? resolvedParam === 'true' : undefined,
+      repository: repository,
+    };
+
+    const records = await recordDao.listRecords(options);
 
     res.status(200).json(records);
   } catch (error) {
