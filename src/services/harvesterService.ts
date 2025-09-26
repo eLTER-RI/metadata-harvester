@@ -9,6 +9,7 @@ import { HarvesterContext, startRecordSync, startRepositorySync } from './jobs/h
 import { syncDeimsSites } from './jobs/deimsSync/syncDeimsSites';
 import { syncWithDar } from './jobs/syncDbWithRemote/localDarSync';
 import { RecordDao } from '../store/dao/recordDao';
+import { ResolvedRecordDao } from '../store/dao/resolvedRecordsDao';
 
 const pool = new Pool({
   user: process.env.DB_USER,
@@ -40,6 +41,26 @@ app.get('/records', async (req, res) => {
   } catch (error) {
     log('error', `Failed to retrieve records: ${error}`);
     res.status(500).json({ error: 'Failed to retrieve records.' });
+  }
+});
+
+app.patch('/api/records/:darId/status', async (req, res) => {
+  const darId = req.params.darId as string;
+  const { status, resolvedBy } = req.body;
+
+  if (!darId || !status) {
+    return res.status(400).json({ error: 'Missing required fields.' });
+  }
+
+  const resolvedRecordDao = new ResolvedRecordDao(pool);
+  if (status === 'resolved') {
+    await resolvedRecordDao.create(darId, resolvedBy);
+    res.status(200).json({ message: 'Status updated successfully.' });
+  } else if (status === 'unresolved') {
+    await resolvedRecordDao.delete(darId);
+    res.status(200).json({ message: 'Status updated successfully.' });
+  } else {
+    return res.status(400).json({ error: "Invalid status value. Status must be 'resolved' or 'unresolved'." });
   }
 });
 

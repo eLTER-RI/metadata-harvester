@@ -15,12 +15,12 @@ export class ResolvedRecordDao {
     this.pool = pool;
   }
 
-  async create(record: Omit<DbResolvedRecord, 'last_harvested'>): Promise<void> {
+  async create(darId: string, resolvedBy: string): Promise<void> {
     const query = `
       INSERT INTO resolved_records (dar_id, resolved_by, resolved_at)
       VALUES ($1, $2, NOW());
     `;
-    const values = [record.dar_id, record.resolved_by];
+    const values = [darId, resolvedBy];
     await this.pool.query(query, values);
   }
 
