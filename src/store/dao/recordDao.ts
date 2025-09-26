@@ -86,24 +86,23 @@ export class RecordDao {
     return result.rows;
   }
 
-  async listRecords(options?: { resolved?: boolean; repository?: RepositoryType }): Promise<DbRecord[]> {
+  async listRecords(options?: { resolved?: boolean; repository?: string }): Promise<DbRecord[]> {
     const values = [];
     const conditions = [];
     let paramCount = 1;
 
-    let selectColumns = `h.source_url, h.source_repository, h.dar_id, h.last_harvested, h.title`;
-    const fromTable = `harvested_records h`;
-    let joinTable = '';
+    let query = `
+      SELECT
+        h.source_url, h.source_repository, h.dar_id, h.last_harvested, h.title, h.status,
+        CASE WHEN r.dar_id IS NOT NULL THEN true ELSE false END AS is_resolved
+      FROM harvested_records h
+      LEFT JOIN resolved_records r ON h.dar_id = r.dar_id
+    `;
 
-    if (options?.resolved === true) {
-      selectColumns = `
-        h.source_url, h.source_repository, h.dar_id, h.last_harvested, h.title,
-        r.resolved_by, r.resolved_at
-      `;
-      joinTable = `JOIN resolved_records r ON h.dar_id = r.dar_id`;
-    } else if (options?.resolved === false) {
-      // Find records in harvested but not in resolved
-      conditions.push(`h.dar_id NOT IN (SELECT dar_id FROM resolved_records)`);
+    if (options?.resolved !== undefined) {
+      conditions.push(`CASE WHEN r.dar_id IS NOT NULL THEN true ELSE false END = $${paramCount}`);
+      values.push(options.resolved);
+      paramCount++;
     }
 
     if (options?.repository) {
@@ -111,14 +110,6 @@ export class RecordDao {
       values.push(options.repository);
       paramCount++;
     }
-
-    let query = `
-      SELECT
-        ${selectColumns}
-      FROM
-        ${fromTable}
-      ${joinTable}
-    `;
 
     if (conditions.length > 0) {
       query += ` WHERE ${conditions.join(' AND ')}`;
