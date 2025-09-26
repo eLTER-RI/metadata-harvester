@@ -4,7 +4,7 @@ import {
     Route,
     RouterProvider,
   } from "react-router-dom";
-import { LandingPage } from "./pages/landingPage/landingPage";
+import { LandingPage } from "./pages/landingPage/LandingPage";
   
 
   const router = createBrowserRouter(
