@@ -83,7 +83,7 @@ async function init(): Promise<void> {
 
       CREATE TABLE IF NOT EXISTS resolved_records (
         id SERIAL PRIMARY KEY,
-        dar_id TEXT NOT NULL REFERENCES harvested_records(dar_id) ON DELETE CASCADE,
+        dar_id TEXT UNIQUE NOT NULL REFERENCES harvested_records(dar_id) ON DELETE CASCADE,
         resolved_by TEXT,
         resolved_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       );
