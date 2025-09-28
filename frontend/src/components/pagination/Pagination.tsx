@@ -1,25 +1,13 @@
 import { Pagination } from 'semantic-ui-react';
+import { useRecords } from '../../store/RecordsProvider';
 
-interface RecordsPaginationProps {
-  currentPage: number;
-  totalResults: number;
-  totalPages: number;
-  pageSize: number;
-  setCurrentPage: (page: number) => void;
-}
-
-const RecordsPagination = ({
-  currentPage,
-  totalResults,
-  totalPages,
-  pageSize,
-  setCurrentPage,
-}: RecordsPaginationProps) => {
+const RecordsPagination = () => {
+  const { currentPage, totalRecords, totalPages, pageSize, setCurrentPage } = useRecords();
   if (totalPages <= 1) {
     return null;
   }
 
-  const pages = Math.ceil(totalResults / pageSize);
+  const pages = Math.ceil(totalRecords / pageSize);
   if (currentPage > pages) setCurrentPage(totalPages);
 
   const handlePageChange = (activePage: number | string | undefined) => {

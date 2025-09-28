@@ -1,13 +1,14 @@
 import axios from 'axios';
 import { useState } from 'react';
 import { Dropdown } from 'semantic-ui-react';
+import { useRecords } from '../../store/RecordsProvider';
 
 interface ActionButtonProps {
   record: any;
-  fetchRecords: any;
 }
 
-export const ActionButton = ({ record, fetchRecords }: ActionButtonProps) => {
+export const ActionButton = ({ record }: ActionButtonProps) => {
+  const { fetchRecords } = useRecords();
   const [isResolving, setIsResolving] = useState(false);
 
   const handleResolve = async () => {

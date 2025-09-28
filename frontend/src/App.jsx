@@ -1,13 +1,13 @@
 import './App.css'
-import { ToastProvider } from "./components/common/display/toast/toast-provider.tsx"
 import { Router } from "./Router.tsx";
+import { RecordsProvider } from "./store/RecordsProvider.tsx"
 
 function App() {
   return (
     <>
-      <ToastProvider>
+      <RecordsProvider>
         <Router />
-      </ToastProvider>
+      </RecordsProvider>
     </>
   )
 }

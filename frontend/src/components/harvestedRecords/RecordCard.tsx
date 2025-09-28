@@ -3,10 +3,9 @@ import { ActionButton } from './RecordButton';
 
 interface RecordCardProps {
   record: any;
-  fetchRecords: any;
 }
 
-const RecordCard = ({ record, fetchRecords }: RecordCardProps) => {
+const RecordCard = ({ record }: RecordCardProps) => {
   const statusColor = record.is_resolved ? 'green' : 'red';
 
   return (
@@ -14,9 +13,7 @@ const RecordCard = ({ record, fetchRecords }: RecordCardProps) => {
       <Item.Content className="content">
         <Grid columns={2} verticalAlign="middle">
           <Grid.Column>
-            <Item.Header>
-              {record.title || 'No Title'}
-            </Item.Header>
+            <Item.Header>{record.title || 'No Title'}</Item.Header>
             <Item.Content>
               <strong>Source URL:</strong>{' '}
               <a href={record.source_url} target="_blank" rel="noopener noreferrer">
@@ -30,7 +27,7 @@ const RecordCard = ({ record, fetchRecords }: RecordCardProps) => {
             )}
           </Grid.Column>
           <Grid.Column width={4} textAlign="right">
-            <ActionButton record={record} fetchRecords={fetchRecords} />
+            <ActionButton record={record} />
           </Grid.Column>
         </Grid>
       </Item.Content>
