@@ -21,9 +21,9 @@ export class RecordDao {
 
   async createRecord(record: Omit<DbRecord, 'last_harvested'>): Promise<void> {
     const query = `
-            INSERT INTO harvested_records (source_url, source_repository, source_checksum, dar_id, dar_checksum, status, last_harvested, title)
-            VALUES ($1, $2, $3, $4, $5, $6, NOW(), $7)
-        `;
+      INSERT INTO harvested_records (source_url, source_repository, source_checksum, dar_id, dar_checksum, status, last_harvested, title)
+      VALUES ($1, $2, $3, $4, $5, $6, NOW(), $7)
+    `;
     const values = [
       record.source_url,
       record.source_repository,
@@ -38,10 +38,10 @@ export class RecordDao {
 
   async updateRecord(source_url: string, record: Partial<DbRecord>): Promise<void> {
     const query = `
-            UPDATE harvested_records
-            SET source_repository = $1, source_checksum = $2, dar_id = $3, dar_checksum = $4, status = $5, last_harvested = NOW(), title = $6
-            WHERE source_url = $7
-        `;
+      UPDATE harvested_records
+      SET source_repository = $1, source_checksum = $2, dar_id = $3, dar_checksum = $4, status = $5, last_harvested = NOW(), title = $6
+      WHERE source_url = $7
+    `;
     const values = [
       record.source_repository,
       record.source_checksum,
@@ -150,10 +150,10 @@ export class RecordDao {
 
   async updateDarId(source_url: string, record: Partial<DbRecord>): Promise<void> {
     const query = `
-            UPDATE harvested_records
-            SET dar_id = $2
-            WHERE source_url = $1
-        `;
+      UPDATE harvested_records
+      SET dar_id = $2
+      WHERE source_url = $1
+    `;
     const values = [source_url, record.dar_id];
     await this.pool.query(query, values);
   }
@@ -162,10 +162,10 @@ export class RecordDao {
   // First source_url is the one that we are looking for, and we are replacing the value with source_url from the record structure.
   async updateRecordWithPrimaryKey(source_url: string, record: Partial<DbRecord>): Promise<void> {
     const query = `
-            UPDATE harvested_records
-            SET source_url = $1, source_checksum = $2, dar_checksum = $3, status = $4, last_harvested = NOW(), title = $5
-            WHERE source_url = $6
-        `;
+      UPDATE harvested_records
+      SET source_url = $1, source_checksum = $2, dar_checksum = $3, status = $4, last_harvested = NOW(), title = $5
+      WHERE source_url = $6
+    `;
     const values = [
       record.source_url,
       record.source_checksum,
@@ -179,10 +179,10 @@ export class RecordDao {
 
   async updateRepositoryToInProgress(repositoryType: RepositoryType): Promise<void> {
     const query = `
-            UPDATE harvested_records
-            SET status = 'in_progress'
-            WHERE source_repository = $1
-        `;
+      UPDATE harvested_records
+      SET status = 'in_progress'
+      WHERE source_repository = $1
+    `;
     const values = [repositoryType];
     await this.pool.query(query, values);
   }
@@ -195,9 +195,9 @@ export class RecordDao {
 
   async deleteRecord(sourceId: string): Promise<void> {
     const query = `
-            DELETE FROM harvested_records
-            WHERE source_url = $1
-        `;
+      DELETE FROM harvested_records
+      WHERE source_url = $1
+    `;
     await this.pool.query(query, [sourceId]);
   }
 }
