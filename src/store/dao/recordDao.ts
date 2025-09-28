@@ -148,6 +148,42 @@ export class RecordDao {
     };
   }
 
+  async listRepositoriesWithCount(options?: {
+    resolved?: boolean;
+    repositories?: string[];
+  }): Promise<{ repository: string; count: number }[]> {
+    const values = [];
+    const conditions = [];
+    let paramCount = 1;
+
+    const query = `
+      SELECT
+        source_repository,
+        count(*)
+      FROM
+        harvested_records
+      GROUP BY
+        source_repository
+      ORDER BY
+        count(*)
+        DESC
+    `;
+
+    if (options?.resolved !== undefined) {
+      conditions.push(`CASE WHEN r.dar_id IS NOT NULL THEN true ELSE false END = $${paramCount}`);
+      values.push(options.resolved);
+      paramCount++;
+    }
+    if (options?.repositories && options.repositories.length > 0) {
+      conditions.push(`h.source_repository = ANY($${paramCount})`);
+      values.push(options.repositories);
+      paramCount++;
+    }
+
+    const result = await this.pool.query(query);
+    return result.rows;
+  }
+
   async updateDarId(source_url: string, record: Partial<DbRecord>): Promise<void> {
     const query = `
       UPDATE harvested_records

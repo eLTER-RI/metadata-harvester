@@ -53,6 +53,24 @@ app.get('/records', async (req, res) => {
   }
 });
 
+app.get('/repositories', async (req, res) => {
+  try {
+    const resolvedParam = req.query.resolved as string;
+    const repository = req.query.repository as RepositoryType;
+    const options = {
+      resolved: resolvedParam ? resolvedParam === 'true' : undefined,
+      repository: repository,
+    };
+    const recordDao = new RecordDao(pool);
+    const repositoriesWithCount = await recordDao.listRepositoriesWithCount(options);
+
+    res.status(200).json(repositoriesWithCount);
+  } catch (error) {
+    log('error', `Failed to retrieve records: ${error}`);
+    res.status(500).json({ error: 'Failed to retrieve records.' });
+  }
+});
+
 app.patch('/api/records/:darId/status', async (req, res) => {
   const darId = req.params.darId as string;
   const { status, resolvedBy } = req.body;
