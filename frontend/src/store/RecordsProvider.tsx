@@ -16,11 +16,11 @@ interface RecordsContextType {
   isLoading: boolean;
   error: string | null;
   resolvedFilter: boolean | undefined;
-  repositoryFilter: string | undefined;
+  repositoryFilter: string[];
   setCurrentPage: (page: number) => void;
   setPageSize: (page: number) => void;
   setResolvedFilter: (resolved: boolean | undefined) => void;
-  setRepositoryFilter: (repository: string | undefined) => void;
+  setRepositoryFilter: (repository: string[]) => void;
   fetchRecords: () => void;
 }
 
@@ -37,7 +37,7 @@ export const RecordsProvider = ({ children }: { children: React.ReactNode }) => 
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [resolvedFilter, setResolvedFilter] = useState<boolean | undefined>(undefined);
-  const [repositoryFilter, setRepositoryFilter] = useState<string | undefined>(undefined);
+  const [repositoryFilter, setRepositoryFilter] = useState<string[]>([]);
 
   const fetchRecords = async () => {
     setIsLoading(true);
@@ -46,7 +46,7 @@ export const RecordsProvider = ({ children }: { children: React.ReactNode }) => 
         page: currentPage,
         size: pageSize,
         resolved: resolvedFilter,
-        repository: repositoryFilter,
+        repositories: repositoryFilter,
       };
       const response = await axios.get(`${API_BASE_URL}/records`, { params });
       const { records, totalCount, totalPages } = response.data;
