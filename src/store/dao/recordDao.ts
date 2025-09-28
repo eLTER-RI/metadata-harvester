@@ -86,18 +86,15 @@ export class RecordDao {
     return result.rows;
   }
 
-  async listRecords(options?: { resolved?: boolean; repository?: string }): Promise<DbRecord[]> {
+  async listRecords(options?: {
+    resolved?: boolean;
+    repository?: string;
+    size?: number;
+    offset?: number;
+  }): Promise<{ records: DbRecord[]; totalCount: number }> {
     const values = [];
     const conditions = [];
     let paramCount = 1;
-
-    let query = `
-      SELECT
-        h.source_url, h.source_repository, h.dar_id, h.last_harvested, h.title, h.status,
-        CASE WHEN r.dar_id IS NOT NULL THEN true ELSE false END AS is_resolved
-      FROM harvested_records h
-      LEFT JOIN resolved_records r ON h.dar_id = r.dar_id
-    `;
 
     if (options?.resolved !== undefined) {
       conditions.push(`CASE WHEN r.dar_id IS NOT NULL THEN true ELSE false END = $${paramCount}`);
@@ -111,14 +108,44 @@ export class RecordDao {
       paramCount++;
     }
 
-    if (conditions.length > 0) {
-      query += ` WHERE ${conditions.join(' AND ')}`;
+    const where = conditions.length > 0 ? ` WHERE ${conditions.join(' AND ')}` : '';
+    let query = `
+      SELECT
+        h.source_url, h.source_repository, h.dar_id, h.last_harvested, h.title, h.status,
+        CASE WHEN r.dar_id IS NOT NULL THEN true ELSE false END AS is_resolved
+      FROM harvested_records h
+      LEFT JOIN resolved_records r ON h.dar_id = r.dar_id
+      ${where}
+      ORDER BY h.last_harvested DESC
+  `;
+
+    const countQuery = `
+      SELECT COUNT(*)
+      FROM harvested_records h
+      LEFT JOIN resolved_records r ON h.dar_id = r.dar_id
+      ${where}
+    `;
+
+    if (options?.size !== undefined) {
+      query += ` LIMIT $${paramCount}`;
+      values.push(options.size);
+      paramCount++;
     }
 
-    query += ` ORDER BY h.last_harvested DESC`;
+    if (options?.offset !== undefined) {
+      query += ` OFFSET $${paramCount}`;
+      values.push(options.offset);
+      paramCount++;
+    }
 
-    const result = await this.pool.query(query, values);
-    return result.rows;
+    const countResult = await this.pool.query(countQuery, values.slice(0, conditions.length));
+    const recordsResult = await this.pool.query(query, values);
+    const totalCount = parseInt(countResult.rows[0].count, 10);
+
+    return {
+      records: recordsResult.rows,
+      totalCount: totalCount,
+    };
   }
 
   async updateDarId(source_url: string, record: Partial<DbRecord>): Promise<void> {

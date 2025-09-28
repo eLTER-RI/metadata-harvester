@@ -30,15 +30,23 @@ app.get('/records', async (req, res) => {
     const recordDao = new RecordDao(pool);
     const resolvedParam = req.query.resolved as string;
     const repository = req.query.repository as RepositoryType;
+    const page = parseInt(req.query.page as string) || 1;
+    const size = parseInt(req.query.size as string) || 10;
 
     const options = {
       resolved: resolvedParam ? resolvedParam === 'true' : undefined,
       repository: repository,
+      size: size,
+      offset: (page - 1) * size,
     };
 
-    const records = await recordDao.listRecords(options);
-
-    res.status(200).json(records);
+    const { records, totalCount } = await recordDao.listRecords(options);
+    res.status(200).json({
+      records: records,
+      totalCount: totalCount,
+      currentPage: page,
+      totalPages: Math.ceil(totalCount / size),
+    });
   } catch (error) {
     log('error', `Failed to retrieve records: ${error}`);
     res.status(500).json({ error: 'Failed to retrieve records.' });
