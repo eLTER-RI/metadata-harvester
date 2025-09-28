@@ -88,7 +88,7 @@ export class RecordDao {
 
   async listRecords(options?: {
     resolved?: boolean;
-    repository?: string;
+    repositories?: string[];
     size?: number;
     offset?: number;
   }): Promise<{ records: DbRecord[]; totalCount: number }> {
@@ -102,9 +102,9 @@ export class RecordDao {
       paramCount++;
     }
 
-    if (options?.repository) {
-      conditions.push(`h.source_repository = $${paramCount}`);
-      values.push(options.repository);
+    if (options?.repositories && options.repositories.length > 0) {
+      conditions.push(`h.source_repository = ANY($${paramCount})`);
+      values.push(options.repositories);
       paramCount++;
     }
 
