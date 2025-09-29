@@ -56,7 +56,9 @@ export const FilterSidebar = () => {
               <Checkbox
                 label={option.resolved ? `Resolved (${option.count})` : `Unresolved (${option.count})`}
                 checked={resolvedFilter != undefined && resolvedFilter === option.resolved}
-                onClick={() => setResolvedFilter(option.resolved)}
+                onClick={() => {
+                  setResolvedFilter(resolvedFilter === option.resolved ? undefined : option.resolved);
+                }}
               />
             </List.Item>
           ))}
