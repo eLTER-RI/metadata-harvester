@@ -28,14 +28,17 @@ const PORT = process.env.PORT || 3000;
 app.get('/api/records', async (req, res) => {
   try {
     const recordDao = new RecordDao(pool);
-    const resolvedParam = req.query.resolved as string;
-    const repository = req.query.repository as RepositoryType;
     const page = parseInt(req.query.page as string) || 1;
     const size = parseInt(req.query.size as string) || 10;
-
+    const resolvedParam = req.query.resolved as string;
+    const repositoryParam = req.query['repositories[]'] as string | string[];
+    let repositories: string[] | undefined;
+    if (repositoryParam) {
+      repositories = Array.isArray(repositoryParam) ? repositoryParam : [repositoryParam];
+    }
     const options = {
       resolved: resolvedParam ? resolvedParam === 'true' : undefined,
-      repository: repository,
+      repositories: repositories,
       size: size,
       offset: (page - 1) * size,
     };
@@ -56,10 +59,14 @@ app.get('/api/records', async (req, res) => {
 app.get('/api/repositories', async (req, res) => {
   try {
     const resolvedParam = req.query.resolved as string;
-    const repository = req.query.repository as RepositoryType;
+    const repositoryParam = req.query['repositories[]'] as string | string[];
+    let repositories: string[] | undefined;
+    if (repositoryParam) {
+      repositories = Array.isArray(repositoryParam) ? repositoryParam : [repositoryParam];
+    }
     const options = {
       resolved: resolvedParam ? resolvedParam === 'true' : undefined,
-      repository: repository,
+      repositories: repositories,
     };
     const recordDao = new RecordDao(pool);
     const repositoriesWithCount = await recordDao.listRepositoriesWithCount(options);
