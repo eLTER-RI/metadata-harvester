@@ -31,10 +31,12 @@ interface RecordsContextType {
   filterError: string | null;
   resolvedFilter: boolean | undefined;
   repositoryFilter: string[];
+  searchQuery: string;
   setCurrentPage: (page: number) => void;
   setPageSize: (page: number) => void;
   setResolvedFilter: (resolved: boolean | undefined) => void;
   setRepositoryFilter: (repository: string[]) => void;
+  setSearchQuery: (title: string) => void;
   fetchRecords: () => void;
   fetchFilterValues: () => void;
 }
@@ -59,6 +61,7 @@ export const RecordsProvider = ({ children }: { children: React.ReactNode }) => 
   const [filterError, setFilterError] = useState<string | null>(null);
   const [resolvedFilter, setResolvedFilter] = useState<boolean | undefined>(undefined);
   const [repositoryFilter, setRepositoryFilter] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const fetchRecords = async () => {
     setIsLoading(true);
@@ -66,6 +69,7 @@ export const RecordsProvider = ({ children }: { children: React.ReactNode }) => 
       const params = {
         page: currentPage,
         size: pageSize,
+        title: searchQuery,
         resolved: resolvedFilter,
         repositories: repositoryFilter,
       };
@@ -89,6 +93,7 @@ export const RecordsProvider = ({ children }: { children: React.ReactNode }) => 
       const params = {
         resolved: resolvedFilter,
         repositories: repositoryFilter,
+        title: searchQuery,
       };
       const repoResponse = await axios.get(`${API_BASE_URL}/repositories`, { params });
       const resolvedResponse = await axios.get(`${API_BASE_URL}/resolved`, { params });
@@ -106,11 +111,11 @@ export const RecordsProvider = ({ children }: { children: React.ReactNode }) => 
 
   useEffect(() => {
     fetchRecords();
-  }, [currentPage, pageSize, resolvedFilter, repositoryFilter]);
+  }, [currentPage, pageSize, resolvedFilter, repositoryFilter, searchQuery]);
 
   useEffect(() => {
     fetchFilterValues();
-  }, [resolvedFilter, repositoryFilter]);
+  }, [resolvedFilter, repositoryFilter, searchQuery]);
 
   const value = {
     records,
@@ -125,10 +130,12 @@ export const RecordsProvider = ({ children }: { children: React.ReactNode }) => 
     filterError,
     resolvedFilter,
     repositoryFilter,
+    searchQuery,
     setCurrentPage,
     setPageSize,
     setResolvedFilter,
     setRepositoryFilter,
+    setSearchQuery,
     fetchRecords,
     fetchFilterValues,
   };
