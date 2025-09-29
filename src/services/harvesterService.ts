@@ -25,7 +25,7 @@ app.use(cors());
 
 const PORT = process.env.PORT || 3000;
 
-app.get('/records', async (req, res) => {
+app.get('/api/records', async (req, res) => {
   try {
     const recordDao = new RecordDao(pool);
     const resolvedParam = req.query.resolved as string;
@@ -53,7 +53,7 @@ app.get('/records', async (req, res) => {
   }
 });
 
-app.get('/repositories', async (req, res) => {
+app.get('/api/repositories', async (req, res) => {
   try {
     const resolvedParam = req.query.resolved as string;
     const repository = req.query.repository as RepositoryType;
@@ -91,7 +91,7 @@ app.patch('/api/records/:darId/status', async (req, res) => {
   }
 });
 
-app.post('/harvest', async (req, res) => {
+app.post('/api/harvest', async (req, res) => {
   const { repository, checkHarvestChanges = true } = req.body;
   if (!repository) {
     return res.status(400).json({ error: "Missing required field: 'repository'." });
@@ -123,7 +123,7 @@ app.post('/harvest', async (req, res) => {
   res.status(200).json({ message: `Harvesting job completed.` });
 });
 
-app.post('/harvest/single', async (req, res) => {
+app.post('/api/harvest/single', async (req, res) => {
   const { sourceUrl, repository, checkHarvestChanges = true } = req.body;
 
   if (!sourceUrl || !repository) {
@@ -152,7 +152,7 @@ app.post('/harvest/single', async (req, res) => {
   res.status(200).json({ message: `Harvesting job completed.` });
 });
 
-app.post('/sync/sites', async (req, res) => {
+app.post('/api/sync/sites', async (req, res) => {
   log('info', 'Command received: sync-deims');
   try {
     await syncDeimsSites(pool);
@@ -163,7 +163,7 @@ app.post('/sync/sites', async (req, res) => {
   }
 });
 
-app.post('/sync/records', async (req, res) => {
+app.post('/api/sync/records', async (req, res) => {
   const { repository, darCleanup = false } = req.body;
   let repositoryType = repository.toUpperCase() as RepositoryType;
 
