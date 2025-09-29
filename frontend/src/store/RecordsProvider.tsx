@@ -69,7 +69,7 @@ export const RecordsProvider = ({ children }: { children: React.ReactNode }) => 
       const params = {
         page: currentPage,
         size: pageSize,
-        title: searchQuery,
+        title: searchQuery ?? null,
         resolved: resolvedFilter,
         repositories: repositoryFilter,
       };
@@ -93,7 +93,7 @@ export const RecordsProvider = ({ children }: { children: React.ReactNode }) => 
       const params = {
         resolved: resolvedFilter,
         repositories: repositoryFilter,
-        title: searchQuery,
+        title: searchQuery ?? null,
       };
       const repoResponse = await axios.get(`${API_BASE_URL}/repositories`, { params });
       const resolvedResponse = await axios.get(`${API_BASE_URL}/resolved`, { params });
