@@ -61,15 +61,9 @@ app.get('/api/records', async (req, res) => {
 app.get('/api/repositories', async (req, res) => {
   try {
     const resolvedParam = req.query.resolved as string;
-    const repositoryParam = req.query['repositories[]'] as string | string[];
     const titleParam = req.query.title as string;
-    let repositories: string[] | undefined;
-    if (repositoryParam) {
-      repositories = Array.isArray(repositoryParam) ? repositoryParam : [repositoryParam];
-    }
     const options = {
       resolved: resolvedParam ? resolvedParam === 'true' : undefined,
-      repositories: repositories,
       title: titleParam,
     };
     const recordDao = new RecordDao(pool);

@@ -157,34 +157,30 @@ export class RecordDao {
 
   async listRepositoriesWithCount(options?: {
     resolved?: boolean;
-    repositories?: string[];
     title?: string;
   }): Promise<{ repository: string; count: number }[]> {
     const values = [];
     const conditions = [];
     let paramCount = 1;
 
-    const query = `
-      SELECT
-        source_repository,
-        count(*)
-      FROM
-        harvested_records
-      GROUP BY
-        source_repository
-      ORDER BY
-        count(*)
-        DESC
-    `;
+    let baseQuery = `
+    FROM
+      harvested_records h
+  `;
+
+    if (options?.resolved !== undefined) {
+      baseQuery += `LEFT JOIN resolved_records r ON h.dar_id = r.dar_id`;
+    }
 
     if (options?.resolved !== undefined) {
       conditions.push(`CASE WHEN r.dar_id IS NOT NULL THEN true ELSE false END = $${paramCount}`);
       values.push(options.resolved);
       paramCount++;
     }
-    if (options?.repositories && options.repositories.length > 0) {
-      conditions.push(`h.source_repository = ANY($${paramCount})`);
-      values.push(options.repositories);
+
+    if (options?.title) {
+      conditions.push(`h.title ILIKE $${paramCount}`);
+      values.push(`%${options.title}%`);
       paramCount++;
     }
     if (options?.title) {
@@ -193,7 +189,20 @@ export class RecordDao {
       paramCount++;
     }
 
-    const result = await this.pool.query(query);
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    const finalQuery = `
+    SELECT
+      h.source_repository as source_repository,
+      count(h.source_repository) as count
+    ${baseQuery}
+    ${whereClause}
+    GROUP BY
+      h.source_repository
+    ORDER BY
+      count(h.source_repository) DESC
+  `;
+
+    const result = await this.pool.query(finalQuery, values);
     return result.rows;
   }
 
