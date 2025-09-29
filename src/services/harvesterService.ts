@@ -32,6 +32,7 @@ app.get('/api/records', async (req, res) => {
     const size = parseInt(req.query.size as string) || 10;
     const resolvedParam = req.query.resolved as string;
     const repositoryParam = req.query['repositories[]'] as string | string[];
+    const titleParam = req.query.title as string;
     let repositories: string[] | undefined;
     if (repositoryParam) {
       repositories = Array.isArray(repositoryParam) ? repositoryParam : [repositoryParam];
@@ -39,6 +40,7 @@ app.get('/api/records', async (req, res) => {
     const options = {
       resolved: resolvedParam ? resolvedParam === 'true' : undefined,
       repositories: repositories,
+      title: titleParam,
       size: size,
       offset: (page - 1) * size,
     };
@@ -60,6 +62,7 @@ app.get('/api/repositories', async (req, res) => {
   try {
     const resolvedParam = req.query.resolved as string;
     const repositoryParam = req.query['repositories[]'] as string | string[];
+    const titleParam = req.query.title as string;
     let repositories: string[] | undefined;
     if (repositoryParam) {
       repositories = Array.isArray(repositoryParam) ? repositoryParam : [repositoryParam];
@@ -67,6 +70,7 @@ app.get('/api/repositories', async (req, res) => {
     const options = {
       resolved: resolvedParam ? resolvedParam === 'true' : undefined,
       repositories: repositories,
+      title: titleParam,
     };
     const recordDao = new RecordDao(pool);
     const repositoriesWithCount = await recordDao.listRepositoriesWithCount(options);
@@ -82,6 +86,7 @@ app.get('/api/resolved', async (req, res) => {
   try {
     const resolvedParam = req.query.resolved as string;
     const repositoryParam = req.query['repositories[]'] as string | string[];
+    const titleParam = req.query.title as string;
     let repositories: string[] | undefined;
     if (repositoryParam) {
       repositories = Array.isArray(repositoryParam) ? repositoryParam : [repositoryParam];
@@ -89,6 +94,7 @@ app.get('/api/resolved', async (req, res) => {
     const options = {
       resolved: resolvedParam ? resolvedParam === 'true' : undefined,
       repositories: repositories,
+      title: titleParam,
     };
     const resolvedDao = new ResolvedRecordDao(pool);
     const resolvedsWithCount = await resolvedDao.listResolvedUnresolvedCount(options);

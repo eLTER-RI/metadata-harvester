@@ -89,6 +89,7 @@ export class RecordDao {
   async listRecords(options?: {
     resolved?: boolean;
     repositories?: string[];
+    title?: string;
     size?: number;
     offset?: number;
   }): Promise<{ records: DbRecord[]; totalCount: number }> {
@@ -105,6 +106,12 @@ export class RecordDao {
     if (options?.repositories && options.repositories.length > 0) {
       conditions.push(`h.source_repository = ANY($${paramCount})`);
       values.push(options.repositories);
+      paramCount++;
+    }
+
+    if (options?.title) {
+      conditions.push(`h.title ILIKE $${paramCount}`);
+      values.push(`%${options.title}%`);
       paramCount++;
     }
 
@@ -151,6 +158,7 @@ export class RecordDao {
   async listRepositoriesWithCount(options?: {
     resolved?: boolean;
     repositories?: string[];
+    title?: string;
   }): Promise<{ repository: string; count: number }[]> {
     const values = [];
     const conditions = [];
@@ -177,6 +185,11 @@ export class RecordDao {
     if (options?.repositories && options.repositories.length > 0) {
       conditions.push(`h.source_repository = ANY($${paramCount})`);
       values.push(options.repositories);
+      paramCount++;
+    }
+    if (options?.title) {
+      conditions.push(`h.title ILIKE $${paramCount}`);
+      values.push(`%${options.title}%`);
       paramCount++;
     }
 

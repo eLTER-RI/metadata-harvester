@@ -35,6 +35,7 @@ export class ResolvedRecordDao {
   async listResolvedUnresolvedCount(options?: {
     resolved?: boolean;
     repositories?: string[];
+    title?: string;
   }): Promise<{ resolved: boolean; count: number }[]> {
     const values = [];
     const conditions = [];
@@ -58,6 +59,11 @@ export class ResolvedRecordDao {
     if (options?.repositories && options.repositories.length > 0) {
       conditions.push(`h.source_repository = ANY($${paramCount})`);
       values.push(options.repositories);
+      paramCount++;
+    }
+    if (options?.title) {
+      conditions.push(`h.title ILIKE $${paramCount}`);
+      values.push(`%${options.title}%`);
       paramCount++;
     }
 
