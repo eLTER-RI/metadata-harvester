@@ -5,11 +5,12 @@ import { useRecords } from '../../store/RecordsProvider';
 import { useState } from 'react';
 
 export const LandingPage = () => {
-  const { setSearchQuery } = useRecords();
+  const { setSearchQuery, setCurrentPage } = useRecords();
   const [searchBarContent, setSearchBarContent] = useState<string>('');
 
   const handleSearch = () => {
     setSearchQuery(searchBarContent);
+    setCurrentPage(1);
   };
 
   return (

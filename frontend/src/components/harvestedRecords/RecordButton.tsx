@@ -8,7 +8,7 @@ interface ActionButtonProps {
 }
 
 export const ActionButton = ({ record }: ActionButtonProps) => {
-  const { fetchRecords } = useRecords();
+  const { fetchRecords, fetchFilterValues } = useRecords();
   const [isResolving, setIsResolving] = useState(false);
 
   const handleResolve = async () => {
@@ -20,6 +20,7 @@ export const ActionButton = ({ record }: ActionButtonProps) => {
         resolvedBy: 'admin',
       });
       fetchRecords();
+      fetchFilterValues();
     } finally {
       setIsResolving(false);
     }

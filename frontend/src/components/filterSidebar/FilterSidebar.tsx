@@ -11,6 +11,7 @@ export const FilterSidebar = () => {
     filterValues,
     isFilterLoading,
     filterError,
+    setCurrentPage,
   } = useRecords();
 
   const [activeIndices, setActiveIndices] = useState<any>([]);
@@ -58,6 +59,7 @@ export const FilterSidebar = () => {
                 checked={resolvedFilter != undefined && resolvedFilter === option.resolved}
                 onClick={() => {
                   setResolvedFilter(resolvedFilter === option.resolved ? undefined : option.resolved);
+                  setCurrentPage(1);
                 }}
               />
             </List.Item>
@@ -85,6 +87,7 @@ export const FilterSidebar = () => {
                     newFilters.push(option.source_repository);
                   }
                   setRepositoryFilter(newFilters);
+                  setCurrentPage(1);
                 }}
               />
             </List.Item>
