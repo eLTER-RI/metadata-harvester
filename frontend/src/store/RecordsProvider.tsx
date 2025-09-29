@@ -7,9 +7,15 @@ interface Record {
   title: string;
 }
 
-interface RepositoryForFilter {
-  source_repository: string;
-  count: number;
+interface FilterValues {
+  repositories: {
+    source_repository: string;
+    count: number;
+  }[];
+  resolved: {
+    resolved: boolean;
+    count: number;
+  }[];
 }
 
 interface RecordsContextType {
@@ -20,9 +26,9 @@ interface RecordsContextType {
   currentPage: number;
   isLoading: boolean;
   error: string | null;
-  repositories: RepositoryForFilter[];
-  isReposLoading: boolean;
-  reposError: string | null;
+  filterValues: FilterValues;
+  isFilterLoading: boolean;
+  filterError: string | null;
   resolvedFilter: boolean | undefined;
   repositoryFilter: string[];
   setCurrentPage: (page: number) => void;
@@ -30,7 +36,7 @@ interface RecordsContextType {
   setResolvedFilter: (resolved: boolean | undefined) => void;
   setRepositoryFilter: (repository: string[]) => void;
   fetchRecords: () => void;
-  fetchRepositories: () => void;
+  fetchFilterValues: () => void;
 }
 
 const API_BASE_URL = 'http://localhost:3000/api';
@@ -45,9 +51,12 @@ export const RecordsProvider = ({ children }: { children: React.ReactNode }) => 
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [repositories, setRepositories] = useState<RepositoryForFilter[]>([]);
-  const [isReposLoading, setIsReposLoading] = useState<boolean>(true);
-  const [reposError, setReposError] = useState<string | null>(null);
+  const [filterValues, setFilterValues] = useState<FilterValues>({
+    repositories: [],
+    resolved: [],
+  });
+  const [isFilterLoading, setIsFilterLoading] = useState<boolean>(true);
+  const [filterError, setFilterError] = useState<string | null>(null);
   const [resolvedFilter, setResolvedFilter] = useState<boolean | undefined>(undefined);
   const [repositoryFilter, setRepositoryFilter] = useState<string[]>([]);
 
@@ -74,21 +83,24 @@ export const RecordsProvider = ({ children }: { children: React.ReactNode }) => 
     }
   };
 
-  const fetchRepositories = async () => {
-    setIsReposLoading(true);
+  const fetchFilterValues = async () => {
+    setIsFilterLoading(true);
     try {
       const params = {
         resolved: resolvedFilter,
         repositories: repositoryFilter,
       };
-      const response = await axios.get(`${API_BASE_URL}/repositories`, { params });
-      const repositories = response.data;
-      setRepositories(repositories);
+      const repoResponse = await axios.get(`${API_BASE_URL}/repositories`, { params });
+      const resolvedResponse = await axios.get(`${API_BASE_URL}/resolved`, { params });
+      setFilterValues({
+        repositories: repoResponse.data,
+        resolved: resolvedResponse.data,
+      });
     } catch (e: any) {
-      setReposError('Failed to fetch repositories. Please check the backend server.');
+      setFilterError('Failed to fetch repositories. Please check the backend server.');
       console.error(e);
     } finally {
-      setIsReposLoading(false);
+      setIsFilterLoading(false);
     }
   };
 
@@ -97,7 +109,7 @@ export const RecordsProvider = ({ children }: { children: React.ReactNode }) => 
   }, [currentPage, pageSize, resolvedFilter, repositoryFilter]);
 
   useEffect(() => {
-    fetchRepositories();
+    fetchFilterValues();
   }, [resolvedFilter, repositoryFilter]);
 
   const value = {
@@ -108,9 +120,9 @@ export const RecordsProvider = ({ children }: { children: React.ReactNode }) => 
     currentPage,
     isLoading,
     error,
-    repositories,
-    isReposLoading,
-    reposError,
+    filterValues,
+    isFilterLoading,
+    filterError,
     resolvedFilter,
     repositoryFilter,
     setCurrentPage,
@@ -118,7 +130,7 @@ export const RecordsProvider = ({ children }: { children: React.ReactNode }) => 
     setResolvedFilter,
     setRepositoryFilter,
     fetchRecords,
-    fetchRepositories,
+    fetchFilterValues,
   };
 
   return <RecordsContext.Provider value={value}>{children}</RecordsContext.Provider>;
