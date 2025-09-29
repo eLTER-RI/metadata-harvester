@@ -32,6 +32,48 @@ export class ResolvedRecordDao {
     await this.pool.query(query, [dar_id]);
   }
 
+  async listResolvedUnresolvedCount(options?: {
+    resolved?: boolean;
+    repositories?: string[];
+  }): Promise<{ resolved: boolean; count: number }[]> {
+    const values = [];
+    const conditions = [];
+    let paramCount = 1;
+
+    const selectClause = `
+      SELECT
+        CASE WHEN r.dar_id IS NOT NULL THEN TRUE ELSE FALSE END AS resolved,
+        COUNT(*) AS count
+      FROM
+        harvested_records h
+      LEFT JOIN
+        resolved_records r ON h.dar_id = r.dar_id
+    `;
+
+    if (options?.resolved !== undefined) {
+      conditions.push(`CASE WHEN r.dar_id IS NOT NULL THEN true ELSE false END = $${paramCount}`);
+      values.push(options.resolved);
+      paramCount++;
+    }
+    if (options?.repositories && options.repositories.length > 0) {
+      conditions.push(`h.source_repository = ANY($${paramCount})`);
+      values.push(options.repositories);
+      paramCount++;
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+    const groupByClause = `
+      GROUP BY
+        resolved
+      ORDER BY
+        resolved DESC;
+    `;
+
+    const query = `${selectClause} ${whereClause} ${groupByClause}`;
+    const result = await this.pool.query(query, values);
+    return result.rows;
+  }
   async getAllResolved(): Promise<DbRecord[]> {
     const query = `
       SELECT r.*

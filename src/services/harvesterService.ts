@@ -78,6 +78,27 @@ app.get('/api/repositories', async (req, res) => {
   }
 });
 
+app.get('/api/resolved', async (req, res) => {
+  try {
+    const resolvedParam = req.query.resolved as string;
+    const repositoryParam = req.query['repositories[]'] as string | string[];
+    let repositories: string[] | undefined;
+    if (repositoryParam) {
+      repositories = Array.isArray(repositoryParam) ? repositoryParam : [repositoryParam];
+    }
+    const options = {
+      resolved: resolvedParam ? resolvedParam === 'true' : undefined,
+      repositories: repositories,
+    };
+    const resolvedDao = new ResolvedRecordDao(pool);
+    const resolvedsWithCount = await resolvedDao.listResolvedUnresolvedCount(options);
+    res.status(200).json(resolvedsWithCount);
+  } catch (error) {
+    log('error', `Failed to retrieve records: ${error}`);
+    res.status(500).json({ error: 'Failed to retrieve records.' });
+  }
+});
+
 app.patch('/api/records/:darId/status', async (req, res) => {
   const darId = req.params.darId as string;
   const { status, resolvedBy } = req.body;
