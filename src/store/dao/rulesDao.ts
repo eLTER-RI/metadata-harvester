@@ -61,4 +61,13 @@ export class RuleDao {
     const result = await this.pool.query(query, [darId]);
     return result.rows;
   }
+
+  async deleteRule(ruleId: string): Promise<RuleDbRecord[]> {
+    const query = `
+      DELETE FROM record_rules
+      WHERE id = $1;
+    `;
+    const result = await this.pool.query(query, [ruleId]);
+    return result.rows;
+  }
 }
