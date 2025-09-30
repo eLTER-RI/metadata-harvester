@@ -29,7 +29,8 @@ export class RuleDao {
           darId,
           rule.rule_type,
           rule.target_path,
-          rule.new_value ? JSON.stringify(rule.new_value) : null,
+          JSON.stringify(rule.orig_value),
+          rule.new_value !== undefined ? JSON.stringify(rule.new_value) : null,
         ];
         await client.query(insertQuery, values);
       }
