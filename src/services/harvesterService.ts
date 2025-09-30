@@ -10,6 +10,7 @@ import { syncDeimsSites } from './jobs/deimsSync/syncDeimsSites';
 import { syncWithDar } from './jobs/syncDbWithRemote/localDarSync';
 import { RecordDao } from '../store/dao/recordDao';
 import { ResolvedRecordDao } from '../store/dao/resolvedRecordsDao';
+import { RuleDao } from '../store/dao/rulesDao';
 
 const pool = new Pool({
   user: process.env.DB_USER,
@@ -116,6 +117,18 @@ app.patch('/api/records/:darId/status', async (req, res) => {
     res.status(200).json({ message: 'Status updated successfully.' });
   } else {
     return res.status(400).json({ error: "Invalid status value. Status must be 'resolved' or 'unresolved'." });
+  }
+});
+
+app.get('/api/records/:darId/rules', async (req, res) => {
+  try {
+    const { darId } = req.params;
+    const ruleDao = new RuleDao(pool);
+    const rules = await ruleDao.getRulesForRecord(darId);
+    res.status(200).json(rules);
+  } catch (error) {
+    log('error', `Failed to retrieve rules: ${error}`);
+    res.status(500).json({ error: 'Failed to retrieve rules.' });
   }
 });
 
