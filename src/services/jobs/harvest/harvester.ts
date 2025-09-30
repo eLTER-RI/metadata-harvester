@@ -94,6 +94,7 @@ export class HarvesterContext {
     const resolvedRecordsDao = new ResolvedRecordDao(pool);
     const sites = await fetchSites();
     const repoConfig = CONFIG.REPOSITORIES[repositoryType];
+    console.log(repoConfig);
     return new HarvesterContext(
       pool,
       recordDao,
@@ -467,10 +468,11 @@ export const startRecordSync = async (ctx: HarvesterContext, sourceUrl: string) 
     if (ctx.repositoryType === 'SITES') {
       await ctx.processOneSitesRecord(sourceUrl);
     } else {
-      const { selfLinkKey } = ctx.repoConfig;
+      const { selfLinkKey, singleRecordKey } = ctx.repoConfig;
       const recordData = await fetchJson(sourceUrl);
       if (!recordData) return null;
-      const recordUrl = getNestedValue(recordData, selfLinkKey);
+      const dataUnderKey = singleRecordKey ? getNestedValue(recordData, singleRecordKey) : recordData;
+      const recordUrl = getNestedValue(dataUnderKey, selfLinkKey);
       if (recordUrl != sourceUrl) {
         log('info', `Found a different url: harvesting from ${recordUrl}`);
       }

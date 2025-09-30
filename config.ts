@@ -4,6 +4,7 @@ export interface RepositoryConfig {
   pageSize?: number;
   selfLinkKey?: string;
   dataKey?: string;
+  singleRecordKey?: string;
   processFunction: 'processApiPage' | 'processFieldSitesPage';
   darQuery: string;
 }
@@ -38,6 +39,7 @@ export const CONFIG = {
       pageSize: 10,
       selfLinkKey: 'link',
       dataKey: 'resources',
+      singleRecordKey: 'resource',
       processFunction: 'processApiPage',
       rateLimit: 0,
       darQuery:
