@@ -245,6 +245,12 @@ export class RecordDao {
     await this.pool.query(query, values);
   }
 
+  async getRecordByDarId(darId: string): Promise<DbRecord | null> {
+    const query = `SELECT * FROM harvested_records WHERE dar_id = $1 LIMIT 1`;
+    const result = await this.pool.query(query, [darId]);
+    return result.rows.length > 0 ? result.rows[0] : null;
+  }
+
   async getRecordBySourceId(sourceId: string): Promise<DbRecord[]> {
     const query = `SELECT * FROM harvested_records WHERE source_url = $1`;
     const result = await this.pool.query(query, [sourceId]);
