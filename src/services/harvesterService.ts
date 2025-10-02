@@ -132,6 +132,18 @@ app.get('/api/records/:darId/rules', async (req, res) => {
   }
 });
 
+app.delete('/api/records/:darId/rules/:ruleId', async (req, res) => {
+  try {
+    const { ruleId } = req.params;
+    const ruleDao = new RuleDao(pool);
+    await ruleDao.deleteRule(ruleId);
+    res.status(204).send();
+  } catch (error) {
+    log('error', `Failed to delete rule: ${error}`);
+    res.status(500).json({ error: 'Failed to delete rule.' });
+  }
+});
+
 app.post('/api/harvest', async (req, res) => {
   const { repository, checkHarvestChanges = true } = req.body;
   if (!repository) {
