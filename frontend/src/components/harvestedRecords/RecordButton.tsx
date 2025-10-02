@@ -2,6 +2,7 @@ import axios from 'axios';
 import { useState } from 'react';
 import { Dropdown } from 'semantic-ui-react';
 import { useRecords } from '../../store/RecordsProvider';
+import { Link } from 'react-router-dom';
 
 interface ActionButtonProps {
   record: any;
@@ -29,7 +30,13 @@ export const ActionButton = ({ record }: ActionButtonProps) => {
   return (
     <Dropdown text="Actions" icon="list" floating labeled button className="icon">
       <Dropdown.Menu>
-        <Dropdown.Item key={'edit'} icon={'edit'} text="Edit" />
+        <Dropdown.Item
+          as={Link}
+          to={`/harvested_records/${record.dar_id}/edit`}
+          key={'edit'}
+          icon={'edit'}
+          text="Edit"
+        />
         <Dropdown.Item
           key={'resolve'}
           icon={record.is_resolved ? 'x' : 'check'}
