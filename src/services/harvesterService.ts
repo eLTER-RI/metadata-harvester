@@ -132,6 +132,39 @@ app.get('/api/records/:darId/rules', async (req, res) => {
   }
 });
 
+app.post('/api/records/:darId/rules', async (req, res) => {
+  try {
+    const { darId } = req.params;
+    const rulesData = req.body;
+
+    if (!Array.isArray(rulesData)) {
+      return res.status(400).json({ error: 'Invalid rules data. Expected an array.' });
+    }
+
+    const recordDao = new RecordDao(pool);
+    const record = await recordDao.getRecordByDarId(darId);
+    if (!record || !record?.source_url || !record?.source_repository) {
+      return res.status(400).json({ error: `Record with dar id ${darId}. not found` });
+    }
+
+    const ruleDao = new RuleDao(pool);
+    await ruleDao.createRules(darId, rulesData);
+    log('info', `${rulesData.length} rules created for ${darId}. Triggering single record re-harvest.`);
+    const repositoryType = record.source_repository.toUpperCase() as RepositoryType;
+    const context = await HarvesterContext.create(pool, repositoryType, false);
+    try {
+      await startRecordSync(context, record.source_url);
+      log('info', `Re-harvest job for ${record.source_url} completed successfully.`);
+    } catch (e) {
+      log('error', `Re-harvest job for ${record.source_url} failed with error: ${e}`);
+    }
+    res.status(201).json({ message: `${rulesData.length} rules created successfully.` });
+  } catch (error) {
+    log('error', `Failed to create rules: ${error}`);
+    res.status(500).json({ error: 'Failed to create rules.' });
+  }
+});
+
 app.delete('/api/records/:darId/rules/:ruleId', async (req, res) => {
   try {
     const { ruleId } = req.params;
