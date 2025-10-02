@@ -265,6 +265,27 @@ app.post('/api/sync/records', async (req, res) => {
   res.status(200).json({ message: `Sync job of DAR with the local database started successfully.` });
 });
 
+// This endpoint will be used as a proxy from the frontend-side
+app.get('/api/external-record/:darId', async (req, res) => {
+  try {
+    const { darId } = req.params;
+    const externalApiUrl = `https://dar.elter-ri.eu/api/external-datasets/${darId}`;
+    const apiResponse = await fetch(externalApiUrl);
+
+    if (!apiResponse.ok) {
+      const errorText = await apiResponse.text();
+      log('error', `Failed to fetch data from DAR with id ${darId}: ${apiResponse.status} ${errorText}`);
+      return res.status(apiResponse.status).json({ error: 'Failed to fetch external record.' });
+    }
+
+    const data = await apiResponse.json();
+    res.status(200).json(data);
+  } catch (error) {
+    log('error', `Error while fetching external record: ${error}`);
+    res.status(500).json({ error: 'Error while fetching external record.' });
+  }
+});
+
 app.listen(PORT, () => {
   log('info', `Data Harvester API listening at http://localhost:${PORT}`);
   // health check for db
