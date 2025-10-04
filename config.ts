@@ -50,7 +50,8 @@ export const CONFIG = {
       mappedRecordsPath: './data/mapped_sites_records.json',
       processFunction: 'processFieldSitesPage',
       rateLimit: 0,
-      darQuery: '',
+      darQuery:
+        'https://dar.elter-ri.eu/api/external-datasets/?q=&metadata_externalSourceInformation_externalSourceName=FieldSites&size=1500',
     } as RepositoryConfig,
     ZENODO: {
       apiUrl: 'https://zenodo.org/api/communities/c4f49aa1-a5ef-46b1-a7ec-7756cd391aa4/records?q=&sort=oldest',
@@ -61,7 +62,7 @@ export const CONFIG = {
       processFunction: 'processApiPage',
       rateLimit: 100,
       darQuery:
-        'https://dar.elter-ri.eu/api/external-datasets/?q=&metadata_projects_projectName=Zenodo%20external%20record%20-%20eLTER%20Community&sort=newest&size=100',
+        'https://dar.elter-ri.eu/api/external-datasets/?q=&metadata_externalSourceInformation_externalSourceName=Zenodo&sort=newest&size=500',
     } as RepositoryConfig,
     ZENODO_IT: {
       apiUrl: 'https://zenodo.org/api/communities/43025cdd-7116-4ed8-8bba-d484ee58896f/records?q=&sort=oldest',
@@ -72,7 +73,7 @@ export const CONFIG = {
       processFunction: 'processApiPage',
       rateLimit: 100,
       darQuery:
-        'https://dar.elter-ri.eu/api/external-datasets/?q=&metadata_projects_projectName=Zenodo%20external%20record%20-%20eLTER-Italy%20Community&sort=newest&size=100',
+        'https://dar.elter-ri.eu/api/external-datasets/?q=&metadata_externalSourceInformation_externalSourceName=Zenodo&sort=newest&size=500',
     } as RepositoryConfig,
   },
   DEIMS_API_URL: 'https://deims.org/api/sites',
