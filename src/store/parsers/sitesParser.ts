@@ -143,7 +143,7 @@ export async function mapFieldSitesToCommonDatasetMetadata(
       relatedID: fieldSites.latestVersion,
       relatedIDType: 'URL',
       relatedResourceType: 'Dataset',
-      relationType: 'IsVersionOf',
+      relationType: 'IsPreviousVersionOf',
     });
   }
 
