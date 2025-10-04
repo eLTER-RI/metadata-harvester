@@ -1,3 +1,4 @@
+import { fetchJson } from '../../utilities/fetchJsonFromRemote';
 import {
   License,
   CommonDataset,
@@ -56,11 +57,27 @@ function extractSitesGeolocation(input: any): Geolocation[] {
   return coverages;
 }
 
+async function fetchLatestSiteRecord(url: string, fieldSites: any, sites: any): Promise<CommonDataset | null> {
+  if (fieldSites.latestVersion && fieldSites.latestVersion !== url) {
+    const latestVersionUrl = fieldSites.latestVersion;
+    const latestVersionData = await fetchJson(latestVersionUrl);
+    if (latestVersionData) {
+      return mapFieldSitesToCommonDatasetMetadata(latestVersionUrl, latestVersionData, sites);
+    }
+  }
+  return null;
+}
+
 export async function mapFieldSitesToCommonDatasetMetadata(
   url: string,
   fieldSites: any,
   sites: any,
 ): Promise<CommonDataset> {
+  const latestDataset = await fetchLatestSiteRecord(url, fieldSites, sites);
+  if (latestDataset) {
+    return latestDataset;
+  }
+
   const licenses: License[] = [];
   if (fieldSites.references?.licence) {
     const licenseCode = fieldSites.references.licence.name;
