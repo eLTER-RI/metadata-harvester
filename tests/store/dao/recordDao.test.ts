@@ -148,7 +148,7 @@ describe('Tests for RecordDao', () => {
       dar_id: 'b2share1-b2share1',
       dar_checksum: 'dar_checksum123',
       status: 'success',
-      title: 'Third Record for Repositories Testing',
+      title: 'First B2SHARE Record for Repositories Testing',
     };
     await recordDao.createRecord(record4);
 
@@ -189,6 +189,18 @@ describe('Tests for RecordDao', () => {
     expect(allRecords.records[1].dar_id).toBe('zenodo3-zenodo3');
     expect(allRecords.records[2].dar_id).toBe('zenodo2-zenodo2');
     expect(allRecords.records[3].dar_id).toBe('zenodo1-zenodo1');
+
+    const queriesRecordsTitle = await recordDao.listRecords({
+      title: 'First',
+      resolved: false,
+    });
+    expect(queriesRecordsTitle.records).toHaveLength(2);
+
+    const queriesRecords = await recordDao.listRecords({
+      repositories: ['ZENODO'],
+      title: 'Third',
+    });
+    expect(queriesRecords.records).toHaveLength(1);
   });
 
   it('creates, updates and deletes a record', async () => {
