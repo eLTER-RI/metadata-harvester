@@ -1,6 +1,7 @@
 import { Pool } from 'pg';
 
 export interface RuleDbRecord {
+  id: string;
   dar_id: string;
   rule_type: 'REPLACE' | 'ADD' | 'REMOVE';
   target_path: string;
@@ -15,7 +16,7 @@ export class RuleDao {
     this.pool = pool;
   }
 
-  async createRules(darId: string, rules: Omit<RuleDbRecord, 'dar_id'>[]): Promise<void> {
+  async createRules(darId: string, rules: Partial<RuleDbRecord>[]): Promise<void> {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
@@ -46,7 +47,7 @@ export class RuleDao {
 
   async getRulesForRecord(darId: string): Promise<RuleDbRecord[]> {
     const query = `
-      SELECT dar_id, rule_type, target_path, orig_value, new_value
+      SELECT id, dar_id, rule_type, target_path, orig_value, new_value
       FROM record_rules
       WHERE dar_id = $1;
     `;
@@ -63,12 +64,12 @@ export class RuleDao {
     return result.rows;
   }
 
-  async deleteRule(ruleId: string): Promise<RuleDbRecord[]> {
+  async deleteRule(id: string): Promise<RuleDbRecord[]> {
     const query = `
       DELETE FROM record_rules
       WHERE id = $1;
     `;
-    const result = await this.pool.query(query, [ruleId]);
+    const result = await this.pool.query(query, [id]);
     return result.rows;
   }
 }
