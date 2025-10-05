@@ -1,5 +1,4 @@
-import { Pool, QueryResult } from 'pg';
-import { DbRecord } from './recordDao';
+import { Pool } from 'pg';
 
 export interface DbResolvedRecord {
   id: number;
@@ -41,16 +40,6 @@ export class ResolvedRecordDao {
     const conditions = [];
     let paramCount = 1;
 
-    const selectClause = `
-      SELECT
-        CASE WHEN r.dar_id IS NOT NULL THEN TRUE ELSE FALSE END AS resolved,
-        COUNT(*) AS count
-      FROM
-        harvested_records h
-      LEFT JOIN
-        resolved_records r ON h.dar_id = r.dar_id
-    `;
-
     if (options?.resolved !== undefined) {
       conditions.push(`CASE WHEN r.dar_id IS NOT NULL THEN true ELSE false END = $${paramCount}`);
       values.push(options.resolved);
@@ -68,36 +57,26 @@ export class ResolvedRecordDao {
     }
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
-
-    const groupByClause = `
-      GROUP BY
-        resolved
-      ORDER BY
-        resolved DESC;
+    const query = `
+      SELECT
+        COUNT(CASE WHEN r.dar_id IS NOT NULL THEN 1 END) AS resolved_count,
+        COUNT(CASE WHEN r.dar_id IS NULL THEN 1 END) AS unresolved_count
+      FROM
+        harvested_records h
+      LEFT JOIN
+        resolved_records r ON h.dar_id = r.dar_id
+      ${whereClause}
     `;
 
-    const query = `${selectClause} ${whereClause} ${groupByClause}`;
     const result = await this.pool.query(query, values);
-    return result.rows;
-  }
-  async getAllResolved(): Promise<DbRecord[]> {
-    const query = `
-      SELECT r.*
-      FROM harvested_records h
-      INNER JOIN resolved_records r ON h.dar_id = r.dar_id;
-    `;
-    const result: QueryResult<DbRecord> = await this.pool.query(query);
-    return result.rows;
-  }
+    const { resolved_count, unresolved_count } = result.rows[0];
 
-  async getAllUnresolved(): Promise<DbRecord[]> {
-    const query = `
-      SELECT r.*
-      FROM harvested_records h
-      LEFT JOIN resolved_records r ON h.dar_id = r.dar_id
-      WHERE r.dar_id IS NULL;
-    `;
-    const result: QueryResult<DbRecord> = await this.pool.query(query);
-    return result.rows;
+    const counts = [
+      { resolved: true, count: parseInt(resolved_count, 10) },
+      { resolved: false, count: parseInt(unresolved_count, 10) },
+    ];
+
+    // sorts the array by the most frequent value
+    return counts.sort((a, b) => (a.resolved === b.resolved ? 0 : a.resolved ? 1 : -1));
   }
 }
