@@ -158,7 +158,7 @@ export class RecordDao {
   async listRepositoriesWithCount(options?: {
     resolved?: boolean;
     title?: string;
-  }): Promise<{ repository: string; count: number }[]> {
+  }): Promise<{ source_repository: string; count: number }[]> {
     const values = [];
     const conditions = [];
     let paramCount = 1;
