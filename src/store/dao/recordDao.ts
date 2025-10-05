@@ -183,11 +183,6 @@ export class RecordDao {
       values.push(`%${options.title}%`);
       paramCount++;
     }
-    if (options?.title) {
-      conditions.push(`h.title ILIKE $${paramCount}`);
-      values.push(`%${options.title}%`);
-      paramCount++;
-    }
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
     const finalQuery = `
