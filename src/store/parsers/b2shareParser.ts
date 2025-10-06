@@ -1,4 +1,7 @@
 import { B2ShareExtractedSchema } from '../../../api/schema/b2shareApi';
+import { b2shareLimiter } from '../../services/rateLimiterConcurrency';
+import { log } from '../../services/serviceLogging';
+import { fetchJson } from '../../utilities/fetchJsonFromRemote';
 import {
   AlternateIdentifier,
   Geolocation,
@@ -19,6 +22,7 @@ import {
   formatDate,
   getLicenseURI,
   getChecksum,
+  RelatedIdentifier,
 } from '../commonStructure';
 
 function extractB2ShareGeolocation(input: any): Geolocation[] {
@@ -170,12 +174,64 @@ function getAdditionalMetadata(b2share: B2ShareExtractedSchema): AdditionalMetad
   return additional_metadata;
 }
 
+async function handleB2ShareVersioning(
+  url: string,
+  b2share: any,
+): Promise<[string, B2ShareExtractedSchema, RelatedIdentifier[]]> {
+  const relatedIdentifiers: RelatedIdentifier[] = [];
+
+  if (!b2share.links?.versions) {
+    return [url, b2share, []];
+  }
+
+  try {
+    const versionsResponse = await b2shareLimiter.schedule(() => fetchJson(b2share.links.versions));
+    if (!versionsResponse || !versionsResponse.versions) {
+      return [url, b2share, []];
+    }
+
+    const allVersions = versionsResponse.versions;
+    const latestVersion = allVersions.reduce((latest: any, current: any) => {
+      return current.version > latest.version ? current : latest;
+    });
+
+    for (const version of allVersions) {
+      if (version.id === latestVersion.id) continue;
+
+      relatedIdentifiers.push({
+        relatedID: version.url,
+        relatedIDType: 'URL',
+        relatedResourceType: 'Dataset',
+        relationType: version.version < latestVersion.version ? 'IsNewVersionOf' : 'IsPreviousVersionOf',
+      });
+    }
+
+    // If we found a version that is most recent, we fetch it, and continue parsing with new data
+    if (latestVersion.id !== b2share.id) {
+      log('warn', 'New version for record on url: ' + url + 'found: ' + latestVersion.url);
+      const latestRecordData = await b2shareLimiter.schedule(() => fetchJson(latestVersion.url));
+      if (latestRecordData) {
+        return [latestVersion.url, latestRecordData, relatedIdentifiers];
+      }
+    }
+
+    return [url, b2share, relatedIdentifiers];
+  } catch (error) {
+    log('error', `Failed to process B2Share versions for ${url}: ${error}`);
+    return [url, b2share, []];
+  }
+}
+
 export async function mapB2ShareToCommonDatasetMetadata(
   url: string,
-  b2share: B2ShareExtractedSchema,
+  recordData: B2ShareExtractedSchema,
   sites: any,
   repositoryType: 'B2SHARE_EUDAT' | 'B2SHARE_JUELICH',
 ): Promise<CommonDataset> {
+  let b2share: B2ShareExtractedSchema = recordData;
+  const [latestUrl, latestData, versionRelations] = await handleB2ShareVersioning(url, recordData);
+  if (latestData) b2share = latestData;
+
   const licenses: License[] = [];
   if (b2share.metadata.license && (b2share.metadata.license.license_identifier || b2share.metadata.license.license)) {
     const licenseCode: string | undefined =
@@ -188,6 +244,7 @@ export async function mapB2ShareToCommonDatasetMetadata(
 
   const [alternateIdentifiers, metadataFromAlternate] = parseB2shareAlternateIdentifiers(b2share);
   const [related_identifiers, metadataFromRelated] = extractRelatedIdentifiers(b2share.metadata);
+  related_identifiers.push(...versionRelations);
   const additional_metadata = [...metadataFromAlternate, ...metadataFromRelated, ...getAdditionalMetadata(b2share)];
   const parsedPID = b2share.metadata.DOI ? parsePID(b2share.metadata.DOI) : null;
   const pids = parsedPID ?? toPID(alternateIdentifiers);
@@ -294,7 +351,9 @@ export async function mapB2ShareToCommonDatasetMetadata(
       externalSourceInformation: {
         externalSourceName: repositoryType == 'B2SHARE_EUDAT' ? 'B2Share Eudat' : 'B2Share Juelich',
         externalSourceURI:
-          b2share.metadata.ePIC_PID && typeof b2share.metadata.ePIC_PID === 'string' ? b2share.metadata.ePIC_PID : url,
+          b2share.metadata.ePIC_PID && typeof b2share.metadata.ePIC_PID === 'string'
+            ? b2share.metadata.ePIC_PID
+            : latestUrl,
       },
       language:
         typeof b2share.metadata.language === 'string'
