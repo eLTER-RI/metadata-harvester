@@ -143,6 +143,7 @@ export class HarvesterContext {
       oldVersions.forEach(async (oldUrl) => {
         const oldVersionsInDb = await this.recordDao.getRecordBySourceId(oldUrl);
         if (oldVersionsInDb.length > 0) {
+          log('warn', 'New version for record on url: ' + url + 'found: ' + oldVersionsInDb[0].dar_id);
           putToDar(oldVersionsInDb[0].dar_id, this.recordDao, url, dataset);
           dbRecordUpsert(
             oldVersionsInDb[0].dar_id,

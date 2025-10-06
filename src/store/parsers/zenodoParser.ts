@@ -1,4 +1,5 @@
 import { zenodoLimiter } from '../../services/rateLimiterConcurrency';
+import { log } from '../../services/serviceLogging';
 import { fetchJson } from '../../utilities/fetchJsonFromRemote';
 import {
   AdditionalMetadata,
@@ -12,6 +13,7 @@ import {
   License,
   parsePID,
   Project,
+  RelatedIdentifier,
   Relation,
   ResponsibleOrganizations,
   TemporalCoverage,
@@ -237,26 +239,51 @@ function getAdditionalMetadata(zenodo: any): AdditionalMetadata[] {
   return additional_metadata;
 }
 
-export async function getLatestZenodoVersionUrl(url: string, zenodo: any): Promise<any> {
+async function handleZenodoVersioning(url: string, zenodo: any): Promise<[string, any, RelatedIdentifier[]]> {
+  const relatedIdentifiers: RelatedIdentifier[] = [];
+
   if (zenodo.metadata.relations?.version[0]?.is_last || !zenodo.links?.versions) {
-    return [null, null];
+    return [url, zenodo, []];
   }
 
   try {
     const versions = await zenodoLimiter.schedule(() => fetchJson(zenodo.links.versions));
-    const latestVersion = versions.hits.hits.find((hit: any) => hit.metadata.relations?.version[0]?.is_last);
-
-    if (latestVersion) {
-      const newUrl = latestVersion.links.self;
-      const recordData = await zenodoLimiter.schedule(() => fetchJson(newUrl));
-      if (!recordData) return [null, null];
-      return [latestVersion.links.self, recordData];
+    if (!versions || !versions.hits?.hits) {
+      return [url, zenodo, []];
     }
-  } catch {
-    return [null, null];
+
+    const allVersions = versions.hits.hits;
+    const latestVersion = allVersions.find((hit: any) => hit.metadata.relations?.version[0]?.is_last);
+    if (!latestVersion) {
+      return [url, zenodo, []];
+    }
+
+    for (const versionHit of allVersions) {
+      if (versionHit.id === latestVersion.id) continue;
+
+      relatedIdentifiers.push({
+        relatedID: versionHit.links.self,
+        relatedIDType: 'URL',
+        relatedResourceType: 'Dataset',
+        relationType: 'IsNewVersionOf', // we have the latest, ale other are old
+      });
+    }
+
+    // If we found a version that is most recent, we fetch it, and continue parsing with new data
+    if (latestVersion.id !== zenodo.id) {
+      log('warn', 'New version for record on url: ' + url + 'found: ' + latestVersion.url);
+      const latestRecordData = await zenodoLimiter.schedule(() => fetchJson(latestVersion.links.self));
+      if (latestRecordData) {
+        return [latestVersion.links.self, latestRecordData, relatedIdentifiers];
+      }
+    }
+
+    return [url, zenodo, relatedIdentifiers];
+  } catch (error) {
+    log('error', `Failed to process Zenodo versions for ${url}: ${error}`);
+    return [url, zenodo, []];
   }
 }
-
 function sortCommunities(recordData: any) {
   const records = recordData?.metadata?.communities;
   if (!records || !records.length) return [];
@@ -280,7 +307,7 @@ export async function mapZenodoToCommonDatasetMetadata(
   sites: any,
 ): Promise<CommonDataset> {
   // First, let's check if the record is not old
-  const [latestUrl, latestData] = await getLatestZenodoVersionUrl(sourceUrl, recordData);
+  const [latestUrl, latestData, versionRelations] = await handleZenodoVersioning(sourceUrl, recordData);
   const zenodo = latestData ?? recordData;
   const url = latestUrl ?? sourceUrl;
   const communities = sortCommunities(zenodo.metadata.communities);
@@ -346,17 +373,20 @@ export async function mapZenodoToCommonDatasetMetadata(
     });
   }
 
+  const relatedIdentifiers = (zenodo.metadata?.related_identifiers || []).map((relatedId: any) => ({
+    relatedID: relatedId.identifier,
+    relatedIDType: getZenodoIdentifierType(relatedId.scheme) || 'URL',
+    relatedResourceType: getZenodoAssetType(relatedId.resource_type) || 'Dataset',
+    relationType: getZenodoRelationType(relatedId.relation),
+  }));
+  const allRelatedIdentifiers = [...relatedIdentifiers, ...versionRelations];
+
   return {
     pids: parsePID(zenodo.metadata.doi) || undefined,
     metadata: {
       assetType: getZenodoAssetType(zenodo.metadata.resource_type),
       alternateIdentifiers: alternateIdentifiers,
-      relatedIdentifiers: (zenodo.metadata?.related_identifiers || []).map((relatedId: any) => ({
-        relatedID: relatedId.identifier,
-        relatedIDType: getZenodoIdentifierType(relatedId.scheme) || 'URL',
-        relatedResourceType: getZenodoAssetType(relatedId.resource_type) || 'Dataset',
-        relationType: getZenodoRelationType(relatedId.relation),
-      })),
+      relatedIdentifiers: allRelatedIdentifiers,
       titles: [{ titleText: zenodo.metadata?.title || zenodo.title || '' }],
       creators: creators,
       descriptions: [
