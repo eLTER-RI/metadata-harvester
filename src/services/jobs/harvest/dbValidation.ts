@@ -5,6 +5,7 @@ import { fieldSitesLimiter, zenodoLimiter } from './../../rateLimiterConcurrency
 /**
  * This function validates the records present in the local database against the source.
  * It checks if the source URLs are still valid and if the source data has changed by comparing checksums.
+ * This function skips validation of B2SHARE records.
  * @param {HarvesterContext} ctx Context of the job.
  */
 export async function dbValidationPhase(ctx: HarvesterContext) {
@@ -13,6 +14,11 @@ export async function dbValidationPhase(ctx: HarvesterContext) {
   log('info', `Validation of database data for ${repositoryType}. Found ${dbRecords.length} records in the database.`);
   await Promise.all(
     dbRecords.map(async (dbRecord) => {
+      if (dbRecord.source_repository === 'B2SHARE_EUDAT' || dbRecord.source_repository === 'B2SHARE_JUELICH') {
+        // skip, B2SHARE returns HTML
+        return;
+      }
+
       if (dbRecord.source_repository === 'SITES') {
         return fieldSitesLimiter.schedule(async () => {
           await ctx.processOneSitesRecord(dbRecord.source_url);
