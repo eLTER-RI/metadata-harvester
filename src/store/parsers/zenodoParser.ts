@@ -1,3 +1,4 @@
+import { zenodoLimiter } from '../../services/rateLimiterConcurrency';
 import { fetchJson } from '../../utilities/fetchJsonFromRemote';
 import {
   AdditionalMetadata,
@@ -242,12 +243,12 @@ export async function getLatestZenodoVersionUrl(url: string, zenodo: any): Promi
   }
 
   try {
-    const versions = await fetchJson(zenodo.links.versions);
+    const versions = await zenodoLimiter.schedule(() => fetchJson(zenodo.links.versions));
     const latestVersion = versions.hits.hits.find((hit: any) => hit.metadata.relations?.version[0]?.is_last);
 
     if (latestVersion) {
       const newUrl = latestVersion.links.self;
-      const recordData = await fetchJson(newUrl);
+      const recordData = await zenodoLimiter.schedule(() => fetchJson(newUrl));
       if (!recordData) return [null, null];
       return [latestVersion.links.self, recordData];
     }
