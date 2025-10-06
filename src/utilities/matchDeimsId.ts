@@ -1,6 +1,7 @@
 import { CONFIG } from '../../config';
 import { fetchJson } from '../utilities/fetchJsonFromRemote';
 import { SiteReference } from '../store/commonStructure';
+import { deimsLimiter } from '../services/rateLimiterConcurrency';
 
 export async function fetchSites(): Promise<any> {
   const response = await fetch(CONFIG.DEIMS_API_URL);
@@ -81,7 +82,7 @@ async function getDeimsSiteFromDeimsDataset(deimsDatasetUrl: string, sites: any)
   if (deimsDatasetUrlFromMetadata) {
     const deimsApiUrl = deimsDatasetUrlFromMetadata.replace('/dataset/', '/api/datasets/');
     try {
-      const deimsApiResponse = await fetchJson(deimsApiUrl);
+      const deimsApiResponse = await deimsLimiter.schedule(() => fetchJson(deimsApiUrl));
       if (
         deimsApiResponse &&
         deimsApiResponse.attributes?.general?.relatedSite &&
