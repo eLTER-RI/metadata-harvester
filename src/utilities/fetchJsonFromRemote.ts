@@ -1,6 +1,7 @@
 import fetch from 'node-fetch';
 import { CONFIG } from '../../config';
 import { JSDOM } from 'jsdom';
+import { log } from '../services/serviceLogging';
 
 const MAX_RETRIES = 5;
 const INITIAL_RETRY_DELAY_MS = 20000;
@@ -18,7 +19,7 @@ export async function fetchJson(url: string, retriesLeft = MAX_RETRIES, delay = 
     const response = await fetch(url, { headers });
     if (!response.ok) {
       if (response.status === 429 && retriesLeft > 0) {
-        process.stderr.write(`Received 429 Too Many Requests for ${url}. Retrying...\n`);
+        log('info', `Received 429 Too Many Requests for ${url}. Retrying...\n`);
         const retryAfter = 10000;
         await new Promise((resolve) => setTimeout(resolve, retryAfter));
         return fetchJson(url, retriesLeft - 1, delay * 2);
@@ -42,12 +43,12 @@ export async function fetchJson(url: string, retriesLeft = MAX_RETRIES, delay = 
         Response Body: ${errorBody}
       `;
 
-      process.stderr.write(errorMessage);
+      log('error', errorMessage);
       return null;
     }
     return await response.json();
   } catch (error) {
-    process.stderr.write(`Error fetching ${url}:` + error + '\n');
+    log('error', `A network error occurred while fetching ${url}: ${error}`);
     return null;
   }
 }
@@ -62,7 +63,7 @@ export async function fetchXml(url: string): Promise<Document | null> {
     const dom = new JSDOM(text, { contentType: 'application/xml' });
     return dom.window.document;
   } catch (error) {
-    process.stdout.write(`Error fetching XML from ${url}:` + error + '\n');
+    log('error', `Error fetching XML from ${url}: ${error}`);
     return null;
   }
 }
