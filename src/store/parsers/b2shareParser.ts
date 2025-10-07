@@ -12,7 +12,6 @@ import {
   AdditionalMetadata,
   Contributor,
   validContributorTypes,
-  // ContributorType,
   isValidEntityIdSchema,
   parsePID,
   ContributorType,
@@ -238,7 +237,11 @@ export async function mapB2ShareToCommonDatasetMetadata(
       b2share.metadata.license.license_identifier || b2share.metadata.license.license;
     licenses.push({
       licenseCode: licenseCode,
-      licenseURI: b2share.metadata.license.license_uri || (licenseCode ? getLicenseURI(licenseCode) : undefined),
+      licenseURI: b2share.metadata.license.license_uri
+        ? convertHttpToHttps(b2share.metadata.license.license_uri)
+        : licenseCode
+          ? getLicenseURI(licenseCode)
+          : undefined,
     });
   }
 
@@ -288,7 +291,6 @@ export async function mapB2ShareToCommonDatasetMetadata(
       alternateIdentifiers: alternateIdentifiers,
       relatedIdentifiers: related_identifiers,
       titles: b2share.metadata.titles.map((t) => ({
-        // incorporate title type?
         titleText: t.title,
         titleLanguage: '',
       })),
@@ -333,7 +335,9 @@ export async function mapB2ShareToCommonDatasetMetadata(
       contributors: contributors as Contributor[],
       publicationDate: b2share.metadata.publication_date
         ? formatDateB2Share(b2share.metadata.publication_date)
-        : undefined,
+        : b2share.created
+          ? formatDateB2Share(b2share.created)
+          : undefined,
       temporalCoverages: b2share.metadata.temporal_coverages?.ranges?.map((t) => ({
         startDate: t.start_date ? formatDateB2Share(t.start_date) : undefined,
         endDate: t.end_date ? formatDateB2Share(t.end_date) : undefined,
