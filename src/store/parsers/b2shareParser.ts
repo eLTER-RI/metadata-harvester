@@ -345,7 +345,7 @@ export async function mapB2ShareToCommonDatasetMetadata(
         sourceUrl: f.ePIC_PID ? convertHttpToHttps(f.ePIC_PID) : undefined,
         md5: getChecksum(f.checksum),
         size: f.size?.toString(),
-        sizeMeasureType: 'kB',
+        sizeMeasureType: 'B',
         format: f.key?.split('.').pop(),
       })),
       externalSourceInformation: {
