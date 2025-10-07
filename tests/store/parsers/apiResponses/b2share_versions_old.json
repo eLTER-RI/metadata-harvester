@@ -1,0 +1,91 @@
+{
+  "created": "2025-09-17T08:42:09.942871+00:00", 
+  "files": [
+    {
+      "bucket": "38f9418e-956d-4663-9ec8-32c8a043c532", 
+      "checksum": "md5:eb588fd4c7d3b2469b3806750d450c64", 
+      "ePIC_PID": "http://hdl.handle.net/11304/7c6e3485-b4dd-4e5f-8689-efab041fa808", 
+      "key": "DATA.txt", 
+      "size": 15873888, 
+      "version_id": "d2c7a94d-c36a-475c-9233-a8fc5dca0735"
+    }, 
+    {
+      "bucket": "38f9418e-956d-4663-9ec8-32c8a043c532", 
+      "checksum": "md5:93d1ef9c4a5aad3aff7039566d55bae1", 
+      "ePIC_PID": "http://hdl.handle.net/11304/12f7c16d-9605-4bb3-90b5-c06cfa67bae2", 
+      "key": "METHOD.txt", 
+      "size": 1111, 
+      "version_id": "bc4c49e2-c952-469e-8e6f-3df8efb0cac3"
+    }, 
+    {
+      "bucket": "38f9418e-956d-4663-9ec8-32c8a043c532", 
+      "checksum": "md5:e467354d58b00d4cdaf4b0e7e2c476be", 
+      "ePIC_PID": "http://hdl.handle.net/11304/a41fc818-4d2b-48fe-b08f-f3afc40ac747", 
+      "key": "STATION.txt", 
+      "size": 233, 
+      "version_id": "3f595085-2d21-45cf-8b16-1b0109bb0cc4"
+    }
+  ], 
+  "id": "7d03f3d9aca64626a1c2c0576ccb0d31", 
+  "links": {
+    "files": "https://b2share.eudat.eu/api/files/38f9418e-956d-4663-9ec8-32c8a043c532", 
+    "self": "https://b2share.eudat.eu/api/records/7d03f3d9aca64626a1c2c0576ccb0d31", 
+    "versions": "https://b2share.eudat.eu/api/records/98bbc3a35001413ab6f44910839b74c0/versions"
+  }, 
+  "metadata": {
+    "$schema": "https://b2share.eudat.eu/api/communities/d952913c-451e-4b5c-817e-d578dc8a4469/schemas/5#/json_schema", 
+    "DOI": "https://doi.org/10.23728/b2share.7d03f3d9aca64626a1c2c0576ccb0d31", 
+    "community": "d952913c-451e-4b5c-817e-d578dc8a4469", 
+    "community_specific": {
+      "d2f5457f-6318-494a-b363-8098356035b7": {
+        "metadata_url": "https://deims.org/8eda49e9-1f4e-4f3e-b58e-e0bb25dc32a6"
+      }
+    }, 
+    "creators": [
+      {
+        "creator_name": "Nied, Sebastian", 
+        "family_name": "Nied", 
+        "given_name": "Sebastian"
+      }
+    ], 
+    "descriptions": [
+      {
+        "description": "Z\u00f6belboden (Austria) - meteorological data 1996", 
+        "description_type": "Abstract"
+      }
+    ], 
+    "disciplines": [
+      {
+        "classification_code": "3.3.14", 
+        "discipline_identifier": "3.3.14 \u2192 Earth sciences \u2192 Meteorology", 
+        "discipline_name": "3.3.14 \u2192 Earth sciences \u2192 Meteorology", 
+        "scheme": "b2share.legacy", 
+        "scheme_uri": "http://b2share.eudat.eu/suggest/disciplines.json"
+      }
+    ], 
+    "ePIC_PID": "http://hdl.handle.net/11304/0a9964cd-0c86-4482-a5d0-27a36bfd24df", 
+    "keywords": [
+      {
+        "keyword": "Z\u00f6belboden, Zoebelboden, LTER CWN, eLTER reporting, meteorology"
+      }
+    ], 
+    "license": {
+      "license": "Creative Commons Attribution (CC-BY)", 
+      "license_identifier": "cc-by", 
+      "license_uri": "http://creativecommons.org/licenses/by/4.0/", 
+      "scheme": "b2share.legacy", 
+      "scheme_uri": "http://b2share.eudat.eu/suggest/licenses.json"
+    }, 
+    "open_access": true, 
+    "owners": [
+      1912
+    ], 
+    "publication_state": "published", 
+    "titles": [
+      {
+        "title": "LTER Z\u00f6belboden (Austria) - meteorological data 1996"
+      }
+    ]
+  }, 
+  "updated": "2025-09-17T08:42:09.942877+00:00"
+}

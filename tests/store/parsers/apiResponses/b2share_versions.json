@@ -1,0 +1,18 @@
+{
+  "versions": [
+    {
+      "created": "Wed, 17 Sep 2025 08:42:09 GMT",
+      "id": "7d03f3d9aca64626a1c2c0576ccb0d31",
+      "updated": "Wed, 17 Sep 2025 08:42:09 GMT",
+      "url": "https://b2share.eudat.eu/api/records/7d03f3d9aca64626a1c2c0576ccb0d31", 
+      "version": 1
+    }, 
+    {
+      "created": "Wed, 17 Sep 2025 09:20:09 GMT",
+      "id": "8f0fdd0163f044a082f8c2571205aaaa",
+      "updated": "Wed, 17 Sep 2025 09:20:09 GMT",
+      "url": "https://b2share.eudat.eu/api/records/8f0fdd0163f044a082f8c2571205aaaa", 
+      "version": 2
+    }
+  ]
+}
