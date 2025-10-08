@@ -2,7 +2,7 @@ import { CommonDataset, RepositoryType, SiteReference } from '../../../store/com
 import { log } from '../../serviceLogging';
 import { CONFIG } from '../../../../config';
 import { Pool } from 'pg';
-import { mapFieldSitesToCommonDatasetMetadata } from '../../../store/parsers/sitesParser';
+import { mapFieldSitesToCommonDatasetMetadata } from '../../../store/parsers/fieldSitesParser';
 import { fetchJson, fetchXml } from '../../../utilities/fetchJsonFromRemote';
 import { applyRuleToRecord, getNestedValue } from '../../../utilities/rules';
 import { calculateChecksum } from '../../../utilities/checksum';
