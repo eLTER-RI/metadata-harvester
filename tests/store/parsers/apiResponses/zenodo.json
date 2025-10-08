@@ -1,0 +1,141 @@
+{
+    "created": "2024-02-07T13:16:37.925697+00:00",
+    "modified": "2025-09-11T11:45:05.380211+00:00",
+    "id": 10630263,
+    "conceptrecid": "10627093",
+    "doi": "10.5281/zenodo.10630263",
+    "conceptdoi": "10.5281/zenodo.10627093",
+    "doi_url": "https://doi.org/10.5281/zenodo.10630263",
+    "metadata": {
+        "title": "eLTER PLUS - eLTER Compiled Survey Overview Information - data inventory",
+        "doi": "10.5281/zenodo.10630263",
+        "publication_date": "2024-02-07",
+        "description": "<p>This document was created by eLTER PLUS WP8.2 to consolidate the survey information received from site managers (on what data was collected and available at each site; document 'eLTER_Survey_20200915_1700.xlsx') as well as whether the data was delivered to the eLTER PLUS project (stored in the eLTER PLUS B2Drop). This document also includes additionial information about each site, the contact information, coordinates etc.</p>\n<p>The 'Key' sheeet provides a description of each column in the 'Information' sheet and the source of the information (e.g. the document's name, from the DEIMS json file). It is also included the level the information is at (i.e. general site information = 'site level' or information tied to a specific measured variable = 'variable level'). It should be noted that the habitat information was retreived from DEIMS json file and does not necessarily reflect the habitat where variables were measured nor does the order indicate dominant habitats at the site. It should also be noted that 'update frequency', referring to the update frency of the data, was interpreted differently by site managers responding to the survey, and thus is not necessarily consistant with the delivered data.</p>\n<p>The columns that start with 'SITE_' indicate the variable name, unit, etc. as found in the delivered dataframes, which is not always consistant with the variable name, unit, etc. indicated in the survey information. This was only done for biogeochemical data and only for certain sites and variables were targeted.</p>\n<p>&nbsp;</p>\n<p>Funding: eLTER PLUS - European long-term ecosystem, critical zone and socio-ecological systems research infrastructure PLUS</p>\n<p><em>This project has received funding from the European Union's Horizon 2020 research and innovation programme under grant agreement No 871128 (eLTER PLUS).</em></p>",
+        "access_right": "open",
+        "creators": [
+            {
+                "name": "Gillespie, Lauren",
+                "affiliation": "Centre National de la Recherche Scientifique",
+                "orcid": "0000-0002-2294-4411"
+            },
+            {
+                "name": "Diaz-Pines, Eugenio",
+                "affiliation": "BOKU University",
+                "orcid": "0000-0001-9935-106X"
+            }
+        ],
+        "keywords": [
+            "eLTER PLUS",
+            "data inventory",
+            "site information",
+            "delivered data invetory",
+            "site data survey results"
+        ],
+        "language": "eng",
+        "resource_type": {
+            "title": "Dataset",
+            "type": "dataset"
+        },
+        "license": {
+            "id": "cc-by-4.0"
+        },
+        "grants": [
+            {
+                "code": "871128",
+                "internal_id": "10.13039/501100000780::871128",
+                "funder": {
+                    "name": "European Commission",
+                    "doi": "10.13039/501100000780",
+                    "acronym": "EC"
+                },
+                "title": "eLTER PLUS - European long-term ecosystem, critical zone and socio-ecological systems research infrastructure PLUS",
+                "url": "https://cordis.europa.eu/project/id/871128"
+            }
+        ],
+        "communities": [
+            {
+                "id": "eu"
+            },
+            {
+                "id": "elter"
+            }
+        ],
+        "relations": {
+            "version": [
+                {
+                    "index": 2,
+                    "is_last": true,
+                    "parent": {
+                        "pid_type": "recid",
+                        "pid_value": "10627093"
+                    }
+                }
+            ]
+        }
+    },
+    "title": "eLTER PLUS - eLTER Compiled Survey Overview Information - data inventory",
+    "links": {
+        "self": "https://zenodo.org/api/records/10630263",
+        "self_html": "https://zenodo.org/records/10630263",
+        "preview_html": "https://zenodo.org/records/10630263?preview=1",
+        "doi": "https://doi.org/10.5281/zenodo.10630263",
+        "self_doi": "https://doi.org/10.5281/zenodo.10630263",
+        "self_doi_html": "https://zenodo.org/doi/10.5281/zenodo.10630263",
+        "reserve_doi": "https://zenodo.org/api/records/10630263/draft/pids/doi",
+        "parent": "https://zenodo.org/api/records/10627093",
+        "parent_html": "https://zenodo.org/records/10627093",
+        "parent_doi": "https://doi.org/10.5281/zenodo.10627093",
+        "parent_doi_html": "https://zenodo.org/doi/10.5281/zenodo.10627093",
+        "self_iiif_manifest": "https://zenodo.org/api/iiif/record:10630263/manifest",
+        "self_iiif_sequence": "https://zenodo.org/api/iiif/record:10630263/sequence/default",
+        "files": "https://zenodo.org/api/records/10630263/files",
+        "media_files": "https://zenodo.org/api/records/10630263/media-files",
+        "archive": "https://zenodo.org/api/records/10630263/files-archive",
+        "archive_media": "https://zenodo.org/api/records/10630263/media-files-archive",
+        "latest": "https://zenodo.org/api/records/10630263/versions/latest",
+        "latest_html": "https://zenodo.org/records/10630263/latest",
+        "versions": "https://zenodo.org/api/records/10630263/versions",
+        "draft": "https://zenodo.org/api/records/10630263/draft",
+        "access_links": "https://zenodo.org/api/records/10630263/access/links",
+        "access_grants": "https://zenodo.org/api/records/10630263/access/grants",
+        "access_users": "https://zenodo.org/api/records/10630263/access/users",
+        "access_request": "https://zenodo.org/api/records/10630263/access/request",
+        "access": "https://zenodo.org/api/records/10630263/access",
+        "communities": "https://zenodo.org/api/records/10630263/communities",
+        "communities-suggestions": "https://zenodo.org/api/records/10630263/communities-suggestions",
+        "requests": "https://zenodo.org/api/records/10630263/requests"
+    },
+    "updated": "2025-09-11T11:45:05.380211+00:00",
+    "recid": "10630263",
+    "revision": 6,
+    "files": [
+        {
+            "id": "1bc7a26f-d8f9-4c80-bdb7-c1fef1e1dfee",
+            "key": "eLTER_Compiled_Survey_Overview_Information_20221214.xlsx",
+            "size": 1267890,
+            "checksum": "md5:bce4fed976f42e52146ac7e605bd7970",
+            "links": {
+                "self": "https://zenodo.org/api/records/10630263/files/eLTER_Compiled_Survey_Overview_Information_20221214.xlsx/content"
+            }
+        }
+    ],
+    "swh": {},
+    "owners": [
+        {
+            "id": "1065771"
+        }
+    ],
+    "status": "published",
+    "stats": {
+        "downloads": 43,
+        "unique_downloads": 43,
+        "views": 252,
+        "unique_views": 249,
+        "version_downloads": 25,
+        "version_unique_downloads": 25,
+        "version_unique_views": 119,
+        "version_views": 122
+    },
+    "state": "done",
+    "submitted": true
+}
