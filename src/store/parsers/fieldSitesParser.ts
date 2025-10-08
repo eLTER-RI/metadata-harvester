@@ -1,3 +1,4 @@
+import { fieldSitesLimiter } from '../../services/rateLimiterConcurrency';
 import { fetchJson } from '../../utilities/fetchJsonFromRemote';
 import {
   License,
@@ -57,26 +58,35 @@ function extractSitesGeolocation(input: any): Geolocation[] {
   return coverages;
 }
 
-async function fetchLatestSiteRecord(url: string, fieldSites: any, sites: any): Promise<CommonDataset | null> {
+async function handleFieldSitesVersioning(url: string, fieldSites: any): Promise<[string, any, RelatedIdentifier[]]> {
+  const versionRelations: RelatedIdentifier[] = [];
+
   if (fieldSites.latestVersion && fieldSites.latestVersion !== url) {
+    versionRelations.push({
+      relatedID: fieldSites.latestVersion,
+      relatedIDType: 'URL',
+      relatedResourceType: 'Dataset',
+      relationType: 'IsNewVersionOf',
+    });
+
     const latestVersionUrl = fieldSites.latestVersion;
-    const latestVersionData = await fetchJson(latestVersionUrl);
+    const latestVersionData = await fieldSitesLimiter.schedule(() => fetchJson(latestVersionUrl));
     if (latestVersionData) {
-      return mapFieldSitesToCommonDatasetMetadata(latestVersionUrl, latestVersionData, sites);
+      return [latestVersionUrl, latestVersionData, versionRelations];
     }
   }
-  return null;
+
+  return [url, fieldSites, versionRelations];
 }
 
 export async function mapFieldSitesToCommonDatasetMetadata(
   url: string,
-  fieldSites: any,
+  recordData: any,
   sites: any,
 ): Promise<CommonDataset> {
-  const latestDataset = await fetchLatestSiteRecord(url, fieldSites, sites);
-  if (latestDataset) {
-    return latestDataset;
-  }
+  let fieldSites = recordData;
+  const [latestUrl, latestData, versionRelations] = await handleFieldSitesVersioning(url, recordData);
+  if (latestData) fieldSites = latestData;
 
   const licenses: License[] = [];
   if (fieldSites.references?.licence) {
@@ -152,6 +162,7 @@ export async function mapFieldSitesToCommonDatasetMetadata(
       }
     });
   }
+  relatedIdentifiers.push(...versionRelations);
 
   if (fieldSites.latestVersion && fieldSites.latestVersion !== url) {
     relatedIdentifiers.push({
@@ -284,7 +295,7 @@ export async function mapFieldSitesToCommonDatasetMetadata(
       ],
       externalSourceInformation: {
         externalSourceName: 'FieldSites',
-        externalSourceURI: url,
+        externalSourceURI: latestUrl,
       },
       responsibleOrganizations: responsibleOrganization,
       projects: fieldSites.specification?.project?.self?.label
