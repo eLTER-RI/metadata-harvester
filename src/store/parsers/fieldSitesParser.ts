@@ -249,6 +249,12 @@ export async function mapFieldSitesToCommonDatasetMetadata(
   }
 
   return {
+    pids: {
+      doi: {
+        identifier: fieldSites.pid,
+        provider: 'doi.org',
+      },
+    },
     metadata: {
       assetType: 'Dataset',
       alternateIdentifiers: alternateIdentifiers,
