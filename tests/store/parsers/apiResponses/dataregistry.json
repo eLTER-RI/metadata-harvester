@@ -1,0 +1,267 @@
+{
+    "resource": {
+        "pk": "169",
+        "uuid": "3ab67761-814c-449a-ad01-c7a30633abc8",
+        "resource_type": "document",
+        "polymorphic_ctype_id": "66",
+        "perms": [
+            "view_resourcebase",
+            "download_resourcebase"
+        ],
+        "owner": {
+            "pk": 1031,
+            "username": "0000-0002-1193-8120",
+            "first_name": "Marco",
+            "last_name": "Sigovini",
+            "avatar": "https://dataregistry.lteritalia.it/static/geonode/img/avatar.png",
+            "is_superuser": false,
+            "is_staff": false,
+            "email": "marco.sigovini@cnr.it",
+            "link": "https://dataregistry.lteritalia.it/api/v2/users/1031"
+        },
+        "poc": [
+            {
+                "pk": 1031,
+                "username": "0000-0002-1193-8120",
+                "first_name": "Marco",
+                "last_name": "Sigovini",
+                "avatar": "https://dataregistry.lteritalia.it/static/geonode/img/avatar.png",
+                "is_superuser": false,
+                "is_staff": false,
+                "email": "marco.sigovini@cnr.it",
+                "link": "https://dataregistry.lteritalia.it/api/v2/users/1031"
+            }
+        ],
+        "metadata_author": [
+            {
+                "pk": 1031,
+                "username": "0000-0002-1193-8120",
+                "first_name": "Marco",
+                "last_name": "Sigovini",
+                "avatar": "https://dataregistry.lteritalia.it/static/geonode/img/avatar.png",
+                "is_superuser": false,
+                "is_staff": false,
+                "email": "marco.sigovini@cnr.it",
+                "link": "https://dataregistry.lteritalia.it/api/v2/users/1031"
+            }
+        ],
+        "processor": [],
+        "publisher": [],
+        "custodian": [],
+        "distributor": [],
+        "resource_user": [],
+        "resource_provider": [],
+        "originator": [],
+        "principal_investigator": [],
+        "keywords": [
+            {
+                "name": "bbb",
+                "slug": "bbb"
+            }
+        ],
+        "tkeywords": [],
+        "regions": [],
+        "category": {
+            "identifier": "biota",
+            "gn_description": "Biota"
+        },
+        "title": "Water temperature and Dissolved Oxygen at Valgrande Coffa (VC) station in the Lagoon of Venice (IT) from June to December 2024",
+        "abstract": "Time series of water temperature (°C) and Dissolved Oxygen (mg/L) at Valgrande Coffa (VC) study area (45.325564°N, 12.285743°E) in the Lagoon of Venice (IT), from 20/06/2024 to 04/12/2024. Data were collected at a depth of about –1 m relative to mean sea level. Measurements were carried out using a HOBO U26 data logger, which continuously recorded (5-minute interval) temperature and Dissolved Oxygen. Dissolved Oxygen sensor was calibrated at intervals of approximately 1–2 months. The measurements were performed during bio-ecological studies.",
+        "attribution": null,
+        "alternate": null,
+        "doi": null,
+        "bbox_polygon": {
+            "type": "Polygon",
+            "coordinates": [
+                [
+                    [
+                        12.284743,
+                        45.324564
+                    ],
+                    [
+                        12.284743,
+                        45.326564
+                    ],
+                    [
+                        12.286743,
+                        45.326564
+                    ],
+                    [
+                        12.286743,
+                        45.324564
+                    ],
+                    [
+                        12.284743,
+                        45.324564
+                    ]
+                ]
+            ]
+        },
+        "ll_bbox_polygon": {
+            "type": "Polygon",
+            "coordinates": [
+                [
+                    [
+                        12.284743,
+                        45.324564
+                    ],
+                    [
+                        12.284743,
+                        45.326564
+                    ],
+                    [
+                        12.286743,
+                        45.326564
+                    ],
+                    [
+                        12.286743,
+                        45.324564
+                    ],
+                    [
+                        12.284743,
+                        45.324564
+                    ]
+                ]
+            ]
+        },
+        "srid": "4326",
+        "date": "2025-08-28T00:00:00Z",
+        "date_type": "publication",
+        "edition": null,
+        "purpose": null,
+        "maintenance_frequency": null,
+        "restriction_code_type": null,
+        "constraints_other": null,
+        "license": {
+            "identifier": "CC BY-NC"
+        },
+        "language": "eng",
+        "spatial_representation_type": null,
+        "temporal_extent_start": null,
+        "temporal_extent_end": null,
+        "supplemental_information": "No information provided",
+        "data_quality_statement": null,
+        "group": null,
+        "popular_count": "0",
+        "share_count": "0",
+        "rating": "0",
+        "featured": false,
+        "advertised": true,
+        "is_published": true,
+        "is_approved": true,
+        "detail_url": "https://dataregistry.lteritalia.it/catalogue/#/document/169",
+        "embed_url": "https://dataregistry.lteritalia.it/documents/169/embed",
+        "created": "2025-08-28T23:05:49.369038Z",
+        "last_updated": "2025-09-29T15:55:02.489669Z",
+        "raw_abstract": "Time series of water temperature (°C) and Dissolved Oxygen (mg/L) at Valgrande Coffa (VC) study area (45.325564°N, 12.285743°E) in the Lagoon of Venice (IT), from 20/06/2024 to 04/12/2024. Data were collected at a depth of about –1 m relative to mean sea level. Measurements were carried out using a HOBO U26 data logger, which continuously recorded (5-minute interval) temperature and Dissolved Oxygen. Dissolved Oxygen sensor was calibrated at intervals of approximately 1–2 months. The measurements were performed during bio-ecological studies.",
+        "raw_purpose": "None",
+        "raw_constraints_other": "None",
+        "raw_supplemental_information": "No information provided",
+        "raw_data_quality_statement": "None",
+        "metadata_only": false,
+        "processed": true,
+        "state": "PROCESSED",
+        "subtype": "other",
+        "sourcetype": "LOCAL",
+        "is_copyable": true,
+        "download_url": "https://dataregistry.lteritalia.it/documents/169/download",
+        "download_urls": [
+            {
+                "url": "https://dataregistry.lteritalia.it/documents/169/download",
+                "ajax_safe": true
+            },
+            {
+                "url": "https://dataregistry.lteritalia.it/api/v2/assets/188/download",
+                "ajax_safe": false,
+                "default": false
+            }
+        ],
+        "extent": {
+            "coords": [
+                12.284743,
+                45.324564,
+                12.286743,
+                45.326564
+            ],
+            "srid": "EPSG:4326"
+        },
+        "favorite": false,
+        "thumbnail_url": null,
+        "links": [
+            {
+                "extension": "xml",
+                "link_type": "metadata",
+                "name": "Atom",
+                "mime": "text/xml",
+                "url": "https://dataregistry.lteritalia.it/catalogue/csw?request=GetRecordById&service=CSW&version=2.0.2&id=3ab67761-814c-449a-ad01-c7a30633abc8&outputschema=http%3A%2F%2Fwww.w3.org%2F2005%2FAtom&elementsetname=full"
+            },
+            {
+                "extension": "xml",
+                "link_type": "metadata",
+                "name": "DIF",
+                "mime": "text/xml",
+                "url": "https://dataregistry.lteritalia.it/catalogue/csw?request=GetRecordById&service=CSW&version=2.0.2&id=3ab67761-814c-449a-ad01-c7a30633abc8&outputschema=http%3A%2F%2Fgcmd.gsfc.nasa.gov%2FAboutus%2Fxml%2Fdif%2F&elementsetname=full"
+            },
+            {
+                "extension": "xml",
+                "link_type": "metadata",
+                "name": "Dublin Core",
+                "mime": "text/xml",
+                "url": "https://dataregistry.lteritalia.it/catalogue/csw?request=GetRecordById&service=CSW&version=2.0.2&id=3ab67761-814c-449a-ad01-c7a30633abc8&outputschema=http%3A%2F%2Fwww.opengis.net%2Fcat%2Fcsw%2F2.0.2&elementsetname=full"
+            },
+            {
+                "extension": "xml",
+                "link_type": "metadata",
+                "name": "ebRIM",
+                "mime": "text/xml",
+                "url": "https://dataregistry.lteritalia.it/catalogue/csw?request=GetRecordById&service=CSW&version=2.0.2&id=3ab67761-814c-449a-ad01-c7a30633abc8&outputschema=urn%3Aoasis%3Anames%3Atc%3Aebxml-regrep%3Axsd%3Arim%3A3.0&elementsetname=full"
+            },
+            {
+                "extension": "xml",
+                "link_type": "metadata",
+                "name": "FGDC",
+                "mime": "text/xml",
+                "url": "https://dataregistry.lteritalia.it/catalogue/csw?request=GetRecordById&service=CSW&version=2.0.2&id=3ab67761-814c-449a-ad01-c7a30633abc8&outputschema=http%3A%2F%2Fwww.opengis.net%2Fcat%2Fcsw%2Fcsdgm&elementsetname=full"
+            },
+            {
+                "extension": "xml",
+                "link_type": "metadata",
+                "name": "ISO",
+                "mime": "text/xml",
+                "url": "https://dataregistry.lteritalia.it/catalogue/csw?request=GetRecordById&service=CSW&version=2.0.2&id=3ab67761-814c-449a-ad01-c7a30633abc8&outputschema=http%3A%2F%2Fwww.isotc211.org%2F2005%2Fgmd&elementsetname=full"
+            },
+            {
+                "extension": "xml",
+                "link_type": "metadata",
+                "name": "ISO with XSL",
+                "mime": "text/xml",
+                "url": "https://dataregistry.lteritalia.it/showmetadata/xsl/169"
+            },
+            {
+                "extension": "csv",
+                "link_type": "uploaded",
+                "name": "IT_LAGOONVENICE_ismarve-eb-VC_DO-T_20240620-20241204_v20250828.csv",
+                "mime": "",
+                "url": "https://dataregistry.lteritalia.it/api/v2/assets/188/link",
+                "extras": {
+                    "type": "asset",
+                    "content": {
+                        "title": "IT_LAGOONVENICE_ismarve-eb-VC_DO-T_20240620-20241204_v20250828.csv",
+                        "description": "Unknown",
+                        "type": "Unknown",
+                        "download_url": "https://dataregistry.lteritalia.it/api/v2/assets/188/download"
+                    }
+                }
+            },
+            {
+                "extension": "csv",
+                "link_type": "data",
+                "name": "Hosted Document",
+                "mime": "text/plain",
+                "url": "https://dataregistry.lteritalia.it/documents/169/download"
+            }
+        ],
+        "link": "https://dataregistry.lteritalia.it/api/v2/resources/169",
+        "metadata_uploaded_preserve": false
+    }
+}
