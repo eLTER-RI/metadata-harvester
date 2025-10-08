@@ -497,9 +497,9 @@ export function parseDOIUrl(url: string): DOI | null {
   };
 }
 
-export function parsePID(url: string): PID | null {
+export function parsePID(url: string): PID | undefined {
   const match = url.match(/^https?:\/\/([^/]+)\/(.+)$/i);
-  if (!match) return null;
+  if (!match) return undefined;
 
   return {
     doi: {

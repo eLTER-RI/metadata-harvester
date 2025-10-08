@@ -284,12 +284,13 @@ async function handleZenodoVersioning(url: string, zenodo: any): Promise<[string
     return [url, zenodo, []];
   }
 }
+
 function sortCommunities(recordData: any) {
-  const records = recordData?.metadata?.communities;
-  if (!records || !records.length) return [];
-  records.sort((a: any, b: any) => {
-    const idA = a.metadata.communities.length > 0 ? a.metadata.communities[0].id : '';
-    const idB = b.metadata.communities.length > 0 ? b.metadata.communities[0].id : '';
+  const communities = recordData?.metadata?.communities;
+  if (!communities || !communities.length) return [];
+  communities.sort((a: any, b: any) => {
+    const idA = a?.id ?? '';
+    const idB = b?.id ?? '';
 
     if (idA < idB) {
       return -1;
@@ -299,6 +300,7 @@ function sortCommunities(recordData: any) {
     }
     return 0;
   });
+  return communities;
 }
 
 export async function mapZenodoToCommonDatasetMetadata(
@@ -310,7 +312,7 @@ export async function mapZenodoToCommonDatasetMetadata(
   const [latestUrl, latestData, versionRelations] = await handleZenodoVersioning(sourceUrl, recordData);
   const zenodo = latestData ?? recordData;
   const url = latestUrl ?? sourceUrl;
-  const communities = sortCommunities(zenodo.metadata.communities);
+  const communities = sortCommunities(zenodo);
   const licenses: License[] = [];
 
   if (zenodo.metadata?.license?.id) {
@@ -361,7 +363,7 @@ export async function mapZenodoToCommonDatasetMetadata(
     temporalCoverages.push({ startDate: publicationDate, endDate: publicationDate });
   }
 
-  const projects: Project[] = mapZenodoCommunitiesToProjects(communities);
+  const projects: Project[] = mapZenodoCommunitiesToProjects(communities || []);
   if (zenodo.metadata?.grants && Array.isArray(zenodo.metadata.grants)) {
     zenodo.metadata.grants.forEach((grant: any) => {
       if (grant.title) {
@@ -382,7 +384,7 @@ export async function mapZenodoToCommonDatasetMetadata(
   const allRelatedIdentifiers = [...relatedIdentifiers, ...versionRelations];
 
   return {
-    pids: parsePID(zenodo.metadata.doi) || undefined,
+    pids: zenodo.doi_url ? parsePID(zenodo.doi_url) : undefined,
     metadata: {
       assetType: getZenodoAssetType(zenodo.metadata.resource_type),
       alternateIdentifiers: alternateIdentifiers,
