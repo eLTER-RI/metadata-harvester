@@ -147,20 +147,18 @@ export async function mapFieldSitesToCommonDatasetMetadata(
           relatedID: versionUrl,
           relatedIDType: 'URL',
           relatedResourceType: 'Dataset',
-          relationType: 'IsNewVersionOf',
+          relationType: 'IsPreviousVersionOf',
         });
       }
     });
   }
 
-  if (fieldSites.latestVersion) {
-    // if latestVersion === id or there is no nextVersion => keep, else delete
-    // or update - maybe better because of OAR/GHS pop?
+  if (fieldSites.latestVersion && fieldSites.latestVersion !== url) {
     relatedIdentifiers.push({
       relatedID: fieldSites.latestVersion,
       relatedIDType: 'URL',
       relatedResourceType: 'Dataset',
-      relationType: 'IsPreviousVersionOf',
+      relationType: 'IsNewVersionOf',
     });
   }
 
