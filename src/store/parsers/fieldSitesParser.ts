@@ -1,4 +1,5 @@
 import { fieldSitesLimiter } from '../../services/rateLimiterConcurrency';
+import { log } from '../../services/serviceLogging';
 import { fetchJson } from '../../utilities/fetchJsonFromRemote';
 import {
   License,
@@ -72,6 +73,7 @@ async function handleFieldSitesVersioning(url: string, fieldSites: any): Promise
     const latestVersionUrl = fieldSites.latestVersion;
     const latestVersionData = await fieldSitesLimiter.schedule(() => fetchJson(latestVersionUrl));
     if (latestVersionData) {
+      log('warn', 'New version for record on url: ' + url + 'found: ' + latestVersionUrl);
       return [latestVersionUrl, latestVersionData, versionRelations];
     }
   }
