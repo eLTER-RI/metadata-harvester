@@ -52,7 +52,7 @@ export async function mapDataRegistryToCommonDatasetMetadata(
   const licenses: License[] = [];
   if (dataRegistry?.resource?.license?.identifier) {
     licenses.push({
-      licenseCode: dataRegistry.resource.license.identifier,
+      licenseCode: dataRegistry.resource.license.identifier.toLowerCase(),
       licenseURI: getLicenseURI(dataRegistry.resource.license.identifier.toLowerCase()),
     });
   }
