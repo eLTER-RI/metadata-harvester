@@ -13,11 +13,6 @@ export async function fetchSites(): Promise<any> {
 }
 
 export function findMatchingUuid(text: string, sites: { id?: { suffix?: string }; title: string }[]): string[] | null {
-  if (typeof text !== 'string') {
-    console.warn('Expected a string for text, got:', typeof text);
-    return null;
-  }
-
   const uuids = sites.map((site) => site.id?.suffix).filter((uuid): uuid is string => typeof uuid === 'string');
 
   const pattern = uuids.map((u) => u.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
