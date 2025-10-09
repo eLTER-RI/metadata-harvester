@@ -137,7 +137,7 @@ export type Relation =
   | 'Obsoletes'
   | 'IsObsoletedBy';
 
-const identifierTypesMap = new Map<string, IdentifierType>(
+export const identifierTypesMap = new Map<string, IdentifierType>(
   [
     'ARK',
     'arXiv',
@@ -161,7 +161,7 @@ const identifierTypesMap = new Map<string, IdentifierType>(
   ].map((type) => [type.toLowerCase(), type as IdentifierType]),
 );
 
-const resourceTypesMap = new Map<string, IdentifierType>(
+export const resourceTypesMap = new Map<string, IdentifierType>(
   [
     'Audiovisual',
     'Book',
@@ -407,85 +407,6 @@ export type DataLevel = {
   dataLevelCode?: string;
   dataLevelURI?: string;
 };
-
-export function extractAlternateIdentifiers(input: Metadata): [AlternateIdentifier[], AdditionalMetadata[]] {
-  const additionalMetadata: AdditionalMetadata[] = [];
-  const identifiers: AlternateIdentifier[] = [];
-  input.alternate_identifiers?.map((item) => {
-    if (!item || typeof item.alternate_identifier_type !== 'string' || typeof item.alternate_identifier !== 'string') {
-      return null;
-    }
-
-    const typeKey = item.alternate_identifier_type.toLowerCase().trim();
-    const value = item.alternate_identifier.trim();
-
-    if (!value) {
-      return null;
-    }
-
-    const idType = identifierTypesMap.get(typeKey) as IdentifierType;
-    const idTypeIfReversed = identifierTypesMap.get(value.toLowerCase()) as IdentifierType;
-    if (idType) {
-      identifiers.push({
-        alternateID: value,
-        alternateIDType: idType,
-      });
-    } else if (idTypeIfReversed) {
-      identifiers.push({
-        alternateID: item.alternate_identifier_type.trim(),
-        alternateIDType: idTypeIfReversed,
-      });
-    } else {
-      additionalMetadata.push({
-        name: item.alternate_identifier_type.trim(),
-        value: value,
-      });
-    }
-  });
-  return [identifiers, additionalMetadata];
-}
-
-export function extractRelatedIdentifiers(input: Metadata): [RelatedIdentifier[], AdditionalMetadata[]] {
-  const additionalMetadata: AdditionalMetadata[] = [];
-  const identifiers: RelatedIdentifier[] = [];
-  input.related_identifiers?.map((item) => {
-    if (!item || typeof item.related_identifier_type !== 'string' || typeof item.related_identifier !== 'string') {
-      return null;
-    }
-
-    const typeKey = item.related_identifier_type.toLowerCase().trim();
-    const value = item.related_identifier.trim();
-
-    if (!value) {
-      return null;
-    }
-
-    const idType = identifierTypesMap.get(typeKey) as IdentifierType;
-    const idTypeIfReversed = identifierTypesMap.get(value.toLowerCase()) as IdentifierType;
-    const idTypeResource = resourceTypesMap.get(value.toLowerCase()) as IdentifierType;
-    if (idType) {
-      identifiers.push({
-        relatedID: value,
-        relatedIDType: idType,
-        relatedResourceType: idTypeResource,
-        relationType: item.relation_type,
-      });
-    } else if (idTypeIfReversed) {
-      identifiers.push({
-        relatedID: value,
-        relatedIDType: idType,
-        relatedResourceType: idTypeResource,
-        relationType: item.relation_type,
-      });
-    } else {
-      additionalMetadata.push({
-        name: item.related_identifier_type.trim(),
-        value: value,
-      });
-    }
-  });
-  return [identifiers, additionalMetadata];
-}
 
 export function parseDOIUrl(url: string): DOI | null {
   const match = url.match(/^https?:\/\/([^/]+)\/(.+)$/i);

@@ -1,4 +1,4 @@
-import { B2ShareExtractedSchema } from '../../../api/schema/b2shareApi';
+import { B2ShareExtractedSchema, Metadata } from '../../../api/schema/b2shareApi';
 import { b2shareLimiter } from '../../services/rateLimiterConcurrency';
 import { log } from '../../services/serviceLogging';
 import { fetchJson } from '../../utilities/fetchJsonFromRemote';
@@ -15,13 +15,14 @@ import {
   isValidEntityIdSchema,
   parsePID,
   ContributorType,
-  extractAlternateIdentifiers,
-  extractRelatedIdentifiers,
   normalizeDate,
   formatDate,
   getLicenseURI,
   getChecksum,
   RelatedIdentifier,
+  IdentifierType,
+  identifierTypesMap,
+  resourceTypesMap,
 } from '../commonStructure';
 
 function extractB2ShareGeolocation(input: any): Geolocation[] {
@@ -80,6 +81,72 @@ function extractB2ShareGeolocation(input: any): Geolocation[] {
   return coverages || [];
 }
 
+export function extractB2ShareAlternateIdentifiers(input: Metadata): [AlternateIdentifier[], AdditionalMetadata[]] {
+  const additionalMetadata: AdditionalMetadata[] = [];
+  const identifiers: AlternateIdentifier[] = [];
+  input.alternate_identifiers?.forEach((item) => {
+    if (!item || typeof item.alternate_identifier_type !== 'string' || typeof item.alternate_identifier !== 'string') {
+      return;
+    }
+
+    const typeKey = item.alternate_identifier_type.toLowerCase().trim();
+    const value = item.alternate_identifier.trim();
+
+    if (!value) {
+      return;
+    }
+
+    const idType = identifierTypesMap.get(typeKey) as IdentifierType;
+    identifiers.push({
+      alternateID: value,
+      alternateIDType: idType || 'Other',
+    });
+  });
+  return [identifiers, additionalMetadata];
+}
+
+export function extractB2ShareRelatedIdentifiers(input: Metadata): [RelatedIdentifier[], AdditionalMetadata[]] {
+  const additionalMetadata: AdditionalMetadata[] = [];
+  const identifiers: RelatedIdentifier[] = [];
+  input.related_identifiers?.map((item) => {
+    if (!item || typeof item.related_identifier_type !== 'string' || typeof item.related_identifier !== 'string') {
+      return null;
+    }
+
+    const typeKey = item.related_identifier_type.toLowerCase().trim();
+    const value = item.related_identifier.trim();
+
+    if (!value) {
+      return null;
+    }
+
+    const idType = identifierTypesMap.get(typeKey) as IdentifierType;
+    const idTypeIfReversed = identifierTypesMap.get(value.toLowerCase()) as IdentifierType;
+    const idTypeResource = resourceTypesMap.get(value.toLowerCase()) as IdentifierType;
+    if (idType) {
+      identifiers.push({
+        relatedID: value,
+        relatedIDType: idType,
+        relatedResourceType: idTypeResource,
+        relationType: item.relation_type,
+      });
+    } else if (idTypeIfReversed) {
+      identifiers.push({
+        relatedID: value,
+        relatedIDType: idType,
+        relatedResourceType: idTypeResource,
+        relationType: item.relation_type,
+      });
+    } else {
+      additionalMetadata.push({
+        name: item.related_identifier_type.trim(),
+        value: value,
+      });
+    }
+  });
+  return [identifiers, additionalMetadata];
+}
+
 function extractB2ShareKeywords(input: any): Keywords[] {
   const keywords: Keywords[] = [];
 
@@ -132,13 +199,14 @@ function extractIdFromUrl(input: string): string {
 function parseB2shareAlternateIdentifiers(
   b2share: B2ShareExtractedSchema,
 ): [AlternateIdentifier[], AdditionalMetadata[]] {
-  const [identifiers, additionalMetadata] = extractAlternateIdentifiers(b2share.metadata);
+  const [identifiers, additionalMetadata] = extractB2ShareAlternateIdentifiers(b2share.metadata);
   if (b2share.metadata.ePIC_PID) {
     identifiers.push({
       alternateID: b2share.metadata.ePIC_PID as string,
       alternateIDType: 'Handle',
     });
   }
+
   return [identifiers, additionalMetadata];
 }
 
@@ -246,7 +314,7 @@ export async function mapB2ShareToCommonDatasetMetadata(
   }
 
   const [alternateIdentifiers, metadataFromAlternate] = parseB2shareAlternateIdentifiers(b2share);
-  const [related_identifiers, metadataFromRelated] = extractRelatedIdentifiers(b2share.metadata);
+  const [related_identifiers, metadataFromRelated] = extractB2ShareRelatedIdentifiers(b2share.metadata);
   related_identifiers.push(...versionRelations);
   const additional_metadata = [...metadataFromAlternate, ...metadataFromRelated, ...getAdditionalMetadata(b2share)];
   const parsedPID = b2share.metadata.DOI ? parsePID(b2share.metadata.DOI) : null;
