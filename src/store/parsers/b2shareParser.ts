@@ -23,6 +23,7 @@ import {
   IdentifierType,
   identifierTypesMap,
   resourceTypesMap,
+  Relation,
 } from '../commonStructure';
 
 function extractB2ShareGeolocation(input: any): Geolocation[] {
@@ -81,8 +82,7 @@ function extractB2ShareGeolocation(input: any): Geolocation[] {
   return coverages || [];
 }
 
-export function extractB2ShareAlternateIdentifiers(input: Metadata): [AlternateIdentifier[], AdditionalMetadata[]] {
-  const additionalMetadata: AdditionalMetadata[] = [];
+export function extractB2ShareAlternateIdentifiers(input: Metadata): AlternateIdentifier[] {
   const identifiers: AlternateIdentifier[] = [];
   input.alternate_identifiers?.forEach((item) => {
     if (!item || typeof item.alternate_identifier_type !== 'string' || typeof item.alternate_identifier !== 'string') {
@@ -96,55 +96,49 @@ export function extractB2ShareAlternateIdentifiers(input: Metadata): [AlternateI
       return;
     }
 
-    const idType = identifierTypesMap.get(typeKey) as IdentifierType;
+    const idType = identifierTypesMap.get(typeKey) as IdentifierType | undefined;
     identifiers.push({
       alternateID: value,
       alternateIDType: idType || 'Other',
     });
   });
-  return [identifiers, additionalMetadata];
+  return identifiers;
 }
 
-export function extractB2ShareRelatedIdentifiers(input: Metadata): [RelatedIdentifier[], AdditionalMetadata[]] {
-  const additionalMetadata: AdditionalMetadata[] = [];
+export function extractB2ShareRelatedIdentifiers(input: Metadata): RelatedIdentifier[] {
   const identifiers: RelatedIdentifier[] = [];
-  input.related_identifiers?.map((item) => {
-    if (!item || typeof item.related_identifier_type !== 'string' || typeof item.related_identifier !== 'string') {
-      return null;
+  input.related_identifiers?.forEach((item) => {
+    if (
+      !item ||
+      typeof item.related_identifier !== 'string' ||
+      !item.related_identifier.trim() ||
+      typeof item.related_identifier_type !== 'string' ||
+      !item.related_identifier_type.trim() ||
+      typeof item.relation_type !== 'string' ||
+      !item.relation_type.trim()
+    ) {
+      return;
     }
 
     const typeKey = item.related_identifier_type.toLowerCase().trim();
     const value = item.related_identifier.trim();
 
     if (!value) {
-      return null;
+      return;
     }
 
-    const idType = identifierTypesMap.get(typeKey) as IdentifierType;
-    const idTypeIfReversed = identifierTypesMap.get(value.toLowerCase()) as IdentifierType;
-    const idTypeResource = resourceTypesMap.get(value.toLowerCase()) as IdentifierType;
-    if (idType) {
-      identifiers.push({
-        relatedID: value,
-        relatedIDType: idType,
-        relatedResourceType: idTypeResource,
-        relationType: item.relation_type,
-      });
-    } else if (idTypeIfReversed) {
-      identifiers.push({
-        relatedID: value,
-        relatedIDType: idType,
-        relatedResourceType: idTypeResource,
-        relationType: item.relation_type,
-      });
-    } else {
-      additionalMetadata.push({
-        name: item.related_identifier_type.trim(),
-        value: value,
-      });
-    }
+    const idType = identifierTypesMap.get(typeKey) as IdentifierType | 'Other';
+    const resourceType = (typeof item.resource_type === 'string' ? item.resource_type || '' : '').toLowerCase().trim();
+    const resourceTypeFromMap = resourceTypesMap.get(resourceType) as IdentifierType | 'Other';
+    identifiers.push({
+      relatedID: value,
+      relatedIDType: idType,
+      relationType: item.relation_type.trim() as Relation,
+      relatedResourceType: resourceTypeFromMap,
+    });
   });
-  return [identifiers, additionalMetadata];
+
+  return identifiers;
 }
 
 function extractB2ShareKeywords(input: any): Keywords[] {
@@ -196,10 +190,8 @@ function extractIdFromUrl(input: string): string {
   }
 }
 
-function parseB2shareAlternateIdentifiers(
-  b2share: B2ShareExtractedSchema,
-): [AlternateIdentifier[], AdditionalMetadata[]] {
-  const [identifiers, additionalMetadata] = extractB2ShareAlternateIdentifiers(b2share.metadata);
+function parseB2shareAlternateIdentifiers(b2share: B2ShareExtractedSchema): AlternateIdentifier[] {
+  const identifiers = extractB2ShareAlternateIdentifiers(b2share.metadata);
   if (b2share.metadata.ePIC_PID) {
     identifiers.push({
       alternateID: b2share.metadata.ePIC_PID as string,
@@ -207,7 +199,7 @@ function parseB2shareAlternateIdentifiers(
     });
   }
 
-  return [identifiers, additionalMetadata];
+  return identifiers;
 }
 
 function getAdditionalMetadata(b2share: B2ShareExtractedSchema): AdditionalMetadata[] {
@@ -313,10 +305,10 @@ export async function mapB2ShareToCommonDatasetMetadata(
     });
   }
 
-  const [alternateIdentifiers, metadataFromAlternate] = parseB2shareAlternateIdentifiers(b2share);
-  const [related_identifiers, metadataFromRelated] = extractB2ShareRelatedIdentifiers(b2share.metadata);
+  const alternateIdentifiers = parseB2shareAlternateIdentifiers(b2share);
+  const related_identifiers = extractB2ShareRelatedIdentifiers(b2share.metadata);
   related_identifiers.push(...versionRelations);
-  const additional_metadata = [...metadataFromAlternate, ...metadataFromRelated, ...getAdditionalMetadata(b2share)];
+  const additional_metadata = getAdditionalMetadata(b2share);
   const parsedPID = b2share.metadata.DOI ? parsePID(b2share.metadata.DOI) : null;
   const pids = parsedPID ?? toPID(alternateIdentifiers);
 

@@ -50,7 +50,14 @@
               "alternate_identifier": "http://hdl.handle.net/11304/f3589a0b-aa74-4355-948b-5b735f39788e", 
               "alternate_identifier_type": "ePIC_PID"
             }
-          ], 
+        ],
+        "related_identifiers": [
+            {
+              "related_identifier": "10.48550/arXiv.2211.01226 ", 
+              "related_identifier_type": "DOI", 
+              "relation_type": "IsDescribedBy"
+            }
+        ],
         "creators": [
             {
                 "creator_name": "Nied, Sebastian",

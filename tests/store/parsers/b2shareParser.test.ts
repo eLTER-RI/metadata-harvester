@@ -68,6 +68,20 @@ describe('B2Share Parser', () => {
         alternateIDType: 'Handle',
       },
     ]);
+    expect(commonDataset.metadata.relatedIdentifiers).toHaveLength(2);
+    expect(commonDataset.metadata.relatedIdentifiers).toEqual([
+      {
+        relatedID: '10.48550/arXiv.2211.01226',
+        relatedIDType: 'DOI',
+        relationType: 'IsDescribedBy',
+      },
+      {
+        relatedID: mockB2ShareOldData.links.self,
+        relatedIDType: 'URL',
+        relatedResourceType: 'Dataset',
+        relationType: 'IsNewVersionOf',
+      },
+    ]);
 
     expect(commonDataset.pids?.doi.identifier).toBe('10.23728/b2share.8f0fdd0163f044a082f8c2571205aaaa');
     expect(commonDataset.metadata.creators).toBeDefined();
@@ -77,10 +91,6 @@ describe('B2Share Parser', () => {
     expect(commonDataset.metadata.descriptions![0].descriptionText).toBe(
       'Zöbelboden (Austria) - meteorological data 1996',
     );
-    expect(commonDataset.metadata.alternateIdentifiers).toContainEqual({
-      alternateID: 'http://hdl.handle.net/11304/067cb4a5-5143-406d-84e8-018ecc39601a',
-      alternateIDType: 'Handle',
-    });
     expect(commonDataset.metadata.keywords).toBeDefined();
     expect(commonDataset.metadata.keywords).toEqual([
       {
@@ -174,12 +184,6 @@ describe('B2Share Parser', () => {
     expect(commonDataset.metadata.externalSourceInformation.externalSourceURI).toBe(
       'http://hdl.handle.net/11304/067cb4a5-5143-406d-84e8-018ecc39601a',
     );
-    expect(commonDataset.metadata.relatedIdentifiers).toContainEqual({
-      relatedID: mockB2ShareOldData.links.self,
-      relatedIDType: 'URL',
-      relatedResourceType: 'Dataset',
-      relationType: 'IsNewVersionOf',
-    });
 
     expect(fetchJsonSpy).toHaveBeenCalledTimes(2);
     expect(fetchJsonSpy).toHaveBeenCalledWith(mockB2ShareOldData.links.versions);
