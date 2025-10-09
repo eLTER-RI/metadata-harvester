@@ -3,6 +3,11 @@ import { fetchJson } from '../utilities/fetchJsonFromRemote';
 import { SiteReference } from '../store/commonStructure';
 import { deimsLimiter } from '../services/rateLimiterConcurrency';
 
+/**
+ * Fetches sites from the Deims API based on the deims API url set in the configuration file.
+ *
+ * @returns {string} Response from the Deims API listing endpoint.
+ */
 export async function fetchSites(): Promise<any> {
   const response = await fetch(CONFIG.DEIMS_API_URL);
   if (!response.ok) {
@@ -12,6 +17,16 @@ export async function fetchSites(): Promise<any> {
   return data;
 }
 
+/**
+ * Constructs a search URL for the Data Registry (DAR) API to find a record by its external source URI.
+ *
+ * @param {string} text Data from which matching sites are to be extracted.
+ * @param {id: { suffix: string }} sites An object holding sites UUIDS (suffixes of the Deims site
+ * self URL and )
+ *
+ *
+ * @returns {string[]} UUIDs matching to existing sites.
+ */
 export function findMatchingUuid(text: string, sites: { id?: { suffix?: string }; title: string }[]): string[] | null {
   const uuids = sites.map((site) => site.id?.suffix).filter((uuid): uuid is string => typeof uuid === 'string');
 
@@ -22,28 +37,15 @@ export function findMatchingUuid(text: string, sites: { id?: { suffix?: string }
   return matches.length > 0 ? matches : null;
 }
 
-export function findPartialMatch(
-  normalizedName: string,
-  sites: { id?: { suffix?: string }; title: string }[],
-): SiteReference[] {
-  const matches: SiteReference[] = [];
-  const seenIds = new Set<string>();
-
-  for (const site of sites) {
-    if (site.id?.suffix && !seenIds.has(site.id.suffix)) {
-      if (site.title.toLowerCase().includes(normalizedName)) {
-        matches.push({
-          siteID: site.id.suffix,
-          siteName: site.title,
-        });
-        seenIds.add(site.id?.suffix);
-      }
-    }
-  }
-
-  return matches;
-}
-
+/**
+ * Goes through a list of matched Deims IDs, and returns an array of sites.
+ *
+ * @param {string[]} matchedUuids Data from which matching SITES are to be extracted.
+ * @param {any} sites An object holding sites returned from the Deims API.
+ *
+ *
+ * @returns {string[]} An object holding Site IDs and names corresponding to the input @param matcheduids.
+ */
 export function mapUuidsToSiteReferences(matchedUuids: string[] | null, sites: any[]): SiteReference[] {
   if (!matchedUuids || matchedUuids.length === 0) {
     return [];
@@ -65,10 +67,19 @@ export function mapUuidsToSiteReferences(matchedUuids: string[] | null, sites: a
   return uniqueMatchedSites;
 }
 
-async function getDeimsSiteFromDeimsDataset(deimsDatasetUrl: string, sites: any): Promise<SiteReference[]> {
+/**
+ * Searches for a https://deims.org/dataset/{uuid} string inside a string.
+ *
+ * @param {string} recordData Input string to be searched through.
+ * @param {any} sites An object holding sites returned from the Deims API.
+ *
+ *
+ * @returns {string[]} An object holding Site IDs and names corresponding to the input @param matcheduids.
+ */
+async function getDeimsSiteFromDeimsDataset(recordData: string, sites: any): Promise<SiteReference[]> {
   const deimsDatasetUrlRegex = /(https:\/\/deims\.org\/dataset\/([0-9a-fA-F-]{36}))/;
   let deimsDatasetUrlFromMetadata: string | null = null;
-  const match = deimsDatasetUrl.match(deimsDatasetUrlRegex);
+  const match = recordData.match(deimsDatasetUrlRegex);
 
   if (match && match[1]) {
     deimsDatasetUrlFromMetadata = match[1];
@@ -101,6 +112,15 @@ async function getDeimsSiteFromDeimsDataset(deimsDatasetUrl: string, sites: any)
   return [];
 }
 
+/**
+ * Searches for related Deims IDs of Sites inside a B2Share data object.
+ *
+ * @param {string} recordData Input string to be searched through.
+ * @param {any} sites An object holding sites returned from the Deims API.
+ *
+ *
+ * @returns {string[]} An object holding Site IDs and names corresponding to the input @param matcheduids.
+ */
 export async function getB2ShareMatchedSites(recordData: any, sites: any): Promise<SiteReference[]> {
   let matchedSites: SiteReference[] = [];
 
@@ -143,6 +163,61 @@ const FIELDSITES_ID_TO_DEIMS_UUID_MAP: { [key: string]: { uuid: string; name: st
   TRS: { uuid: '332a99af-8c02-4ce8-8f2b-70d17aaacf0a', name: 'Tarfala Research Station - Sweden' },
 };
 
+/**
+ * Searches for related Deims IDs of Sites inside a fieldSites data object.
+ * FieldSites has their own abbreviations of sites that are also saved in
+ * Deims. Therefore, sites and their mapping is hardcoded for simplicity.
+ *
+ * @param {string} recordData Input string to be searched through.
+ *
+ * @returns {string[]} An object holding Site IDs and names corresponding to the input @param matcheduids.
+ */
+export function getFieldSitesMatchedSites(recordData: any): SiteReference[] {
+  const stationId = recordData?.specificInfo?.acquisition?.station?.id;
+  if (stationId) {
+    const deims = FIELDSITES_ID_TO_DEIMS_UUID_MAP[stationId];
+    if (!deims) {
+      return [];
+    }
+    return [{ siteID: deims?.uuid, siteName: deims?.name }];
+  }
+
+  return [];
+}
+
+/**
+ * Searches for related Deims IDs of Sites inside a Zenodo data object.
+ *
+ * @param {string} recordData Input string to be searched through.
+ * @param {any} sites An object holding sites returned from the Deims API.
+ *
+ *
+ * @returns {string[]} An object holding Site IDs and names corresponding to the input @param matcheduids.
+ */
+export async function getZenodoMatchedSites(recordData: any, sites: any): Promise<SiteReference[]> {
+  let matchedSites: SiteReference[] = [];
+
+  const matchedUuidsFromDescription = findMatchingUuid(recordData.metadata.description, sites);
+  if (matchedUuidsFromDescription) {
+    matchedSites = mapUuidsToSiteReferences(matchedUuidsFromDescription, sites);
+    if (matchedSites.length > 0) {
+      return matchedSites;
+    }
+  }
+
+  if (recordData.metadata.related_identifiers) {
+    const matchedUuidsRelatedIds = findMatchingUuid(JSON.stringify(recordData.metadata.related_identifiers), sites);
+    if (matchedUuidsRelatedIds) {
+      matchedSites = mapUuidsToSiteReferences(matchedUuidsRelatedIds, sites);
+      if (matchedSites.length > 0) {
+        return matchedSites;
+      }
+    }
+  }
+
+  return [];
+}
+
 const DATAREGISTRY_TITLE_TO_DEIMS_MAP: { [key: string]: { uuid: string; name: string } } = {
   'mar piccolo of taranto': {
     uuid: 'ac3f674d-2922-47f6-b1d8-2c91daa81ce1',
@@ -170,46 +245,17 @@ const DATAREGISTRY_TITLE_TO_DEIMS_MAP: { [key: string]: { uuid: string; name: st
   },
 };
 
-export function getFieldSitesMatchedSites(recordData: any): SiteReference[] {
-  const stationId = recordData?.specificInfo?.acquisition?.station?.id;
-  if (stationId) {
-    const deims = FIELDSITES_ID_TO_DEIMS_UUID_MAP[stationId];
-    if (!deims) {
-      return [];
-    }
-    return [{ siteID: deims?.uuid, siteName: deims?.name }];
-  }
-
-  return [];
-}
-
-export async function getZenodoMatchedSites(recordData: any, sites: any): Promise<SiteReference[]> {
-  let matchedSites: SiteReference[] = [];
-
-  const matchedUuidsFromDescription = findMatchingUuid(recordData.metadata.description, sites);
-  if (matchedUuidsFromDescription) {
-    matchedSites = mapUuidsToSiteReferences(matchedUuidsFromDescription, sites);
-    if (matchedSites.length > 0) {
-      return matchedSites;
-    }
-  }
-
-  if (recordData.metadata.related_identifiers) {
-    const matchedUuidsRelatedIds = findMatchingUuid(JSON.stringify(recordData.metadata.related_identifiers), sites);
-    if (matchedUuidsRelatedIds) {
-      matchedSites = mapUuidsToSiteReferences(matchedUuidsRelatedIds, sites);
-      if (matchedSites.length > 0) {
-        return matchedSites;
-      }
-    }
-  }
-
-  return [];
-}
-
-// Deims IDs are nicely included in the files of data registry, however,
-// the repository does not offer a sensible way to view the document without downloading it.
-// In the future, we can try to do this.
+/**
+ * Searches for related Deims IDs of Sites inside a Dataregistry data object.
+ * Deims IDs are nicely included in the files that Dataregistry stores, however,
+ * there is no such information about it in metadata.
+ * Most of Dataregistry files have some information about the site in the title itself,
+ * however without any specific formatting, so this might not be as reliable.
+ *
+ * @param {string} recordData Input string to be searched through.
+ *
+ * @returns {string[]} An object holding Site IDs and names corresponding to the input @param matcheduids.
+ */
 export async function getDataRegistryMatchedSites(recordData: any): Promise<SiteReference[]> {
   const title = recordData?.resource?.title;
 
