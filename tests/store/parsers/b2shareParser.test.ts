@@ -116,6 +116,41 @@ describe('B2Share Parser', () => {
     expect(commonDataset.metadata.externalSourceInformation.externalSourceURI).toBe(
       'http://hdl.handle.net/11304/067cb4a5-5143-406d-84e8-018ecc39601a',
     );
+    expect(commonDataset.metadata.temporalCoverages).toBeDefined();
+    expect(commonDataset.metadata.temporalCoverages).toHaveLength(1);
+    expect(commonDataset.metadata.temporalCoverages).toEqual([
+      {
+        startDate: '2023-05-31',
+        endDate: '2024-05-31',
+      },
+    ]);
+    expect(commonDataset.metadata.geoLocations).toBeDefined();
+    expect(commonDataset.metadata.geoLocations).toHaveLength(2);
+    expect(commonDataset.metadata.geoLocations).toEqual([
+      {
+        geographicDescription: 'Sion (Switzerland)',
+        point: {
+          latitude: 46.22748,
+          longitude: 7.36459,
+        },
+      },
+      {
+        geographicDescription: 'Sion (Switzerland)',
+        boundingBox: {
+          eastBoundLongitude: 7.94,
+          northBoundLatitude: 46.43,
+          southBoundLatitude: 46.04,
+          westBoundLongitude: 6.87,
+        },
+      },
+    ]);
+    expect(commonDataset.metadata.temporalCoverages).toEqual([
+      {
+        startDate: '2023-05-31',
+        endDate: '2024-05-31',
+      },
+    ]);
+
     // We check that the correct string was called to get versions
     expect(fetchJsonSpy).toHaveBeenCalledWith(mockB2ShareData.links.versions);
   });

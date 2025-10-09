@@ -95,7 +95,30 @@
             {
                 "title": "LTER Z\u00f6belboden (Austria) - meteorological data 1996"
             }
-        ]
+        ],
+        "spatial_coverages": [
+            {
+              "box": {
+                "eastbound_longitude": 7.94, 
+                "northbound_latitude": 46.43, 
+                "southbound_latitude": 46.04, 
+                "westbound_longitude": 6.87
+              }, 
+              "place": "Sion (Switzerland)", 
+              "point": {
+                "point_latitude": 46.22748, 
+                "point_longitude": 7.36459
+              }
+            }
+          ], 
+          "temporal_coverages": {
+            "ranges": [
+              {
+                "end_date": "2024-05-31T21:59:00.000Z", 
+                "start_date": "2023-05-31T22:00:00.000Z"
+              }
+            ]
+          }
     },
     "updated": "2025-09-17T09:20:09.546382+00:00"
 }
