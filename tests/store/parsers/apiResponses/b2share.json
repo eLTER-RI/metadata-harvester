@@ -41,6 +41,16 @@
                 "metadata_url": "https://deims.org/8eda49e9-1f4e-4f3e-b58e-e0bb25dc32a6"
             }
         },
+        "alternate_identifiers": [
+            {
+              "alternate_identifier": "353", 
+              "alternate_identifier_type": "B2SHARE_V1_ID"
+            }, 
+            {
+              "alternate_identifier": "http://hdl.handle.net/11304/f3589a0b-aa74-4355-948b-5b735f39788e", 
+              "alternate_identifier_type": "ePIC_PID"
+            }
+          ], 
         "creators": [
             {
                 "creator_name": "Nied, Sebastian",

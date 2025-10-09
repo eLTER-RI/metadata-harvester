@@ -53,6 +53,22 @@ describe('B2Share Parser', () => {
         sizeMeasureType: 'B',
       },
     ]);
+    expect(commonDataset.metadata.alternateIdentifiers).toHaveLength(3);
+    expect(commonDataset.metadata.alternateIdentifiers).toEqual([
+      {
+        alternateID: '353',
+        alternateIDType: 'Other',
+      },
+      {
+        alternateID: 'http://hdl.handle.net/11304/f3589a0b-aa74-4355-948b-5b735f39788e',
+        alternateIDType: 'Other',
+      },
+      {
+        alternateID: 'http://hdl.handle.net/11304/067cb4a5-5143-406d-84e8-018ecc39601a',
+        alternateIDType: 'Handle',
+      },
+    ]);
+
     expect(commonDataset.pids?.doi.identifier).toBe('10.23728/b2share.8f0fdd0163f044a082f8c2571205aaaa');
     expect(commonDataset.metadata.creators).toBeDefined();
     expect(commonDataset.metadata.creators![0].creatorFamilyName).toBe('Nied');
@@ -94,6 +110,9 @@ describe('B2Share Parser', () => {
     expect(commonDataset.metadata.titles).toBeDefined();
     expect(commonDataset.metadata.titles![0].titleText).toBe('LTER Zöbelboden (Austria) - meteorological data 1996');
     expect(commonDataset.metadata.externalSourceInformation.externalSourceName).toBe('B2Share Eudat');
+    expect(commonDataset.metadata.externalSourceInformation.externalSourceURI).toBe(
+      'http://hdl.handle.net/11304/067cb4a5-5143-406d-84e8-018ecc39601a',
+    );
     expect(commonDataset.metadata.externalSourceInformation.externalSourceURI).toBe(
       'http://hdl.handle.net/11304/067cb4a5-5143-406d-84e8-018ecc39601a',
     );
