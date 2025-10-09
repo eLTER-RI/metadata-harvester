@@ -1,16 +1,33 @@
 import { CommonDataset } from '../store/commonStructure';
 import { RuleDbRecord } from '../store/dao/rulesDao';
 
+/**
+ * This function gets the value from nested parts of the structure.
+ * @param {any} obj The object that the function is supposed to search in.
+ * @param {string} path A path in the object, like 'metadata.descriptions[0].descriptionText
+ */
 export function getNestedValue(obj: any, path: string): any {
-  const objectParts = path.split('.');
-  let currentPart = obj;
-  for (const part of objectParts) {
-    if (currentPart === null || currentPart === undefined) {
+  if (obj === null || obj === undefined || !path) {
+    return undefined;
+  }
+
+  // normalizes [0] into .0
+  const normalizedPath = path.replace(/\[(\d+)\]/g, '.$1');
+
+  // remove leading dots
+  const cleanPath = normalizedPath.startsWith('.') ? normalizedPath.substring(1) : normalizedPath;
+
+  const parts = cleanPath.split('.');
+  let current = obj;
+
+  for (const part of parts) {
+    if (current === null || current === undefined) {
       return undefined;
     }
-    currentPart = currentPart[part];
+    current = current[part];
   }
-  return currentPart;
+
+  return current;
 }
 
 /**
