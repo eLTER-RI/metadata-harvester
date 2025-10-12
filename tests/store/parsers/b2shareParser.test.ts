@@ -53,16 +53,8 @@ describe('B2Share Parser', () => {
         sizeMeasureType: 'B',
       },
     ]);
-    expect(commonDataset.metadata.alternateIdentifiers).toHaveLength(3);
+    expect(commonDataset.metadata.alternateIdentifiers).toHaveLength(1);
     expect(commonDataset.metadata.alternateIdentifiers).toEqual([
-      {
-        alternateID: '353',
-        alternateIDType: 'Other',
-      },
-      {
-        alternateID: 'http://hdl.handle.net/11304/f3589a0b-aa74-4355-948b-5b735f39788e',
-        alternateIDType: 'Other',
-      },
       {
         alternateID: 'http://hdl.handle.net/11304/067cb4a5-5143-406d-84e8-018ecc39601a',
         alternateIDType: 'Handle',

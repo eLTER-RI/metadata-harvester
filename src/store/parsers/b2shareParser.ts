@@ -97,10 +97,12 @@ export function extractB2ShareAlternateIdentifiers(input: Metadata): AlternateId
     }
 
     const idType = identifierTypesMap.get(typeKey) as IdentifierType | undefined;
-    identifiers.push({
-      alternateID: value,
-      alternateIDType: idType || 'Other',
-    });
+    if (idType) {
+      identifiers.push({
+        alternateID: value,
+        alternateIDType: idType,
+      });
+    }
   });
   return identifiers;
 }
