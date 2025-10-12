@@ -11,7 +11,8 @@
     "test:coverage": "NODE_ENV=test jest --coverage",
     "lint": "eslint --ext .ts,.tsx ./src",
     "check-format": "prettier --check 'src/**/*.{js,jsx,ts,tsx}'",
-    "migrate": "node-pg-migrate"
+    "migrate": "node-pg-migrate",
+    "migrate:create": "npm run migrate -- create --migration-file-language sql"
   },
   "repository": {
     "type": "git",
