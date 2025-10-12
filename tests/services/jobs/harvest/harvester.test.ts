@@ -7,6 +7,9 @@ import { mapB2ShareToCommonDatasetMetadata } from '../../../../src/store/parsers
 import { mapDataRegistryToCommonDatasetMetadata } from '../../../../src/store/parsers/dataregistryParser';
 import { mapZenodoToCommonDatasetMetadata } from '../../../../src/store/parsers/zenodoParser';
 import { mapFieldSitesToCommonDatasetMetadata } from '../../../../src/store/parsers/fieldSitesParser';
+import { RuleDao, RuleDbRecord } from '../../../../src/store/dao/rulesDao';
+import { applyRuleToRecord } from '../../../../src/utilities/rules';
+import { CommonDataset } from '../../../../src/store/commonStructure';
 
 // To isolate all other layers, we need to isolate the following:
 // those should be tested separately
@@ -21,6 +24,7 @@ jest.mock('../../../../src/utilities/fetchJsonFromRemote');
 jest.mock('../../../../src/utilities/checksum');
 jest.mock('../../../../src/utilities/matchDeimsId');
 const mockedFetchSites = fetchSites as jest.Mock;
+const mockedApplyRuleToRecord = applyRuleToRecord as jest.Mock;
 
 // parsers
 jest.mock('../../../../src/store/parsers/b2shareParser');
@@ -33,9 +37,11 @@ jest.mock('../../../../src/services/jobs/harvest/dbValidation');
 jest.mock('../../../../api/darApi');
 
 describe('Test harvester file', () => {
+  let context: HarvesterContext;
   let mockPool: jest.Mocked<Pool>;
   let mockRecordDao: jest.Mocked<RecordDao>;
   let mockResolvedRecordsDao: jest.Mocked<ResolvedRecordDao>;
+  let mockRuleDao: jest.Mocked<RuleDao>;
 
   beforeEach(() => {
     // before each test, we use different mocks to make it independent
@@ -44,6 +50,17 @@ describe('Test harvester file', () => {
     mockPool = new (Pool as any)();
     mockRecordDao = new (RecordDao as any)(mockPool);
     mockResolvedRecordsDao = new (ResolvedRecordDao as any)(mockPool);
+    mockRuleDao = new (RuleDao as any)(mockPool);
+    context = new HarvesterContext(
+      mockPool,
+      mockRecordDao,
+      mockRuleDao,
+      mockResolvedRecordsDao,
+      [{ siteID: 'deims-1', siteName: 'Test Site' }],
+      'ZENODO',
+      {},
+      true,
+    );
 
     // Mock DAO method returns
     mockRecordDao.getRecordBySourceId.mockResolvedValue([]);
@@ -111,4 +128,50 @@ describe('Test harvester file', () => {
       expect(mapDataRegistryToCommonDatasetMetadata).toHaveBeenCalled();
     });
   });
+
+  describe('synchronizeRecord', () => {});
+  describe('processOneRecordTask', () => {});
+  describe('mapToCommonStructure', () => {});
+  describe('applyRulesToRecord', () => {
+    const mockRecord: CommonDataset = {
+      metadata: {
+        titles: [{ titleText: 'A Mock Title' }],
+        assetType: 'Dataset',
+        externalSourceInformation: {
+          externalSourceURI: 'http://example.com/record/1',
+          externalSourceName: 'ZENODO',
+        },
+      },
+    };
+    const darId = 'dar-123';
+
+    it('should correctly apply working rules to a record', async () => {
+      const workingRule: RuleDbRecord = {
+        id: darId,
+        dar_id: 'some-dar-id',
+        rule_type: 'REPLACE',
+        target_path: 'first_name',
+        orig_value: 'Thomas',
+        new_value: 'Tomas',
+      };
+      mockRuleDao.getRulesForRecord.mockResolvedValue([workingRule]);
+      mockedApplyRuleToRecord.mockReturnValue(true);
+      await context.applyRulesToRecord(mockRecord, darId);
+
+      expect(mockedApplyRuleToRecord).toHaveBeenCalledWith(mockRecord, workingRule);
+      expect(mockRuleDao.deleteRuleForRecord).not.toHaveBeenCalled();
+    });
+
+    it('should delete a rule if does not work', async () => {});
+
+    it('should handle a combination of working and not working rules', async () => {});
+  });
+  describe('handleChangedRecord', () => {});
+  describe('processApiHits', () => {});
+  describe('syncApiRepositoryAll', () => {});
+  describe('syncSitesRepository', () => {});
+  describe('syncSitesRepositoryAll', () => {});
+  describe('processOneSitesRecord', () => {});
+  describe('startRepositorySync', () => {});
+  describe('startRecordSync', () => {});
 });
