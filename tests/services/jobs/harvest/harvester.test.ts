@@ -23,7 +23,6 @@ import { CONFIG } from '../../../../config';
 import { dbValidationPhase } from '../../../../src/services/jobs/harvest/dbValidation';
 import { IdentifierType } from '../../../../src/store/commonStructure';
 import { getZenodoMatchedSites } from '../../../../src/utilities/matchDeimsId';
-import { getFieldSitesMatchedSites } from '../../../../src/utilities/matchDeimsId';
 
 // To isolate all other layers, we need to isolate the following:
 // those should be tested separately
@@ -156,8 +155,6 @@ describe('Test harvester file', () => {
       expect(mapDataRegistryToCommonDatasetMetadata).toHaveBeenCalled();
     });
   });
-
-  describe('getUrlWithExternalSourceURIQuery', () => {});
   describe('findDarRecordBySourceURL', () => {});
   describe('synchronizeRecord', () => {});
   describe('processOneRecordTask', () => {
