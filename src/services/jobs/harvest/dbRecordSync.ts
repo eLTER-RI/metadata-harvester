@@ -24,8 +24,6 @@ export async function dbRecordUpsert(
   title: string | null,
   oldUrl?: string,
 ) {
-  const dbMatches = await recordDao.getRecordBySourceId(sourceUrl);
-  const missingInDb = dbMatches.length === 0;
   if (!darId) {
     await recordDao.updateDarIdStatus(sourceUrl, {
       status: 'failed',
@@ -33,9 +31,8 @@ export async function dbRecordUpsert(
     return;
   }
 
-  if (missingInDb) {
-    log('info', `Creating database record for ${sourceUrl}`);
-    await recordDao.createRecord({
+  try {
+    const recordPayload = {
       source_url: sourceUrl,
       source_repository: repositoryType,
       source_checksum: sourceChecksum,
@@ -43,37 +40,29 @@ export async function dbRecordUpsert(
       dar_checksum: darChecksum,
       status: 'success',
       title: title,
+    };
+
+    if (oldUrl) {
+      log('info', `Record ${sourceUrl} has an old version of ${oldUrl} in DAR with ${darId}`);
+      await recordDao.updateRecordWithPrimaryKey(oldUrl, recordPayload);
+      return;
+    }
+
+    const dbMatches = await recordDao.getRecordBySourceId(sourceUrl);
+    if (dbMatches.length === 0) {
+      log('info', `Creating database record for ${sourceUrl}`);
+      await recordDao.createRecord(recordPayload);
+      log('info', `Successfully created record: ${sourceUrl}`);
+    } else {
+      log('info', `Updating record in database for record ${sourceUrl}, dar id ${darId}`);
+      await recordDao.updateRecord(sourceUrl, recordPayload);
+      log('info', `Successfully updated record: ${sourceUrl}`);
+    }
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+    log('error', `Failed to upsert record for ${sourceUrl}. Reason: ${errorMessage}`);
+    await recordDao.updateDarIdStatus(sourceUrl, {
+      status: 'failed',
     });
-    return;
   }
-
-  if (oldUrl) {
-    log('info', `Record ${sourceUrl} has an old version of ${oldUrl} in DAR with ${darId}`);
-    await recordDao.updateRecordWithPrimaryKey(oldUrl, {
-      source_url: sourceUrl,
-      source_repository: repositoryType,
-      source_checksum: sourceChecksum,
-      dar_id: darId,
-      dar_checksum: darChecksum,
-      status: 'updating',
-      title: title,
-    });
-    return;
-  }
-
-  log('info', `Updating record in database for record ${sourceUrl}, dar id ${darId}`);
-  await recordDao.updateRecord(sourceUrl, {
-    source_url: sourceUrl,
-    source_repository: repositoryType,
-    source_checksum: sourceChecksum,
-    dar_id: darId,
-    dar_checksum: darChecksum,
-    status: 'updating',
-    title: title,
-  });
-
-  log('info', 'Record was up to date.');
-  await recordDao.updateStatus(sourceUrl, {
-    status: 'success',
-  });
 }
