@@ -62,8 +62,12 @@ function extractSitesGeolocation(input: any): Geolocation[] {
 async function handleFieldSitesVersioning(url: string, fieldSites: any): Promise<[string, any, RelatedIdentifier[]]> {
   const versionRelations: RelatedIdentifier[] = [];
 
-  if (fieldSites.previousVersion && Array.isArray(fieldSites.previousVersion)) {
-    for (const prevUrl of fieldSites.previousVersion) {
+  if (fieldSites.previousVersion) {
+    const previousVersions = Array.isArray(fieldSites.previousVersion)
+      ? fieldSites.previousVersion
+      : [fieldSites.previousVersion];
+
+    for (const prevUrl of previousVersions) {
       if (typeof prevUrl === 'string' && prevUrl) {
         versionRelations.push({
           relatedID: prevUrl,

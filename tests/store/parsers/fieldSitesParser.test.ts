@@ -59,7 +59,7 @@ describe('SITES Parser', () => {
         relatedID: 'https://meta.fieldsites.se/objects/Y3ct4eNvkD7goZFtdYwIb4wK',
         relatedIDType: 'URL',
         relatedResourceType: 'Dataset',
-        relationType: 'IsPreviousVersionOf',
+        relationType: 'IsNewVersionOf',
       },
     ]);
     expect(commonDataset.metadata.publicationDate).toBe('2023-01-01');
