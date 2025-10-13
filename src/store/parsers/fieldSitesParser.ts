@@ -161,22 +161,6 @@ export async function mapFieldSitesToCommonDatasetMetadata(
   }
 
   const relatedIdentifiers: RelatedIdentifier[] = [];
-  if (fieldSites.previousVersion) {
-    const previousVersions = Array.isArray(fieldSites.previousVersion)
-      ? fieldSites.previousVersion
-      : [fieldSites.previousVersion];
-
-    previousVersions.forEach((versionUrl: string) => {
-      if (typeof versionUrl === 'string' && versionUrl.trim() !== '') {
-        relatedIdentifiers.push({
-          relatedID: versionUrl,
-          relatedIDType: 'URL',
-          relatedResourceType: 'Dataset',
-          relationType: 'IsPreviousVersionOf',
-        });
-      }
-    });
-  }
   relatedIdentifiers.push(...versionRelations);
 
   if (fieldSites.latestVersion && fieldSites.latestVersion !== url) {
