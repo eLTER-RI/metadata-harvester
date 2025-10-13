@@ -1,5 +1,13 @@
 import { CommonDataset } from '../../../src/store/commonStructure';
-import { appendValue, getNestedValue, setNestedValue } from '../../../src/utilities/rules';
+import { commonDatasetSchema } from '../../../src/store/commonStructure.zod.gen';
+import { RuleDbRecord } from '../../../src/store/dao/rulesDao';
+import { appendValue, applyRuleToRecord, getNestedValue, setNestedValue } from '../../../src/utilities/rules';
+
+jest.mock('../../../src/store/commonStructure.zod.gen', () => ({
+  commonDatasetSchema: {
+    safeParse: jest.fn(),
+  },
+}));
 
 describe('Rules Utility Functions', () => {
   let sampleRecord: CommonDataset;
@@ -169,6 +177,135 @@ describe('Rules Utility Functions', () => {
         appendValue(sampleRecord, 'pids', 'value appended to undefined property');
         expect(sampleRecord.pids).toEqual(['value appended to undefined property']);
       });
+    });
+  });
+
+  describe('applyRules Advanced Scenarios', () => {
+    let sampleRecord: CommonDataset;
+
+    beforeEach(() => {
+      sampleRecord = {
+        metadata: {
+          assetType: 'Dataset',
+          titles: [{ titleText: 'Some title of a record from remote repository' }],
+          descriptions: [
+            {
+              descriptionText: 'Description text.',
+              descriptionType: 'Abstract',
+            },
+          ],
+          externalSourceInformation: {
+            externalSourceName: 'Zenodo',
+          },
+        },
+      };
+
+      (commonDatasetSchema.safeParse as jest.Mock).mockReturnValue({ success: true });
+    });
+
+    it('should accept creating an array for valid metadata field when the field not yet filled in', () => {
+      const rules: RuleDbRecord[] = [
+        {
+          id: '1',
+          dar_id: 'abc-def',
+          target_path: 'metadata.keywords',
+          orig_value: undefined,
+          rule_type: 'ADD',
+          new_value: { keywordLabel: 'First Keyword' },
+        },
+      ];
+
+      const changedFst = applyRuleToRecord(sampleRecord, rules[0]);
+
+      expect(changedFst).toBe(true);
+      expect(sampleRecord.metadata.keywords).toEqual([{ keywordLabel: 'First Keyword' }]);
+    });
+
+    it('should apply rules that depend on each other within the same batch', () => {
+      const rules: RuleDbRecord[] = [
+        {
+          id: '1',
+          dar_id: 'abc-def',
+          target_path: 'metadata.keywords',
+          orig_value: undefined,
+          rule_type: 'ADD',
+          new_value: { keywordLabel: 'First Keyword' },
+        },
+        {
+          id: '2',
+          dar_id: 'ghi-jkl',
+          target_path: 'metadata.keywords',
+          orig_value: [{ keywordLabel: 'First Keyword' }],
+          rule_type: 'ADD',
+          new_value: { keywordLabel: 'Second Keyword' },
+        },
+      ];
+
+      const changedFst = applyRuleToRecord(sampleRecord, rules[0]);
+      const changedSnd = applyRuleToRecord(sampleRecord, rules[1]);
+
+      expect(changedFst).toBe(true);
+      expect(changedSnd).toBe(true);
+      expect(sampleRecord.metadata.keywords).toEqual([
+        { keywordLabel: 'First Keyword' },
+        { keywordLabel: 'Second Keyword' },
+      ]);
+    });
+
+    it('should fail a rule if not valid new field name', () => {
+      (commonDatasetSchema.safeParse as jest.Mock).mockReturnValue({
+        success: false,
+        error: { flatten: () => 'Mocked validation error' },
+      });
+      const originalRecordState = JSON.parse(JSON.stringify(sampleRecord));
+      const rule: RuleDbRecord = {
+        id: '2',
+        dar_id: 'ghi-jkl',
+        target_path: 'metadata.keywords',
+        orig_value: undefined,
+        rule_type: 'ADD',
+        new_value: { notExistingFieldName: 'Second Keyword' },
+      };
+
+      const changed = applyRuleToRecord(sampleRecord, rule);
+
+      expect(changed).toBe(false);
+      expect(sampleRecord).toEqual(originalRecordState);
+
+      const rule2: RuleDbRecord = {
+        id: '2',
+        dar_id: 'ghi-jkl',
+        target_path: 'metadata.keywords',
+        orig_value: undefined,
+        rule_type: 'REPLACE',
+        new_value: { notExistingFieldName: 'Second Keyword' },
+      };
+
+      const changed2 = applyRuleToRecord(sampleRecord, rule2);
+
+      expect(changed2).toBe(false);
+      expect(sampleRecord).toEqual(originalRecordState);
+    });
+
+    it('should fail a rule if not valid target path name', () => {
+      (commonDatasetSchema.safeParse as jest.Mock).mockReturnValue({
+        success: false,
+        error: { flatten: () => 'Mocked validation error' },
+      });
+      const originalRecordState = JSON.parse(JSON.stringify(sampleRecord));
+      const rule: RuleDbRecord = {
+        id: '1',
+        dar_id: 'abc-def',
+        target_path: 'metadata.idonotexist',
+        orig_value: undefined,
+        rule_type: 'ADD',
+        new_value: { keywordLabel: 'First Keyword' },
+      };
+
+      const changed = applyRuleToRecord(sampleRecord, rule);
+
+      expect(changed).toBe(false);
+      expect(sampleRecord).toEqual(originalRecordState);
     });
   });
 });
