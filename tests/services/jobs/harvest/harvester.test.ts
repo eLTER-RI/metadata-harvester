@@ -23,6 +23,7 @@ import { CONFIG } from '../../../../config';
 import { dbValidationPhase } from '../../../../src/services/jobs/harvest/dbValidation';
 import { IdentifierType } from '../../../../src/store/commonStructure';
 import { getZenodoMatchedSites } from '../../../../src/utilities/matchDeimsId';
+import { getFieldSitesMatchedSites } from '../../../../src/utilities/matchDeimsId';
 
 // To isolate all other layers, we need to isolate the following:
 // those should be tested separately
@@ -241,17 +242,7 @@ describe('Test harvester file', () => {
     });
 
     it('should stop processing if status success', async () => {
-      const existingDbRecord: DbRecord = {
-        source_url: sourceUrl,
-        source_repository: 'ZENODO',
-        source_checksum: 'matching-checksum',
-        dar_id: 'bbb',
-        dar_checksum: 'matching-checksum',
-        status: 'success',
-        last_harvested: new Date('2025-12-31'),
-        title: 'A title of a record',
-      };
-      mockRecordDao.getRecordBySourceId.mockResolvedValue([existingDbRecord]);
+      mockRecordDao.getRecordBySourceId.mockResolvedValue([{ status: 'success' }] as any);
 
       await context.processOneRecordTask(sourceUrl);
 
