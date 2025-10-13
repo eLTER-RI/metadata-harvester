@@ -310,7 +310,7 @@ export class HarvesterContext {
    *
    * @param {string[]} hits An array of "hits" from the API response, where each hit represents a record.
    */
-  public async processApiHits(hits: string[]) {
+  public async processApiHits(hits: any[]) {
     const { selfLinkKey } = this.repoConfig;
     await Promise.all(
       hits.map(async (hit: any) => {
