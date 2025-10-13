@@ -4,6 +4,10 @@ import { mapDataRegistryToCommonDatasetMetadata } from '../../../src/store/parse
 
 jest.mock('../../../src/utilities/fetchJsonFromRemote');
 
+jest.mock('../../../src/services/serviceLogging', () => ({
+  log: jest.fn(),
+}));
+
 describe('DataRegistry Parser', () => {
   beforeEach(() => {
     jest.clearAllMocks();

@@ -7,6 +7,10 @@ import { mapZenodoToCommonDatasetMetadata } from '../../../src/store/parsers/zen
 
 jest.mock('../../../src/utilities/fetchJsonFromRemote');
 
+jest.mock('../../../src/services/serviceLogging', () => ({
+  log: jest.fn(),
+}));
+
 describe('Zenodo Parser', () => {
   beforeEach(() => {
     jest.clearAllMocks();

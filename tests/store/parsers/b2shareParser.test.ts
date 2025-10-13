@@ -7,6 +7,10 @@ import * as fetcher from '../../../src/utilities/fetchJsonFromRemote';
 
 jest.mock('../../../src/utilities/fetchJsonFromRemote');
 
+jest.mock('../../../src/services/serviceLogging', () => ({
+  log: jest.fn(),
+}));
+
 describe('B2Share Parser', () => {
   beforeEach(() => {
     jest.clearAllMocks();

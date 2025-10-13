@@ -9,6 +9,10 @@ jest.mock('../../../src/store/commonStructure.zod.gen', () => ({
   },
 }));
 
+jest.mock('../../../src/services/serviceLogging', () => ({
+  log: jest.fn(),
+}));
+
 describe('Rules Utility Functions', () => {
   let sampleRecord: CommonDataset;
 

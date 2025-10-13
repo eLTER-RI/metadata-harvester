@@ -15,7 +15,6 @@ import { RuleDao } from '../../../../src/store/dao/rulesDao';
 import * as rulesUtilities from '../../../../src/utilities/rules';
 import { CONFIG } from '../../../../config';
 import { dbValidationPhase } from '../../../../src/services/jobs/harvest/dbValidation';
-import { log } from '../../../../src/services/serviceLogging';
 
 // To isolate all other layers, we need to isolate the following:
 // those should be tested separately
@@ -37,6 +36,11 @@ jest.mock('../../../../src/store/parsers/dataregistryParser');
 jest.mock('../../../../src/store/parsers/zenodoParser');
 jest.mock('../../../../src/store/parsers/fieldSitesParser');
 jest.mock('../../../../src/services/jobs/harvest/dbValidation');
+
+// services
+jest.mock('../../../../src/services/serviceLogging', () => ({
+  log: jest.fn(),
+}));
 
 describe('Test harvester file', () => {
   let context: HarvesterContext;

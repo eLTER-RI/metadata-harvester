@@ -6,6 +6,10 @@ import { mapFieldSitesToCommonDatasetMetadata } from '../../../src/store/parsers
 
 jest.mock('../../../src/utilities/fetchJsonFromRemote');
 
+jest.mock('../../../src/services/serviceLogging', () => ({
+  log: jest.fn(),
+}));
+
 describe('SITES Parser', () => {
   beforeEach(() => {
     jest.clearAllMocks();
