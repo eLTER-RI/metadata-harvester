@@ -23,6 +23,7 @@ import { CONFIG } from '../../../../config';
 import { dbValidationPhase } from '../../../../src/services/jobs/harvest/dbValidation';
 import { IdentifierType } from '../../../../src/store/commonStructure';
 import { getZenodoMatchedSites } from '../../../../src/utilities/matchDeimsId';
+import { fieldSitesLimiter } from '../../../../src/services/rateLimiterConcurrency';
 
 // To isolate all other layers, we need to isolate the following:
 // those should be tested separately
@@ -397,9 +398,86 @@ describe('Test harvester file', () => {
       expect(contextSpy).toHaveBeenCalledWith('https://zenodo.org/api/records/99999999');
     });
   });
-  describe('syncApiRepositoryAll', () => {});
-  describe('syncSitesRepository', () => {});
-  describe('syncSitesRepositoryAll', () => {});
+  describe('syncApiRepositoryAll', () => {
+    it('should fetch pages until a partial or empty page is found', async () => {
+      context.repoConfig.pageSize = 2;
+      context.repoConfig.dataKey = 'hits';
+      context.repoConfig.apiUrl = 'http://b2share.eudat.eu/api/records?q=test';
+
+      mockedFetchJson.mockResolvedValueOnce({ hits: ['hit1', 'hit2'] }).mockResolvedValueOnce({ hits: ['hit3'] });
+
+      const processApiHitsSpy = jest.spyOn(context, 'processApiHits').mockResolvedValue(undefined);
+
+      await context.syncApiRepositoryAll();
+
+      expect(mockedFetchJson).toHaveBeenCalledTimes(2);
+      expect(mockedFetchJson).toHaveBeenCalledWith('http://b2share.eudat.eu/api/records?q=test&size=2&page=1');
+      expect(mockedFetchJson).toHaveBeenCalledWith('http://b2share.eudat.eu/api/records?q=test&size=2&page=2');
+
+      expect(processApiHitsSpy).toHaveBeenCalledTimes(2);
+      expect(processApiHitsSpy).toHaveBeenCalledWith(['hit1', 'hit2']);
+      expect(processApiHitsSpy).toHaveBeenCalledWith(['hit3']);
+    });
+
+    it('should not start if first page is empty', async () => {
+      context.repoConfig.pageSize = 2;
+      context.repoConfig.dataKey = 'hits';
+      mockedFetchJson.mockResolvedValueOnce({ hits: [] });
+      const processApiHitsSpy = jest.spyOn(context, 'processApiHits');
+
+      await context.syncApiRepositoryAll();
+
+      expect(mockedFetchJson).toHaveBeenCalledTimes(1);
+      expect(processApiHitsSpy).not.toHaveBeenCalled();
+    });
+  });
+  describe('syncSitesRepository', () => {
+    it('schedules processing for each URL', async () => {
+      const urls = ['http://meta.fieldsites.se/records/1', 'http://meta.fieldsites.se/records/2'];
+      const processSpy = jest.spyOn(context, 'processOneRecordTask').mockResolvedValue(undefined);
+      const scheduleSpy = jest.spyOn(fieldSitesLimiter, 'schedule');
+
+      await context.syncSitesRepository(urls);
+
+      expect(scheduleSpy).toHaveBeenCalledTimes(2);
+      expect(processSpy).toHaveBeenCalledTimes(2);
+      expect(processSpy).toHaveBeenCalledWith('http://meta.fieldsites.se/records/1');
+      expect(processSpy).toHaveBeenCalledWith('http://meta.fieldsites.se/records/2');
+    });
+  });
+  describe('syncSitesRepositoryAll', () => {
+    it('fetches XML sitemap, parses URLs, and syncSitesRepository', async () => {
+      const mockDocument = {
+        getElementsByTagName: () => [
+          { textContent: 'http://meta.fieldsites.se/records/1' },
+          { textContent: 'http://meta.fieldsites.se/records/2' },
+        ],
+      };
+      mockedFetchXml.mockResolvedValue(mockDocument as any);
+
+      const syncSitesRepoSpy = jest.spyOn(context, 'syncSitesRepository').mockResolvedValue(undefined);
+
+      await context.syncSitesRepositoryAll('http://sitemap.xml');
+
+      expect(mockedFetchXml).toHaveBeenCalledWith('http://sitemap.xml');
+
+      expect(syncSitesRepoSpy).toHaveBeenCalledWith([
+        'http://meta.fieldsites.se/records/1',
+        'http://meta.fieldsites.se/records/2',
+      ]);
+    });
+
+    it('should not call syncSitesRepository if fetching the sitemap fails', async () => {
+      mockedFetchXml.mockResolvedValue(null);
+      const syncSitesRepoSpy = jest.spyOn(context, 'syncSitesRepository');
+
+      await context.syncSitesRepositoryAll('http://sitemap.xml');
+
+      expect(mockedFetchXml).toHaveBeenCalledWith('http://sitemap.xml');
+      expect(syncSitesRepoSpy).not.toHaveBeenCalled();
+    });
+  });
+
   describe('startRepositorySync transaction test', () => {
     it('startRepositorySync should COMMIT on success', async () => {
       const context = await HarvesterContext.create(mockPool, 'ZENODO', true);
