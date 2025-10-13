@@ -1,5 +1,9 @@
-import { Pool } from 'pg';
-import { HarvesterContext } from '../../../../src/services/jobs/harvest/harvester';
+import { Pool, PoolClient } from 'pg';
+import {
+  HarvesterContext,
+  startRecordSync,
+  startRepositorySync,
+} from '../../../../src/services/jobs/harvest/harvester';
 import { RecordDao } from '../../../../src/store/dao/recordDao';
 import { ResolvedRecordDao } from '../../../../src/store/dao/resolvedRecordsDao';
 import { fetchSites } from '../../../../src/utilities/matchDeimsId';
@@ -7,10 +11,11 @@ import { mapB2ShareToCommonDatasetMetadata } from '../../../../src/store/parsers
 import { mapDataRegistryToCommonDatasetMetadata } from '../../../../src/store/parsers/dataregistryParser';
 import { mapZenodoToCommonDatasetMetadata } from '../../../../src/store/parsers/zenodoParser';
 import { mapFieldSitesToCommonDatasetMetadata } from '../../../../src/store/parsers/fieldSitesParser';
-import { RuleDao, RuleDbRecord } from '../../../../src/store/dao/rulesDao';
+import { RuleDao } from '../../../../src/store/dao/rulesDao';
 import * as rulesUtilities from '../../../../src/utilities/rules';
-import { CommonDataset } from '../../../../src/store/commonStructure';
 import { CONFIG } from '../../../../config';
+import { dbValidationPhase } from '../../../../src/services/jobs/harvest/dbValidation';
+import { log } from '../../../../src/services/serviceLogging';
 
 // To isolate all other layers, we need to isolate the following:
 // those should be tested separately
@@ -33,21 +38,22 @@ jest.mock('../../../../src/store/parsers/zenodoParser');
 jest.mock('../../../../src/store/parsers/fieldSitesParser');
 jest.mock('../../../../src/services/jobs/harvest/dbValidation');
 
-// And finally, the darApi
-jest.mock('../../../../api/darApi');
-
 describe('Test harvester file', () => {
   let context: HarvesterContext;
   let mockPool: jest.Mocked<Pool>;
+  let mockClient: jest.Mocked<PoolClient>;
   let mockRecordDao: jest.Mocked<RecordDao>;
   let mockResolvedRecordsDao: jest.Mocked<ResolvedRecordDao>;
   let mockRuleDao: jest.Mocked<RuleDao>;
 
   beforeEach(() => {
-    // before each test, we use different mocks to make it independent
     jest.clearAllMocks();
-
+    mockClient = {
+      query: jest.fn().mockResolvedValue(undefined),
+      release: jest.fn(),
+    } as any;
     mockPool = new (Pool as any)();
+    (mockPool.connect as jest.Mock).mockResolvedValue(mockClient);
     mockRecordDao = new (RecordDao as any)(mockPool);
     mockResolvedRecordsDao = new (ResolvedRecordDao as any)(mockPool);
     mockRuleDao = new (RuleDao as any)(mockPool);
@@ -129,39 +135,12 @@ describe('Test harvester file', () => {
     });
   });
 
+  describe('getUrlWithExternalSourceURIQuery', () => {});
+  describe('findDarRecordBySourceURL', () => {});
   describe('synchronizeRecord', () => {});
   describe('processOneRecordTask', () => {});
   describe('mapToCommonStructure', () => {});
   describe('applyRulesToRecord', () => {
-    const mockRecord: CommonDataset = {
-      metadata: {
-        titles: [{ titleText: 'A Mock Title' }],
-        assetType: 'Dataset',
-        externalSourceInformation: {
-          externalSourceURI: 'http://example.com/record/1',
-          externalSourceName: 'ZENODO',
-        },
-      },
-    };
-    const darId = 'dar-123';
-
-    // it('should correctly apply working rules to a record', async () => {
-    //   const workingRule: RuleDbRecord = {
-    //     id: darId,
-    //     dar_id: 'some-dar-id',
-    //     rule_type: 'REPLACE',
-    //     target_path: 'first_name',
-    //     orig_value: 'Thomas',
-    //     new_value: 'Tomas',
-    //   };
-    //   mockRuleDao.getRulesForRecord.mockResolvedValue([workingRule]);
-    //   mockedApplyRuleToRecord.mockReturnValue(true);
-    //   await context.applyRulesToRecord(mockRecord, darId);
-
-    //   expect(mockedApplyRuleToRecord).toHaveBeenCalledWith(mockRecord, workingRule);
-    //   expect(mockRuleDao.deleteRuleForRecord).not.toHaveBeenCalled();
-    // });
-
     it('should delete a rule if does not work', async () => {});
 
     it('should handle a combination of working and not working rules', async () => {});
@@ -169,44 +148,73 @@ describe('Test harvester file', () => {
   describe('handleChangedRecord', () => {});
   describe('processApiHits', () => {
     it('should call process one record task with correct url', async () => {
-      // fix
-      const hits = [
-        `
-          links: {
-            "self": "https://zenodo.org/api/records/10630263",
-            "doi": "some url"
-          },
-          "title": "Elter record title",
-      `,
-      ];
-      const rulesUtilitiesSpy = jest
-        .spyOn(rulesUtilities, 'getNestedValue')
-        .mockResolvedValueOnce('https://zenodo.org/api/records/10630263');
       const contextSpy = jest.spyOn(context, 'processOneRecordTask').mockResolvedValue(undefined);
-
-      await context.processApiHits(hits);
-
-      expect(rulesUtilitiesSpy).toHaveBeenCalledTimes(1);
-      expect(rulesUtilitiesSpy).toHaveBeenCalledWith(
-        `
+      const hits = [
+        {
           links: {
-            "self": "https://zenodo.org/api/records/10630263",
-            "doi": "some url"
+            self: 'https://zenodo.org/api/records/10630263',
           },
-          "title": "Elter record title",
-      `,
-        context.repoConfig.selfLinkKey,
-      );
-      expect(contextSpy).toHaveBeenCalledTimes(1);
+        },
+        {
+          links: {
+            self: 'https://zenodo.org/api/records/99999999',
+          },
+        },
+      ];
+      await context.processApiHits(hits);
+      expect(contextSpy).toHaveBeenCalledTimes(2);
       expect(contextSpy).toHaveBeenCalledWith('https://zenodo.org/api/records/10630263');
+      expect(contextSpy).toHaveBeenCalledWith('https://zenodo.org/api/records/99999999');
     });
   });
   describe('syncApiRepositoryAll', () => {});
   describe('syncSitesRepository', () => {});
   describe('syncSitesRepositoryAll', () => {});
   describe('processOneSitesRecord', () => {});
-  describe('startRepositorySync', () => {});
-  describe('startRecordSync', () => {
-    // todo: resolve clients
+  describe('startRepositorySync transaction test', () => {
+    it('startRepositorySync should COMMIT on success', async () => {
+      const context = await HarvesterContext.create(mockPool, 'ZENODO', true);
+      context.syncApiRepositoryAll = jest.fn().mockResolvedValue(undefined);
+
+      await startRepositorySync(context);
+
+      expect(mockClient.query).toHaveBeenCalledWith('BEGIN');
+      expect(dbValidationPhase).toHaveBeenCalledWith(context);
+      expect(context.syncApiRepositoryAll).toHaveBeenCalled();
+      expect(mockClient.query).toHaveBeenCalledWith('COMMIT');
+    });
+
+    it('startRepositorySync should ROLLBACK on failure', async () => {
+      const context = await HarvesterContext.create(mockPool, 'ZENODO', true);
+      const testError = new Error('Sync Failed!');
+      context.syncApiRepositoryAll = jest.fn().mockRejectedValue(testError);
+
+      await expect(startRepositorySync(context)).rejects.toThrow(testError);
+
+      expect(mockClient.query).toHaveBeenCalledWith('BEGIN');
+      expect(mockClient.query).toHaveBeenCalledWith('ROLLBACK');
+    });
+  });
+  describe('Transaction tests for startRepositorySync and startRecordSync', () => {
+    it('startRecordSync should COMMIT on success', async () => {
+      const context = await HarvesterContext.create(mockPool, 'SITES', true);
+      context.processOneSitesRecord = jest.fn().mockResolvedValue(undefined);
+
+      await startRecordSync(context, 'http://test.com/site/1');
+
+      expect(mockClient.query).toHaveBeenCalledWith('BEGIN');
+      expect(context.processOneSitesRecord).toHaveBeenCalledWith('http://test.com/site/1');
+      expect(mockClient.query).toHaveBeenCalledWith('COMMIT');
+    });
+    it('startRecordSync should ROLLBACK on failure', async () => {
+      const context = await HarvesterContext.create(mockPool, 'SITES', true);
+      const testError = new Error('Sync Failed!');
+      context.processOneSitesRecord = jest.fn().mockRejectedValue(testError);
+
+      await expect(startRecordSync(context, 'http://test.com/site/1')).rejects.toThrow(testError);
+
+      expect(mockClient.query).toHaveBeenCalledWith('BEGIN');
+      expect(mockClient.query).toHaveBeenCalledWith('ROLLBACK');
+    });
   });
 });
