@@ -12,7 +12,8 @@
     "lint": "eslint --ext .ts,.tsx ./src",
     "check-format": "prettier --check 'src/**/*.{js,jsx,ts,tsx}'",
     "migrate": "node-pg-migrate",
-    "migrate:create": "npm run migrate -- create --migration-file-language sql"
+    "migrate:create": "npm run migrate -- create --migration-file-language sql",
+    "generate:schemas": "ts-to-zod src/store/commonStructure.ts src/store/commonStructure.zod.gen.ts"
   },
   "repository": {
     "type": "git",
