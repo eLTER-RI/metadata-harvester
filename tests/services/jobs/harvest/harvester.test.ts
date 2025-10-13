@@ -6,7 +6,11 @@ import {
 } from '../../../../src/services/jobs/harvest/harvester';
 import { DbRecord, RecordDao } from '../../../../src/store/dao/recordDao';
 import { ResolvedRecordDao } from '../../../../src/store/dao/resolvedRecordsDao';
-import { fetchSites } from '../../../../src/utilities/matchDeimsId';
+import {
+  fetchSites,
+  getB2ShareMatchedSites,
+  getDataRegistryMatchedSites,
+} from '../../../../src/utilities/matchDeimsId';
 import { mapB2ShareToCommonDatasetMetadata } from '../../../../src/store/parsers/b2shareParser';
 import { mapDataRegistryToCommonDatasetMetadata } from '../../../../src/store/parsers/dataregistryParser';
 import { mapZenodoToCommonDatasetMetadata } from '../../../../src/store/parsers/zenodoParser';
@@ -18,6 +22,7 @@ import * as checksumUtils from '../../../../src/utilities/checksum';
 import { CONFIG } from '../../../../config';
 import { dbValidationPhase } from '../../../../src/services/jobs/harvest/dbValidation';
 import { IdentifierType } from '../../../../src/store/commonStructure';
+import { getZenodoMatchedSites } from '../../../../src/utilities/matchDeimsId';
 
 // To isolate all other layers, we need to isolate the following:
 // those should be tested separately
@@ -256,7 +261,52 @@ describe('Test harvester file', () => {
       expect((context as any).synchronizeRecord).not.toHaveBeenCalled();
     });
   });
-  describe('mapToCommonStructure', () => {});
+  describe('mapToCommonStructure', () => {
+    it('should call the correct mapper for the ZENODO repository type', async () => {
+      const zenodoContext = await HarvesterContext.create(mockPool, 'ZENODO', true);
+      const sourceUrl = 'http://zenodo.org/record/1';
+      const recordData = { id: 'zenodo-1', title: 'Test Data' };
+      const expectedMappedDataset = { metadata: { assetType: 'Dataset' } };
+
+      (getZenodoMatchedSites as jest.Mock).mockResolvedValue([]);
+      (mapZenodoToCommonDatasetMetadata as jest.Mock).mockResolvedValue(expectedMappedDataset);
+
+      await zenodoContext.mapToCommonStructure(sourceUrl, recordData);
+
+      expect(getZenodoMatchedSites).toHaveBeenCalledWith(recordData, zenodoContext.sites);
+      expect(mapZenodoToCommonDatasetMetadata).toHaveBeenCalledWith(sourceUrl, recordData, []);
+    });
+
+    it('should call the correct mapper for the B2SHARE repository type', async () => {
+      const b2shareContext = await HarvesterContext.create(mockPool, 'B2SHARE_EUDAT', true);
+      const sourceUrl = 'http://b2shareEudat.org/record/1';
+      const recordData = { id: 'b2share-1', title: 'Test Data' };
+      const expectedMappedDataset = { metadata: { assetType: 'Dataset' } };
+
+      (getB2ShareMatchedSites as jest.Mock).mockResolvedValue([]);
+      (mapB2ShareToCommonDatasetMetadata as jest.Mock).mockResolvedValue(expectedMappedDataset);
+
+      await b2shareContext.mapToCommonStructure(sourceUrl, recordData);
+
+      expect(getB2ShareMatchedSites).toHaveBeenCalledWith(recordData, b2shareContext.sites);
+      expect(mapB2ShareToCommonDatasetMetadata).toHaveBeenCalledWith(sourceUrl, recordData, [], 'B2SHARE_EUDAT');
+    });
+
+    it('should call the correct mapper for the Dataregistry repository type', async () => {
+      const dataregistryCtx = await HarvesterContext.create(mockPool, 'DATAREGISTRY', true);
+      const sourceUrl = 'https://dataregistry.lteritalia.it/.org/record/1';
+      const recordData = { id: 'dataregistry-1', title: 'Test Data' };
+      const expectedMappedDataset = { metadata: { assetType: 'Dataset' } };
+
+      (getDataRegistryMatchedSites as jest.Mock).mockResolvedValue([]);
+      (mapDataRegistryToCommonDatasetMetadata as jest.Mock).mockResolvedValue(expectedMappedDataset);
+
+      await dataregistryCtx.mapToCommonStructure(sourceUrl, recordData);
+
+      expect(getDataRegistryMatchedSites).toHaveBeenCalledWith(recordData);
+      expect(mapDataRegistryToCommonDatasetMetadata).toHaveBeenCalledWith(sourceUrl, recordData, []);
+    });
+  });
   describe('applyRulesToRecord', () => {
     const mockRecord = {
       metadata: {
