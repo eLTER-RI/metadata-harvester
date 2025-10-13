@@ -181,6 +181,21 @@ describe('B2Share Parser', () => {
       'http://hdl.handle.net/11304/067cb4a5-5143-406d-84e8-018ecc39601a',
     );
 
+    expect(commonDataset.metadata.relatedIdentifiers).toEqual([
+      {
+        relatedID: '10.48550/arXiv.2211.01226',
+        relatedIDType: 'DOI',
+        relatedResourceType: undefined,
+        relationType: 'IsDescribedBy',
+      },
+      {
+        relatedID: 'https://b2share.eudat.eu/api/records/7d03f3d9aca64626a1c2c0576ccb0d31',
+        relatedIDType: 'URL',
+        relatedResourceType: 'Dataset',
+        relationType: 'IsNewVersionOf',
+      },
+    ]);
+
     expect(fetchJsonSpy).toHaveBeenCalledTimes(2);
     expect(fetchJsonSpy).toHaveBeenCalledWith(mockB2ShareOldData.links.versions);
     expect(fetchJsonSpy).toHaveBeenCalledWith(mockB2ShareData.links.self);
