@@ -193,6 +193,8 @@ export class HarvesterContext {
     if (dbRecord && dbRecord[0] && dbRecord[0].status === 'success') {
       return;
     }
+    if (!sourceUrl) return null;
+
     const recordData = await fetchJson(sourceUrl);
     if (!recordData) return;
     const newSourceChecksum = calculateChecksum(recordData);
@@ -236,6 +238,13 @@ export class HarvesterContext {
         repositoryType = 'ZENODO';
         break;
       }
+      case 'SITES': {
+        const matchedSites = getFieldSitesMatchedSites(recordData);
+        mappedDataset = await mapFieldSitesToCommonDatasetMetadata(sourceUrl, recordData, matchedSites);
+        repositoryType = 'SITES';
+        break;
+      }
+
       default:
         throw new Error(`Unknown repository: ${repositoryType}.`);
     }
@@ -365,7 +374,7 @@ export class HarvesterContext {
   public async syncSitesRepository(sourceUrls: string[]) {
     const processingPromises = sourceUrls.map((datasetUrl: string) => {
       return fieldSitesLimiter.schedule(async () => {
-        await this.processOneSitesRecord(datasetUrl);
+        await this.processOneRecordTask(datasetUrl);
       });
     });
     await Promise.allSettled(processingPromises);
@@ -391,32 +400,6 @@ export class HarvesterContext {
     }
 
     await this.syncSitesRepository(urls);
-  }
-
-  /**
-   * Processes a single record from the SITES repository.
-   * It fetches the record, maps it to the common dataset format, calculates a checksum,
-   * and then calls the main synchronization function.
-   * @param {string} sourceUrl The source URL of the record on the remote repository.
-   * @param {RecordDao} recordDao
-   */
-  public async processOneSitesRecord(sourceUrl: string) {
-    const dbRecord = await this.recordDao.getRecordBySourceId(sourceUrl);
-    if (dbRecord && dbRecord[0].status === 'success') {
-      return;
-    }
-    try {
-      if (!sourceUrl) return null;
-      const recordData = await fetchJson(sourceUrl);
-      if (!recordData) return null;
-      const matchedSites = getFieldSitesMatchedSites(recordData);
-      const mappedDataset = await mapFieldSitesToCommonDatasetMetadata(sourceUrl, recordData, matchedSites);
-      const newSourceChecksum = calculateChecksum(recordData);
-      await this.synchronizeRecord(sourceUrl, newSourceChecksum, mappedDataset);
-    } catch (error) {
-      log('error', `Failed to process record for SITES: ${error}`);
-      await this.recordDao.updateStatus(sourceUrl, { status: 'failed' });
-    }
   }
 }
 
@@ -474,22 +457,18 @@ export const startRecordSync = async (ctx: HarvesterContext, sourceUrl: string) 
     client = await ctx.pool.connect();
     await client.query('BEGIN');
     // Process just one record
-    if (ctx.repositoryType === 'SITES') {
-      await ctx.processOneSitesRecord(sourceUrl);
-    } else {
-      const { selfLinkKey, singleRecordKey } = ctx.repoConfig;
-      const recordData = await fetchJson(sourceUrl);
-      if (!recordData) return null;
-      const dataUnderKey = singleRecordKey ? getNestedValue(recordData, singleRecordKey) : recordData;
-      const recordUrl = getNestedValue(dataUnderKey, selfLinkKey);
-      if (recordUrl != sourceUrl) {
-        log('info', `Found a different url: harvesting from ${recordUrl}`);
-      }
-      await ctx.recordDao.updateStatus(recordUrl, {
-        status: 'in_progress',
-      });
-      await ctx.processOneRecordTask(recordUrl);
+    const { selfLinkKey, singleRecordKey } = ctx.repoConfig;
+    const recordData = await fetchJson(sourceUrl);
+    if (!recordData) return null;
+    const dataUnderKey = singleRecordKey ? getNestedValue(recordData, singleRecordKey) : recordData;
+    const recordUrl = selfLinkKey ? getNestedValue(dataUnderKey, selfLinkKey) : sourceUrl;
+    if (recordUrl != sourceUrl) {
+      log('info', `Found a different url: harvesting from ${recordUrl}`);
     }
+    await ctx.recordDao.updateStatus(recordUrl, {
+      status: 'in_progress',
+    });
+    await ctx.processOneRecordTask(recordUrl);
 
     await client.query('COMMIT');
     log('info', `Harvesting for record ${sourceUrl} finished successfully.`);

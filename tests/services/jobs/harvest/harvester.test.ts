@@ -403,7 +403,6 @@ describe('Test harvester file', () => {
   describe('syncApiRepositoryAll', () => {});
   describe('syncSitesRepository', () => {});
   describe('syncSitesRepositoryAll', () => {});
-  describe('processOneSitesRecord', () => {});
   describe('startRepositorySync transaction test', () => {
     it('startRepositorySync should COMMIT on success', async () => {
       const context = await HarvesterContext.create(mockPool, 'ZENODO', true);
@@ -431,18 +430,18 @@ describe('Test harvester file', () => {
   describe('Transaction tests for startRepositorySync and startRecordSync', () => {
     it('startRecordSync should COMMIT on success', async () => {
       const context = await HarvesterContext.create(mockPool, 'SITES', true);
-      context.processOneSitesRecord = jest.fn().mockResolvedValue(undefined);
+      context.processOneRecordTask = jest.fn().mockResolvedValue(undefined);
 
       await startRecordSync(context, 'http://test.com/site/1');
 
       expect(mockClient.query).toHaveBeenCalledWith('BEGIN');
-      expect(context.processOneSitesRecord).toHaveBeenCalledWith('http://test.com/site/1');
+      expect(context.processOneRecordTask).toHaveBeenCalledWith('http://test.com/site/1');
       expect(mockClient.query).toHaveBeenCalledWith('COMMIT');
     });
     it('startRecordSync should ROLLBACK on failure', async () => {
       const context = await HarvesterContext.create(mockPool, 'SITES', true);
       const testError = new Error('Sync Failed!');
-      context.processOneSitesRecord = jest.fn().mockRejectedValue(testError);
+      context.processOneRecordTask = jest.fn().mockRejectedValue(testError);
 
       await expect(startRecordSync(context, 'http://test.com/site/1')).rejects.toThrow(testError);
 

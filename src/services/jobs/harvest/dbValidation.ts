@@ -20,7 +20,7 @@ export async function dbValidationPhase(ctx: HarvesterContext) {
     dbRecords.map(async (dbRecord) => {
       if (repositoryType === 'SITES') {
         return fieldSitesLimiter.schedule(async () => {
-          await ctx.processOneSitesRecord(dbRecord.source_url);
+          await ctx.processOneRecordTask(dbRecord.source_url);
         });
       }
       if (repositoryType === 'ZENODO' || repositoryType === 'ZENODO_IT') {
