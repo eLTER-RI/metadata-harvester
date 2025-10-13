@@ -4,17 +4,20 @@ import {
   startRecordSync,
   startRepositorySync,
 } from '../../../../src/services/jobs/harvest/harvester';
-import { RecordDao } from '../../../../src/store/dao/recordDao';
+import { DbRecord, RecordDao } from '../../../../src/store/dao/recordDao';
 import { ResolvedRecordDao } from '../../../../src/store/dao/resolvedRecordsDao';
 import { fetchSites } from '../../../../src/utilities/matchDeimsId';
 import { mapB2ShareToCommonDatasetMetadata } from '../../../../src/store/parsers/b2shareParser';
 import { mapDataRegistryToCommonDatasetMetadata } from '../../../../src/store/parsers/dataregistryParser';
 import { mapZenodoToCommonDatasetMetadata } from '../../../../src/store/parsers/zenodoParser';
 import { mapFieldSitesToCommonDatasetMetadata } from '../../../../src/store/parsers/fieldSitesParser';
-import { RuleDao } from '../../../../src/store/dao/rulesDao';
+import { RuleDao, RuleDbRecord } from '../../../../src/store/dao/rulesDao';
 import * as rulesUtilities from '../../../../src/utilities/rules';
+import * as fetchers from '../../../../src/utilities/fetchJsonFromRemote';
+import * as checksumUtils from '../../../../src/utilities/checksum';
 import { CONFIG } from '../../../../config';
 import { dbValidationPhase } from '../../../../src/services/jobs/harvest/dbValidation';
+import { IdentifierType } from '../../../../src/store/commonStructure';
 
 // To isolate all other layers, we need to isolate the following:
 // those should be tested separately
@@ -28,16 +31,25 @@ jest.mock('../../../../src/store/dao/resolvedRecordsDao');
 jest.mock('../../../../src/utilities/fetchJsonFromRemote');
 jest.mock('../../../../src/utilities/checksum');
 jest.mock('../../../../src/utilities/matchDeimsId');
+jest.mock('../../../../src/utilities/rules', () => ({
+  // this is here because we use getNested for our tests
+  ...jest.requireActual('../../../../src/utilities/rules'), // keep all original functions
+  applyRuleToRecord: jest.fn(), // override only the function we want to mock
+}));
 const mockedFetchSites = fetchSites as jest.Mock;
+const mockedApplyRuleToRecord = rulesUtilities.applyRuleToRecord as jest.Mock;
+const mockedFetchJson = fetchers.fetchJson as jest.Mock;
+const mockedFetchXml = fetchers.fetchXml as jest.Mock;
+const mockedCalculateChecksum = checksumUtils.calculateChecksum as jest.Mock;
 
 // parsers
 jest.mock('../../../../src/store/parsers/b2shareParser');
 jest.mock('../../../../src/store/parsers/dataregistryParser');
 jest.mock('../../../../src/store/parsers/zenodoParser');
 jest.mock('../../../../src/store/parsers/fieldSitesParser');
-jest.mock('../../../../src/services/jobs/harvest/dbValidation');
 
 // services
+jest.mock('../../../../src/services/jobs/harvest/dbValidation');
 jest.mock('../../../../src/services/serviceLogging', () => ({
   log: jest.fn(),
 }));
@@ -142,12 +154,188 @@ describe('Test harvester file', () => {
   describe('getUrlWithExternalSourceURIQuery', () => {});
   describe('findDarRecordBySourceURL', () => {});
   describe('synchronizeRecord', () => {});
-  describe('processOneRecordTask', () => {});
+  describe('processOneRecordTask', () => {
+    const sourceUrl = 'http://example.com/record/1';
+    const apiData = { id: 1, title: 'API Data' };
+    const mappedData = { metadata: { externalSourceInformation: { externalSourceURI: sourceUrl } } };
+
+    beforeEach(() => {
+      mockedFetchJson.mockResolvedValue(apiData);
+      mockedCalculateChecksum.mockReturnValue('a checksum value');
+      (context.mapToCommonStructure as jest.Mock) = jest.fn().mockResolvedValue(mappedData);
+      (context as any).synchronizeRecord = jest.fn().mockResolvedValue(undefined);
+    });
+
+    it('should process a record that is not in the database', async () => {
+      mockRecordDao.getRecordBySourceId.mockResolvedValue([]);
+      await context.processOneRecordTask(sourceUrl);
+      expect(mockedFetchJson).toHaveBeenCalledWith(sourceUrl);
+      expect(context.mapToCommonStructure).toHaveBeenCalledWith(sourceUrl, apiData);
+      expect((context as any).synchronizeRecord).toHaveBeenCalledWith(sourceUrl, 'a checksum value', mappedData);
+    });
+
+    it('should not process a if checkHarvestChanges false and checksums match', async () => {
+      context = new HarvesterContext(
+        mockPool,
+        mockRecordDao,
+        mockRuleDao,
+        mockResolvedRecordsDao,
+        [{ siteID: 'deims-1', siteName: 'Test Site' }],
+        'ZENODO',
+        CONFIG.REPOSITORIES.ZENODO,
+        false,
+      );
+      const existingDbRecord: DbRecord = {
+        source_url: sourceUrl,
+        source_repository: 'ZENODO',
+        source_checksum: 'matching-checksum',
+        dar_id: 'aaa',
+        dar_checksum: 'matching-checksum',
+        status: 'in_progress',
+        last_harvested: new Date('2025-12-31'),
+        title: 'A title of a record',
+      };
+      const mapSpy = jest.spyOn(context, 'mapToCommonStructure');
+      const syncSpy = jest.spyOn(context as any, 'synchronizeRecord');
+
+      mockRecordDao.getRecordBySourceId.mockResolvedValue([existingDbRecord]);
+      mockedCalculateChecksum.mockReturnValue('matching-checksum');
+
+      await context.processOneRecordTask(sourceUrl);
+
+      expect(mockedFetchJson).toHaveBeenCalledWith(sourceUrl);
+      expect(mapSpy).not.toHaveBeenCalled();
+      expect(syncSpy).not.toHaveBeenCalled();
+    });
+
+    it('should apply rules if a record already exists in the DB', async () => {
+      const mockMappedData = {
+        metadata: {
+          titles: [{ titleText: 'A title of a record' }],
+          assetType: 'Dataset',
+          externalSourceInformation: {},
+        },
+      };
+      const existingDbRecord: DbRecord = {
+        source_url: sourceUrl,
+        source_repository: 'ZENODO',
+        source_checksum: 'matching-checksum',
+        dar_id: 'bbb',
+        dar_checksum: 'matching-checksum',
+        status: 'in_progress',
+        last_harvested: new Date('2025-12-31'),
+        title: 'A title of a record',
+      };
+      mockRecordDao.getRecordBySourceId.mockResolvedValue([existingDbRecord]);
+      (context.mapToCommonStructure as jest.Mock).mockResolvedValue(mockMappedData);
+      context.applyRulesToRecord = jest.fn();
+
+      await context.processOneRecordTask(sourceUrl);
+
+      expect(context.applyRulesToRecord).toHaveBeenCalledWith(mockMappedData, existingDbRecord.dar_id);
+    });
+
+    it('should stop processing if status success', async () => {
+      const existingDbRecord: DbRecord = {
+        source_url: sourceUrl,
+        source_repository: 'ZENODO',
+        source_checksum: 'matching-checksum',
+        dar_id: 'bbb',
+        dar_checksum: 'matching-checksum',
+        status: 'success',
+        last_harvested: new Date('2025-12-31'),
+        title: 'A title of a record',
+      };
+      mockRecordDao.getRecordBySourceId.mockResolvedValue([existingDbRecord]);
+
+      await context.processOneRecordTask(sourceUrl);
+
+      expect(mockedFetchJson).not.toHaveBeenCalled();
+      expect(mockedCalculateChecksum).not.toHaveBeenCalled();
+      expect(context.mapToCommonStructure as jest.Mock).not.toHaveBeenCalled();
+      expect((context as any).synchronizeRecord).not.toHaveBeenCalled();
+    });
+  });
   describe('mapToCommonStructure', () => {});
   describe('applyRulesToRecord', () => {
-    it('should delete a rule if does not work', async () => {});
+    const mockRecord = {
+      metadata: {
+        assetType: 'Dataset' as IdentifierType,
+        titles: [{ titleText: 'Some title of a record from remote repository' }],
+        descriptions: [
+          {
+            descriptionText: 'Description text.',
+            descriptionType: 'Abstract',
+          },
+        ],
+        externalSourceInformation: {
+          externalSourceName: 'Zenodo',
+        },
+      },
+    };
+    const darId = 'dar-123';
 
-    it('should handle a combination of working and not working rules', async () => {});
+    const workingRule: RuleDbRecord = {
+      id: '1',
+      dar_id: 'abc-def',
+      target_path: 'metadata.keywords',
+      orig_value: undefined,
+      rule_type: 'ADD',
+      new_value: { keywordLabel: 'First Keyword' },
+    };
+
+    const brokenRule: RuleDbRecord = {
+      id: '2',
+      dar_id: 'ghi-jkl',
+      target_path: 'metadata.keywords',
+      orig_value: undefined,
+      rule_type: 'ADD',
+      new_value: [{ notExistingFieldName: 'Second Keyword' }],
+    };
+
+    it('should apply a rule that works and not delete it', async () => {
+      mockRuleDao.getRulesForRecord.mockResolvedValue([workingRule]);
+      mockedApplyRuleToRecord.mockReturnValue(true);
+
+      await context.applyRulesToRecord(mockRecord, darId);
+
+      expect(mockRuleDao.getRulesForRecord).toHaveBeenCalledWith(darId);
+      expect(mockedApplyRuleToRecord).toHaveBeenCalledWith(mockRecord, workingRule);
+      expect(mockRuleDao.deleteRuleForRecord).not.toHaveBeenCalled();
+    });
+
+    it('should delete a rule that fails to apply', async () => {
+      mockRuleDao.getRulesForRecord.mockResolvedValue([brokenRule]);
+      mockedApplyRuleToRecord.mockReturnValue(false);
+
+      await context.applyRulesToRecord(mockRecord, darId);
+
+      expect(mockedApplyRuleToRecord).toHaveBeenCalledWith(mockRecord, brokenRule);
+      expect(mockRuleDao.deleteRule).toHaveBeenCalledTimes(1);
+      expect(mockRuleDao.deleteRule).toHaveBeenCalledWith(brokenRule.id);
+    });
+
+    it('should handle a combination of working and not working rules', async () => {
+      const workingRule2: RuleDbRecord = {
+        id: '3',
+        dar_id: 'ccc-ddd',
+        target_path: 'metadata.descriptions[0].descriptionType',
+        orig_value: 'Abstract',
+        rule_type: 'REPLACE',
+        new_value: 'Other',
+      };
+      mockRuleDao.getRulesForRecord.mockResolvedValue([workingRule, brokenRule, workingRule2]);
+
+      mockedApplyRuleToRecord.mockImplementation((record, rule) => {
+        return rule.id !== '2';
+      });
+
+      await context.applyRulesToRecord(mockRecord, darId);
+
+      expect(mockedApplyRuleToRecord).toHaveBeenCalledTimes(3);
+      expect(mockRuleDao.deleteRule).toHaveBeenCalledTimes(1);
+      expect(mockRuleDao.deleteRule).toHaveBeenCalledWith('2');
+    });
   });
   describe('handleChangedRecord', () => {});
   describe('processApiHits', () => {

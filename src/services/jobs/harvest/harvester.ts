@@ -253,7 +253,7 @@ export class HarvesterContext {
     for (const rule of repoRules) {
       const ruleApplied = applyRuleToRecord(record, rule);
       if (!ruleApplied) {
-        await this.ruleDao.deleteRuleForRecord(darId);
+        await this.ruleDao.deleteRule(rule.id);
       }
     }
   }
