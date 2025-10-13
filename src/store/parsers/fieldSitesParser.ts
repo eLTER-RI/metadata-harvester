@@ -311,7 +311,12 @@ export async function mapFieldSitesToCommonDatasetMetadata(
               projectID: 'https://meta.fieldsites.se/',
             },
           ]
-        : [],
+        : [
+            {
+              projectName: 'SITES external record - eLTER Community',
+              projectID: 'https://meta.fieldsites.se/',
+            },
+          ],
       siteReferences: sites,
       dataLevel: {
         dataLevelCode: fieldSites.specification.dataLevel.toString(),
