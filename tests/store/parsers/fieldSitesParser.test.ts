@@ -10,6 +10,7 @@ jest.mock('../../../src/services/serviceLogging', () => ({
   log: jest.fn(),
 }));
 
+// TODO: versioning testy
 describe('SITES Parser', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -129,7 +130,7 @@ describe('SITES Parser', () => {
     );
 
     expect(commonDataset.metadata.relatedIdentifiers).toContainEqual({
-      relatedID: 'https://meta.fieldsites.se/objects/VGRl3pJhfNW472Jd3YlgLoCg',
+      relatedID: 'https://meta.fieldsites.se/objects/Y3ct4eNvkD7goZFtdYwIb4wK',
       relatedIDType: 'URL',
       relatedResourceType: 'Dataset',
       relationType: 'IsNewVersionOf',
