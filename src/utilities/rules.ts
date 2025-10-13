@@ -1,4 +1,6 @@
+import { log } from '../services/serviceLogging';
 import { CommonDataset } from '../store/commonStructure';
+import { commonDatasetSchema } from '../store/commonStructure.zod.gen';
 import { RuleDbRecord } from '../store/dao/rulesDao';
 
 /**
@@ -105,6 +107,11 @@ export function appendValue(obj: any, path: string, value: any): void {
   }
 }
 
+function isAtomicOrNull(value: any): boolean {
+  const type = typeof value;
+  return type === 'string' || type === 'number' || type === 'boolean' || value === null || value === undefined;
+}
+
 /**
  * Applies given rule set by users.
  * @param {CommonDataset} record The object that the function is supposed to rewrite.
@@ -112,8 +119,36 @@ export function appendValue(obj: any, path: string, value: any): void {
  */
 export function applyRuleToRecord(record: CommonDataset, rule: RuleDbRecord): boolean {
   const targetValue = getNestedValue(record, rule.target_path);
-
   if (JSON.stringify(targetValue) !== JSON.stringify(rule.orig_value)) {
+    return false;
+  }
+
+  if (rule.rule_type === 'REPLACE' || rule.rule_type === 'REMOVE') {
+    if (!isAtomicOrNull(targetValue)) {
+      log(
+        `error`,
+        `ERror for rule "${rule.target_path}". Only atomic values (string, number, boolean) can be replaced or removed.`,
+      );
+      return false;
+    }
+  }
+
+  const recordCopy = JSON.parse(JSON.stringify(record));
+  switch (rule.rule_type) {
+    case 'REPLACE':
+      setNestedValue(recordCopy, rule.target_path, rule.new_value);
+      break;
+    case 'ADD':
+      appendValue(recordCopy, rule.target_path, rule.new_value);
+      break;
+    case 'REMOVE':
+      setNestedValue(recordCopy, rule.target_path, undefined);
+      break;
+  }
+
+  const finalValidation = commonDatasetSchema.safeParse(recordCopy);
+  if (!finalValidation.success) {
+    log(`error`, `Rule application failed validation for path '${rule.target_path}': ` + finalValidation.error);
     return false;
   }
 

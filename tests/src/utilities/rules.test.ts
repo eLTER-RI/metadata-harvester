@@ -181,10 +181,10 @@ describe('Rules Utility Functions', () => {
   });
 
   describe('applyRules Advanced Scenarios', () => {
-    let sampleRecord: CommonDataset;
+    let sampleRecord2: CommonDataset;
 
     beforeEach(() => {
-      sampleRecord = {
+      sampleRecord2 = {
         metadata: {
           assetType: 'Dataset',
           titles: [{ titleText: 'Some title of a record from remote repository' }],
@@ -215,10 +215,10 @@ describe('Rules Utility Functions', () => {
         },
       ];
 
-      const changedFst = applyRuleToRecord(sampleRecord, rules[0]);
+      const changedFst = applyRuleToRecord(sampleRecord2, rules[0]);
 
       expect(changedFst).toBe(true);
-      expect(sampleRecord.metadata.keywords).toEqual([{ keywordLabel: 'First Keyword' }]);
+      expect(sampleRecord2.metadata.keywords).toEqual([{ keywordLabel: 'First Keyword' }]);
     });
 
     it('should apply rules that depend on each other within the same batch', () => {
@@ -241,12 +241,12 @@ describe('Rules Utility Functions', () => {
         },
       ];
 
-      const changedFst = applyRuleToRecord(sampleRecord, rules[0]);
-      const changedSnd = applyRuleToRecord(sampleRecord, rules[1]);
+      const changedFst = applyRuleToRecord(sampleRecord2, rules[0]);
+      const changedSnd = applyRuleToRecord(sampleRecord2, rules[1]);
 
       expect(changedFst).toBe(true);
       expect(changedSnd).toBe(true);
-      expect(sampleRecord.metadata.keywords).toEqual([
+      expect(sampleRecord2.metadata.keywords).toEqual([
         { keywordLabel: 'First Keyword' },
         { keywordLabel: 'Second Keyword' },
       ]);
@@ -257,34 +257,34 @@ describe('Rules Utility Functions', () => {
         success: false,
         error: { flatten: () => 'Mocked validation error' },
       });
-      const originalRecordState = JSON.parse(JSON.stringify(sampleRecord));
+      const originalRecordState = JSON.parse(JSON.stringify(sampleRecord2));
       const rule: RuleDbRecord = {
         id: '2',
         dar_id: 'ghi-jkl',
         target_path: 'metadata.keywords',
         orig_value: undefined,
         rule_type: 'ADD',
-        new_value: { notExistingFieldName: 'Second Keyword' },
+        new_value: [{ notExistingFieldName: 'Second Keyword' }],
       };
 
-      const changed = applyRuleToRecord(sampleRecord, rule);
+      const changed = applyRuleToRecord(sampleRecord2, rule);
 
       expect(changed).toBe(false);
-      expect(sampleRecord).toEqual(originalRecordState);
+      expect(sampleRecord2).toEqual(originalRecordState);
 
       const rule2: RuleDbRecord = {
         id: '2',
         dar_id: 'ghi-jkl',
-        target_path: 'metadata.keywords',
+        target_path: 'metadata.keywords[0]',
         orig_value: undefined,
         rule_type: 'REPLACE',
         new_value: { notExistingFieldName: 'Second Keyword' },
       };
 
-      const changed2 = applyRuleToRecord(sampleRecord, rule2);
+      const changed2 = applyRuleToRecord(sampleRecord2, rule2);
 
       expect(changed2).toBe(false);
-      expect(sampleRecord).toEqual(originalRecordState);
+      expect(sampleRecord2).toEqual(originalRecordState);
     });
 
     it('should fail a rule if not valid target path name', () => {
@@ -292,7 +292,7 @@ describe('Rules Utility Functions', () => {
         success: false,
         error: { flatten: () => 'Mocked validation error' },
       });
-      const originalRecordState = JSON.parse(JSON.stringify(sampleRecord));
+      const originalRecordState = JSON.parse(JSON.stringify(sampleRecord2));
       const rule: RuleDbRecord = {
         id: '1',
         dar_id: 'abc-def',
@@ -302,10 +302,134 @@ describe('Rules Utility Functions', () => {
         new_value: { keywordLabel: 'First Keyword' },
       };
 
-      const changed = applyRuleToRecord(sampleRecord, rule);
+      const changed = applyRuleToRecord(sampleRecord2, rule);
 
       expect(changed).toBe(false);
-      expect(sampleRecord).toEqual(originalRecordState);
+      expect(sampleRecord2).toEqual(originalRecordState);
+    });
+
+    it('should success with rule updating a strictly typed field', () => {
+      const rule: RuleDbRecord = {
+        id: '1',
+        dar_id: 'abc-def',
+        target_path: 'metadata.assetType',
+        orig_value: 'Dataset',
+        rule_type: 'REPLACE',
+        new_value: 'Book',
+      };
+
+      const changed = applyRuleToRecord(sampleRecord2, rule);
+
+      expect(changed).toBe(true);
+      expect(sampleRecord2.metadata.assetType).toEqual('Book');
+    });
+
+    it('should fail a rule if not a valid primitive type to insert', () => {
+      (commonDatasetSchema.safeParse as jest.Mock).mockReturnValue({
+        success: false,
+        error: { flatten: () => 'Mocked validation error' },
+      });
+      const originalRecordState = JSON.parse(JSON.stringify(sampleRecord2));
+      const rule: RuleDbRecord = {
+        id: '1',
+        dar_id: 'abc-def',
+        target_path: 'metadata.datasetType',
+        orig_value: 'Dataset',
+        rule_type: 'REPLACE',
+        new_value: { keywordLabel: 'First Keyword' },
+      };
+
+      const rule2: RuleDbRecord = {
+        id: '1',
+        dar_id: 'abc-def',
+        target_path: 'metadata.assetType',
+        orig_value: 'Dataset',
+        rule_type: 'REPLACE',
+        new_value: 'something else',
+      };
+
+      const changed = applyRuleToRecord(sampleRecord2, rule);
+      const changed2 = applyRuleToRecord(sampleRecord2, rule2);
+
+      expect(changed).toBe(false);
+      expect(changed2).toBe(false);
+      expect(sampleRecord2).toEqual(originalRecordState);
+    });
+
+    it('should fail changing non-atomic field by rules', () => {
+      const rule: RuleDbRecord = {
+        id: '222',
+        dar_id: 'ccc-ddd',
+        target_path: 'metadata.descriptions',
+        orig_value: [{ descriptionText: 'Description text.', descriptionType: 'Abstract' }],
+        rule_type: 'REPLACE',
+        new_value: [{ descriptionText: 'replaced description', descriptionType: 'Other' }],
+      };
+
+      const changed = applyRuleToRecord(sampleRecord2, rule);
+
+      expect(changed).toBe(false);
+      expect(sampleRecord2.metadata.descriptions).toEqual([
+        { descriptionText: 'Description text.', descriptionType: 'Abstract' },
+      ]);
+    });
+
+    it('should correctly handle replacing two parts of object', () => {
+      const rules: RuleDbRecord[] = [
+        {
+          id: '222',
+          dar_id: 'ccc-ddd',
+          target_path: 'metadata.descriptions[0].descriptionType',
+          orig_value: 'Abstract',
+          rule_type: 'REPLACE',
+          new_value: 'Other',
+        },
+        {
+          id: '333',
+          dar_id: 'eee-fff',
+          target_path: 'metadata.descriptions[0].descriptionText',
+          orig_value: 'Description text.',
+          rule_type: 'REPLACE',
+          new_value: 'replaced specific description text',
+        },
+      ];
+
+      const changedFst = applyRuleToRecord(sampleRecord2, rules[0]);
+      const changedSnd = applyRuleToRecord(sampleRecord2, rules[1]);
+
+      expect(changedFst).toBe(true);
+      expect(changedSnd).toBe(true);
+      expect(sampleRecord2.metadata.descriptions).toEqual([
+        { descriptionText: 'replaced specific description text', descriptionType: 'Other' },
+      ]);
+    });
+
+    // A cleanup of db should prevent this, but this shoudl still work
+    it('should update to the original value', () => {
+      const rule1: RuleDbRecord = {
+        id: '6',
+        dar_id: 'opq-rst',
+        target_path: 'metadata.titles[0].titleText',
+        orig_value: 'Some title of a record from remote repository',
+        rule_type: 'REPLACE',
+        new_value: 'Intermediate Title',
+      };
+      const rule2: RuleDbRecord = {
+        id: '7',
+        dar_id: 'opq-rst',
+        target_path: 'metadata.titles[0].titleText',
+        orig_value: 'Intermediate Title',
+        rule_type: 'REPLACE',
+        new_value: 'Some title of a record from remote repository',
+      };
+
+      const changedFst = applyRuleToRecord(sampleRecord2, rule1);
+      const changedSnd = applyRuleToRecord(sampleRecord2, rule2);
+
+      expect(changedFst).toBe(true);
+      expect(changedSnd).toBe(true);
+      expect(sampleRecord2.metadata.titles).toBeDefined();
+      expect(sampleRecord2.metadata.titles![0].titleText).toBe('Some title of a record from remote repository');
     });
   });
 });
