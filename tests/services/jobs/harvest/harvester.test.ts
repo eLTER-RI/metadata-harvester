@@ -19,15 +19,21 @@ import { RuleDao, RuleDbRecord } from '../../../../src/store/dao/rulesDao';
 import * as rulesUtilities from '../../../../src/utilities/rules';
 import * as fetchers from '../../../../src/utilities/fetchJsonFromRemote';
 import * as checksumUtils from '../../../../src/utilities/checksum';
+import * as darApi from '../../../../api/darApi';
+import * as dbRecordSync from '../../../../src/services/jobs/harvest/dbRecordSync';
 import { CONFIG } from '../../../../config';
 import { dbValidationPhase } from '../../../../src/services/jobs/harvest/dbValidation';
-import { IdentifierType } from '../../../../src/store/commonStructure';
+import { CommonDataset, IdentifierType } from '../../../../src/store/commonStructure';
 import { getZenodoMatchedSites } from '../../../../src/utilities/matchDeimsId';
 import { fieldSitesLimiter } from '../../../../src/services/rateLimiterConcurrency';
 
 // To isolate all other layers, we need to isolate the following:
 // those should be tested separately
 jest.mock('pg');
+
+// API
+jest.mock('../../../../api/darApi');
+
 // DAO
 jest.mock('../../../../src/store/dao/recordDao');
 jest.mock('../../../../src/store/dao/rulesDao');
@@ -47,6 +53,9 @@ const mockedApplyRuleToRecord = rulesUtilities.applyRuleToRecord as jest.Mock;
 const mockedFetchJson = fetchers.fetchJson as jest.Mock;
 const mockedFetchXml = fetchers.fetchXml as jest.Mock;
 const mockedCalculateChecksum = checksumUtils.calculateChecksum as jest.Mock;
+const mockedPutToDar = darApi.putToDar as jest.Mock;
+const mockedPostToDar = darApi.postToDar as jest.Mock;
+const mockedDbRecordUpsert = dbRecordSync.dbRecordUpsert as jest.Mock;
 
 // parsers
 jest.mock('../../../../src/store/parsers/b2shareParser');
@@ -56,6 +65,7 @@ jest.mock('../../../../src/store/parsers/fieldSitesParser');
 
 // services
 jest.mock('../../../../src/services/jobs/harvest/dbValidation');
+jest.mock('../../../../src/services/jobs/harvest/dbRecordSync');
 jest.mock('../../../../src/services/serviceLogging', () => ({
   log: jest.fn(),
 }));
@@ -156,8 +166,99 @@ describe('Test harvester file', () => {
       expect(mapDataRegistryToCommonDatasetMetadata).toHaveBeenCalled();
     });
   });
-  describe('findDarRecordBySourceURL', () => {});
-  describe('synchronizeRecord', () => {});
+  describe('findDarRecordBySourceURL', () => {
+    // TODO
+  });
+  describe('synchronizeRecord', () => {
+    beforeEach(() => {
+      // we do not need any results of fetch,
+      // but it gets called by findDarRecordBySourceUrl
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ hits: { hits: [] } }),
+      });
+    });
+
+    it('should handle new versions of existing records', async () => {
+      const oldUrl = 'http://zenodo.org/old';
+      const newUrl = 'http://zenodo.org/new';
+      const oldDbRecord: DbRecord = {
+        source_url: oldUrl,
+        source_repository: 'ZENODO',
+        source_checksum: 'matching-checksum',
+        dar_id: 'dar-id-old',
+        dar_checksum: 'matching-checksum',
+        status: 'in_progress',
+        last_harvested: new Date('2025-12-31'),
+        title: 'A title of a record',
+      };
+      const newDataset: CommonDataset = {
+        metadata: {
+          assetType: 'Dataset',
+          titles: [{ titleText: 'New Version' }],
+          relatedIdentifiers: [
+            { relationType: 'IsNewVersionOf', relatedID: oldUrl, relatedIDType: 'URL', relatedResourceType: 'Dataset' },
+          ],
+          externalSourceInformation: { externalSourceURI: newUrl },
+        },
+      };
+
+      mockedCalculateChecksum.mockReturnValue('mocked-dar-checksum');
+      mockRecordDao.getRecordBySourceId.mockImplementation((url) => {
+        if (url === oldUrl) return Promise.resolve([oldDbRecord]);
+        return Promise.resolve([]);
+      });
+      mockedPutToDar.mockResolvedValue(undefined);
+      mockedDbRecordUpsert.mockResolvedValue(undefined);
+
+      await (context as any).synchronizeRecord(newUrl, 'new-checksum', newDataset);
+
+      expect(mockRecordDao.getRecordBySourceId).toHaveBeenCalledWith(oldUrl);
+      expect(mockedPutToDar).toHaveBeenCalledWith('dar-id-old', mockRecordDao, newUrl, newDataset);
+      expect(mockedDbRecordUpsert).toHaveBeenCalledWith(
+        'dar-id-old',
+        mockRecordDao,
+        newUrl,
+        context.repositoryType,
+        'new-checksum',
+        'mocked-dar-checksum',
+        'New Version',
+        oldUrl,
+      );
+    });
+
+    it('should POST a new record if no match in DAR', async () => {
+      const sourceUrl = 'http://zenodo.org/new';
+      const newDataset: CommonDataset = {
+        metadata: {
+          assetType: 'Dataset',
+          titles: [{ titleText: 'New Record' }],
+          externalSourceInformation: {},
+        },
+      };
+
+      // no record found in DAR
+      (global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ hits: { hits: [] } }),
+      });
+      mockedPostToDar.mockResolvedValue('new-id-from-dar');
+
+      await (context as any).synchronizeRecord(sourceUrl, 'source-checksum', newDataset);
+
+      expect(mockedPostToDar).toHaveBeenCalledWith(mockRecordDao, sourceUrl, newDataset);
+      expect(mockedDbRecordUpsert).toHaveBeenCalledWith(
+        'new-id-from-dar',
+        mockRecordDao,
+        sourceUrl,
+        context.repositoryType,
+        'source-checksum',
+        'mock-dar-checksum',
+        'New Record',
+      );
+      expect(mockedPutToDar).not.toHaveBeenCalled();
+    });
+  });
   describe('processOneRecordTask', () => {
     const sourceUrl = 'http://example.com/record/1';
     const apiData = { id: 1, title: 'API Data' };
@@ -376,7 +477,9 @@ describe('Test harvester file', () => {
       expect(mockRuleDao.deleteRule).toHaveBeenCalledWith('2');
     });
   });
-  describe('handleChangedRecord', () => {});
+  describe('handleChangedRecord', () => {
+    // TODO
+  });
   describe('processApiHits', () => {
     it('should call process one record task with correct url', async () => {
       const contextSpy = jest.spyOn(context, 'processOneRecordTask').mockResolvedValue(undefined);
