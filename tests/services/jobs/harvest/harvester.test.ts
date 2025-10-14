@@ -253,10 +253,53 @@ describe('Test harvester file', () => {
         sourceUrl,
         context.repositoryType,
         'source-checksum',
-        'mock-dar-checksum',
+        'mocked-dar-checksum',
         'New Record',
       );
       expect(mockedPutToDar).not.toHaveBeenCalled();
+    });
+
+    it('should call handleChangedRecord when records changes', async () => {
+      const sourceUrl = 'http://zenodo.org/changed';
+      const changedDataset: CommonDataset = {
+        metadata: {
+          assetType: 'Dataset',
+          titles: [{ titleText: 'Changed record' }],
+          externalSourceInformation: {},
+        },
+      };
+
+      (global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ hits: { hits: [{ id: 'existing-dar-id' }] } }),
+      });
+      // faking a different checksum in the DB to execute 'rewriteRecord'
+      mockRecordDao.getRecordBySourceId.mockResolvedValue([{ dar_checksum: 'old-dar-checksum' }] as any);
+
+      const handleChangedSpy = jest.spyOn(context as any, 'handleChangedRecord');
+
+      await (context as any).synchronizeRecord(sourceUrl, 'source-checksum', changedDataset);
+
+      expect(handleChangedSpy).toHaveBeenCalled();
+      expect(mockedPostToDar).not.toHaveBeenCalled();
+    });
+
+    it('should update record to "success" status for an up-to-date record', async () => {
+      const sourceUrl = 'http://example.com/up-to-date-record';
+      const upToDateDataset = { metadata: { titles: [{ titleText: 'Up To Date' }], externalSourceInformation: {} } };
+
+      (global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ hits: { hits: [{ id: 'existing-dar-id' }] } }),
+      });
+      mockRecordDao.getRecordBySourceId.mockResolvedValue([{ dar_checksum: 'mocked-dar-checksum' }] as any);
+
+      await (context as any).synchronizeRecord(sourceUrl, 'source-checksum', upToDateDataset);
+
+      expect(mockRecordDao.updateStatus).toHaveBeenCalledWith(sourceUrl, { status: 'success' });
+      expect(mockedPostToDar).not.toHaveBeenCalled();
+      expect(mockedPutToDar).not.toHaveBeenCalled();
+      expect(mockedDbRecordUpsert).not.toHaveBeenCalled();
     });
   });
   describe('processOneRecordTask', () => {

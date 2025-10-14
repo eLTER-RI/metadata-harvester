@@ -348,6 +348,10 @@ export class HarvesterContext {
       const data = await fetchJson(pageUrl);
       const hits: string[] = dataKey ? getNestedValue(data, dataKey) || [] : [];
       log('info', `Found ${hits.length} self links. Fetching individual records...\n`);
+      if (hits.length === 0) {
+        log('warn', `No records found on page ${page}. Stopping.`);
+        break;
+      }
 
       // // Process individual records using the parser
       await this.processApiHits(hits);
