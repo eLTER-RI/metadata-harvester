@@ -52,5 +52,30 @@ describe('DAR API Tests', () => {
       // called only to set to failure
       expect(mockRecordDao.updateDarIdStatus).not.toHaveBeenCalled();
     });
+
+    it('should return null and set record status to failed on empty apiResponse', async () => {
+      mockFetch.mockResolvedValueOnce(null);
+
+      const result = await postToDar(mockRecordDao, sourceUrl, mockDataset);
+
+      expect(result).toBeNull();
+      expect(mockRecordDao.updateDarIdStatus).toHaveBeenCalledWith(sourceUrl, { dar_id: '', status: 'failed' });
+      expect(mockLog).toHaveBeenCalledWith('error', expect.stringContaining(`Posting ${sourceUrl} into dar failed`));
+    });
+
+    it('should return null and set record status to failed if response not ok', async () => {
+      const errorResponse = 'Bad Request';
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        text: () => Promise.resolve(errorResponse),
+      });
+
+      const result = await postToDar(mockRecordDao, sourceUrl, mockDataset);
+
+      expect(result).toBeNull();
+      expect(mockRecordDao.updateDarIdStatus).toHaveBeenCalledWith(sourceUrl, { dar_id: '', status: 'failed' });
+      expect(mockLog).toHaveBeenCalledWith('error', expect.stringContaining(`failed with : 400: ${errorResponse}`));
+    });
   });
 });
