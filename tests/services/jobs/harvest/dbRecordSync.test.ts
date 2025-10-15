@@ -62,10 +62,11 @@ describe('dbRecordUpsert', () => {
       dbRecord.source_checksum,
       dbRecord.dar_checksum,
       dbRecord.title,
+      oldUrl,
     );
 
     expect(mockRecordDao.updateRecordWithPrimaryKey).toHaveBeenCalledWith(oldUrl, {
-      source_url: dbRecord.dar_id,
+      source_url: dbRecord.source_url,
       source_repository: dbRecord.source_repository,
       source_checksum: dbRecord.source_checksum,
       dar_id: dbRecord.dar_id,
@@ -73,6 +74,10 @@ describe('dbRecordUpsert', () => {
       status: 'success',
       title: dbRecord.title,
     });
+    expect(mockLog).toHaveBeenCalledWith(
+      'info',
+      `Record ${dbRecord.source_url} has an old version of ${oldUrl} in DAR with ${dbRecord.dar_id}`,
+    );
     // Should not perform checks for the new URL
     expect(mockRecordDao.getRecordBySourceId).not.toHaveBeenCalled();
     expect(mockRecordDao.createRecord).not.toHaveBeenCalled();
@@ -94,7 +99,7 @@ describe('dbRecordUpsert', () => {
 
     expect(mockRecordDao.getRecordBySourceId).toHaveBeenCalledWith(dbRecord.source_url);
     expect(mockRecordDao.createRecord).toHaveBeenCalledWith({
-      source_url: dbRecord.dar_id,
+      source_url: dbRecord.source_url,
       source_repository: dbRecord.source_repository,
       source_checksum: dbRecord.source_checksum,
       dar_id: dbRecord.dar_id,
@@ -120,7 +125,7 @@ describe('dbRecordUpsert', () => {
 
     expect(mockRecordDao.getRecordBySourceId).toHaveBeenCalledWith(dbRecord.source_url);
     expect(mockRecordDao.updateRecord).toHaveBeenCalledWith(dbRecord.source_url, {
-      source_url: dbRecord.dar_id,
+      source_url: dbRecord.source_url,
       source_repository: dbRecord.source_repository,
       source_checksum: dbRecord.source_checksum,
       dar_id: dbRecord.dar_id,
