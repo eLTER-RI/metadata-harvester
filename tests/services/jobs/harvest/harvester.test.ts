@@ -26,13 +26,18 @@ import { dbValidationPhase } from '../../../../src/services/jobs/harvest/dbValid
 import { CommonDataset, IdentifierType } from '../../../../src/store/commonStructure';
 import { getZenodoMatchedSites } from '../../../../src/utilities/matchDeimsId';
 import { fieldSitesLimiter } from '../../../../src/services/rateLimiterConcurrency';
+import { log } from '../../../../src/services/serviceLogging';
 
 // To isolate all other layers, we need to isolate the following:
 // those should be tested separately
 jest.mock('pg');
 
 // API
-jest.mock('../../../../api/darApi');
+jest.mock('../../../../api/darApi', () => ({
+  findDarRecordBySourceURL: jest.fn(),
+  postToDar: jest.fn(),
+  putToDar: jest.fn(),
+}));
 
 // DAO
 jest.mock('../../../../src/store/dao/recordDao');
@@ -55,6 +60,7 @@ const mockedFetchXml = fetchers.fetchXml as jest.Mock;
 const mockedCalculateChecksum = checksumUtils.calculateChecksum as jest.Mock;
 const mockedPutToDar = darApi.putToDar as jest.Mock;
 const mockedPostToDar = darApi.postToDar as jest.Mock;
+const mockedFindDar = darApi.findDarRecordBySourceURL as jest.Mock;
 const mockedDbRecordUpsert = dbRecordSync.dbRecordUpsert as jest.Mock;
 
 // parsers
@@ -166,9 +172,6 @@ describe('Test harvester file', () => {
       expect(mapDataRegistryToCommonDatasetMetadata).toHaveBeenCalled();
     });
   });
-  describe('findDarRecordBySourceURL', () => {
-    // TODO
-  });
   describe('synchronizeRecord', () => {
     beforeEach(() => {
       // we do not need any results of fetch,
@@ -238,10 +241,7 @@ describe('Test harvester file', () => {
       };
 
       // no record found in DAR
-      (global.fetch as jest.Mock).mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve({ hits: { hits: [] } }),
-      });
+      mockedFindDar.mockResolvedValue(null);
       mockedPostToDar.mockResolvedValue('new-id-from-dar');
 
       await (context as any).synchronizeRecord(sourceUrl, 'source-checksum', newDataset);
@@ -269,11 +269,8 @@ describe('Test harvester file', () => {
         },
       };
 
-      (global.fetch as jest.Mock).mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve({ hits: { hits: [{ id: 'existing-dar-id' }] } }),
-      });
       // faking a different checksum in the DB to execute 'rewriteRecord'
+      mockedFindDar.mockResolvedValue('existing-dar-id');
       mockRecordDao.getRecordBySourceId.mockResolvedValue([{ dar_checksum: 'old-dar-checksum' }] as any);
 
       const handleChangedSpy = jest.spyOn(context as any, 'handleChangedRecord');
@@ -288,11 +285,10 @@ describe('Test harvester file', () => {
       const sourceUrl = 'http://example.com/up-to-date-record';
       const upToDateDataset = { metadata: { titles: [{ titleText: 'Up To Date' }], externalSourceInformation: {} } };
 
-      (global.fetch as jest.Mock).mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve({ hits: { hits: [{ id: 'existing-dar-id' }] } }),
-      });
-      mockRecordDao.getRecordBySourceId.mockResolvedValue([{ dar_checksum: 'mocked-dar-checksum' }] as any);
+      mockedFindDar.mockResolvedValue('existing-dar-id');
+      mockRecordDao.getRecordBySourceId.mockResolvedValue([
+        { dar_checksum: 'mocked-dar-checksum', source_checksum: 'source-checksum' },
+      ] as any);
 
       await (context as any).synchronizeRecord(sourceUrl, 'source-checksum', upToDateDataset);
 
@@ -520,8 +516,97 @@ describe('Test harvester file', () => {
       expect(mockRuleDao.deleteRule).toHaveBeenCalledWith('2');
     });
   });
-  describe('handleChangedRecord', () => {
-    // TODO
+  describe('handleChangedRecord - tests only logging', () => {
+    const sourceUrl = 'http://dataregistry.com/changed-record';
+    const darId = 'dar-id-123';
+    const dataset: CommonDataset = {
+      metadata: {
+        assetType: 'Dataset',
+        titles: [{ titleText: 'Test Title' }],
+        externalSourceInformation: {},
+      },
+    };
+    let handleChangedSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      handleChangedSpy = jest.spyOn(context as any, 'handleChangedRecord');
+      mockedPutToDar.mockResolvedValue(undefined);
+      mockedDbRecordUpsert.mockResolvedValue(undefined);
+      mockedFindDar.mockResolvedValue(darId);
+
+      // calling function uses fetch
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ hits: { hits: [{ id: darId }] } }),
+      });
+    });
+
+    it('should log "No database record" when the local record is missing', async () => {
+      mockRecordDao.getRecordBySourceId.mockResolvedValue([]); // No DB matches
+      mockedCalculateChecksum.mockReturnValue('new-checksum');
+
+      (context.mapToCommonStructure as jest.Mock) = jest.fn().mockResolvedValue({
+        metadata: {
+          titles: [{ titleText: 'Test Title' }],
+          externalSourceInformation: { externalSourceURI: sourceUrl },
+        },
+      });
+      await context.processOneRecordTask(sourceUrl);
+
+      expect(handleChangedSpy).toHaveBeenCalled();
+      expect(log).toHaveBeenCalledWith('info', expect.stringContaining('No database record'));
+      expect(mockedPutToDar).toHaveBeenCalledTimes(1);
+      expect(mockedDbRecordUpsert).toHaveBeenCalledTimes(1);
+    });
+
+    it('should log "Source data changed" when source checksum differs', async () => {
+      const dbRecord: DbRecord = {
+        source_url: 'sites.org',
+        source_repository: 'SITES',
+        source_checksum: 'old-source-hecksum',
+        dar_id: 'dar-id-',
+        dar_checksum: 'dar-checksum',
+        status: 'in_progress',
+        last_harvested: new Date('2025-12-31'),
+        title: 'A title of a record',
+      };
+
+      mockRecordDao.getRecordBySourceId.mockResolvedValue([dbRecord]);
+      // DAR checksum same
+      mockedCalculateChecksum.mockReturnValue('dar-checksum');
+
+      // different source checksum
+      await (context as any).synchronizeRecord(sourceUrl, 'new-source-checksum', dataset);
+
+      expect(handleChangedSpy).toHaveBeenCalled();
+      expect(log).toHaveBeenCalledWith('info', expect.stringContaining('Source data changed'));
+      expect(mockedPutToDar).toHaveBeenCalledTimes(1);
+      expect(mockedDbRecordUpsert).toHaveBeenCalledTimes(1);
+    });
+
+    it('should log "Implementation of mappers might have changed" when DAR checksum differs', async () => {
+      const dbRecord: DbRecord = {
+        source_url: 'sites.org',
+        source_repository: 'SITES',
+        source_checksum: 'source-checksum',
+        dar_id: 'dar-id',
+        dar_checksum: 'old-dar-checksum',
+        status: 'in_progress',
+        last_harvested: new Date('2025-12-31'),
+        title: 'A title of a record',
+      };
+
+      mockRecordDao.getRecordBySourceId.mockResolvedValue([dbRecord]);
+      mockedCalculateChecksum.mockReturnValue('new-dar-checksum');
+
+      // source checksum same
+      await (context as any).synchronizeRecord(sourceUrl, 'source-checksum', dataset);
+
+      expect(handleChangedSpy).toHaveBeenCalled();
+      expect(log).toHaveBeenCalledWith('info', expect.stringContaining('Implementation of mappers might have changed'));
+      expect(mockedPutToDar).toHaveBeenCalledTimes(1);
+      expect(mockedDbRecordUpsert).toHaveBeenCalledTimes(1);
+    });
   });
   describe('processApiHits', () => {
     it('should call process one record task with correct url', async () => {

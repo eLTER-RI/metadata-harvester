@@ -87,3 +87,33 @@ export async function postToDar(
   const resp = await apiResponse.json();
   return resp.id;
 }
+
+/**
+ * Constructs a search URL for the Data Registry (DAR) API to find a record by its external source URI.
+ *
+ * @param {string} externalSourceURI externalSourceURI used in the record's externalSourceInformation field in DAR.
+ *
+ * @returns {string} URL for querying for filtering based on externalSourceURI
+ */
+function getUrlWithExternalSourceURIQuery(externalSourceURI: string): string {
+  const encodedURI = encodeURIComponent(externalSourceURI);
+  return `${API_URL}?q=&metadata_externalSourceInformation_externalSourceURI=${encodedURI}`;
+}
+
+/**
+ * Searches DAR for a record by its source URL.
+ * @param {string} sourceUrl The source URL of the record on the remote repository.
+ * @returns {string | null} The ID of the matching record in DAR, null if no record found.
+ */
+export async function findDarRecordBySourceURL(sourceUrl: string): Promise<string | null> {
+  const response = await fetch(getUrlWithExternalSourceURIQuery(sourceUrl), {
+    method: 'GET',
+    headers: { Authorization: AUTH_TOKEN, Accept: 'application/json' },
+  });
+
+  const searchResult = (await response.json()) as any;
+  if (searchResult?.hits?.hits?.length > 0 && searchResult.hits.hits[0]?.id) {
+    return searchResult.hits.hits[0].id;
+  }
+  return null;
+}
