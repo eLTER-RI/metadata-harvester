@@ -130,4 +130,25 @@ describe('dbRecordUpsert', () => {
     });
     expect(mockRecordDao.createRecord).not.toHaveBeenCalled();
   });
+
+  it('should handle errors of database and update status to "failed"', async () => {
+    const dbError = new Error('Database connection lost');
+    mockRecordDao.getRecordBySourceId.mockRejectedValue(dbError);
+
+    await dbRecordUpsert(
+      dbRecord.dar_id,
+      mockRecordDao,
+      dbRecord.source_url,
+      dbRecord.source_repository as RepositoryType,
+      dbRecord.source_checksum,
+      dbRecord.dar_checksum,
+      dbRecord.title,
+    );
+
+    expect(mockLog).toHaveBeenCalledWith(
+      'error',
+      expect.stringContaining(`Failed to upsert record for ${dbRecord.source_url}. Reason: ${dbError.message}`),
+    );
+    expect(mockRecordDao.updateDarIdStatus).toHaveBeenCalledWith(dbRecord.source_url, { status: 'failed' });
+  });
 });
