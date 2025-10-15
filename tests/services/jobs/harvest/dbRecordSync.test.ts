@@ -50,4 +50,84 @@ describe('dbRecordUpsert', () => {
     expect(mockRecordDao.createRecord).not.toHaveBeenCalled();
     expect(mockRecordDao.updateRecord).not.toHaveBeenCalled();
   });
+
+  it('should update an existing record by old URL', async () => {
+    const oldUrl = 'http://example.com/record/old-version';
+
+    await dbRecordUpsert(
+      dbRecord.dar_id,
+      mockRecordDao,
+      dbRecord.source_url,
+      dbRecord.source_repository as RepositoryType,
+      dbRecord.source_checksum,
+      dbRecord.dar_checksum,
+      dbRecord.title,
+    );
+
+    expect(mockRecordDao.updateRecordWithPrimaryKey).toHaveBeenCalledWith(oldUrl, {
+      source_url: dbRecord.dar_id,
+      source_repository: dbRecord.source_repository,
+      source_checksum: dbRecord.source_checksum,
+      dar_id: dbRecord.dar_id,
+      dar_checksum: dbRecord.dar_checksum,
+      status: 'success',
+      title: dbRecord.title,
+    });
+    // Should not perform checks for the new URL
+    expect(mockRecordDao.getRecordBySourceId).not.toHaveBeenCalled();
+    expect(mockRecordDao.createRecord).not.toHaveBeenCalled();
+    expect(mockRecordDao.updateRecord).not.toHaveBeenCalled();
+  });
+
+  it('should create a new record if no matching record found in db', async () => {
+    mockRecordDao.getRecordBySourceId.mockResolvedValue([]);
+
+    await dbRecordUpsert(
+      dbRecord.dar_id,
+      mockRecordDao,
+      dbRecord.source_url,
+      dbRecord.source_repository as RepositoryType,
+      dbRecord.source_checksum,
+      dbRecord.dar_checksum,
+      dbRecord.title,
+    );
+
+    expect(mockRecordDao.getRecordBySourceId).toHaveBeenCalledWith(dbRecord.source_url);
+    expect(mockRecordDao.createRecord).toHaveBeenCalledWith({
+      source_url: dbRecord.dar_id,
+      source_repository: dbRecord.source_repository,
+      source_checksum: dbRecord.source_checksum,
+      dar_id: dbRecord.dar_id,
+      dar_checksum: dbRecord.dar_checksum,
+      status: 'success',
+      title: dbRecord.title,
+    });
+    expect(mockRecordDao.updateRecord).not.toHaveBeenCalled();
+  });
+
+  it('should update an existing record if matching record found in db', async () => {
+    mockRecordDao.getRecordBySourceId.mockResolvedValue([{} as any]);
+
+    await dbRecordUpsert(
+      dbRecord.dar_id,
+      mockRecordDao,
+      dbRecord.source_url,
+      dbRecord.source_repository as RepositoryType,
+      dbRecord.source_checksum,
+      dbRecord.dar_checksum,
+      dbRecord.title,
+    );
+
+    expect(mockRecordDao.getRecordBySourceId).toHaveBeenCalledWith(dbRecord.source_url);
+    expect(mockRecordDao.updateRecord).toHaveBeenCalledWith(dbRecord.source_url, {
+      source_url: dbRecord.dar_id,
+      source_repository: dbRecord.source_repository,
+      source_checksum: dbRecord.source_checksum,
+      dar_id: dbRecord.dar_id,
+      dar_checksum: dbRecord.dar_checksum,
+      status: 'success',
+      title: dbRecord.title,
+    });
+    expect(mockRecordDao.createRecord).not.toHaveBeenCalled();
+  });
 });
