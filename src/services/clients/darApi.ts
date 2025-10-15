@@ -1,7 +1,7 @@
-import { API_URL, AUTH_TOKEN } from '../src/services/jobs/harvest/harvester';
-import { log } from '../src/services/serviceLogging';
-import { CommonDataset } from '../src/store/commonStructure';
-import { RecordDao } from '../src/store/dao/recordDao';
+import { API_URL, AUTH_TOKEN } from '../jobs/harvest/harvester';
+import { log } from '../serviceLogging';
+import { CommonDataset } from '../../store/commonStructure';
+import { RecordDao } from '../../store/dao/recordDao';
 
 /**
  * Sends a PUT request to the DAR API.

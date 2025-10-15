@@ -19,7 +19,7 @@ import { RuleDao, RuleDbRecord } from '../../../../src/store/dao/rulesDao';
 import * as rulesUtilities from '../../../../src/utilities/rules';
 import * as fetchers from '../../../../src/utilities/fetchJsonFromRemote';
 import * as checksumUtils from '../../../../src/utilities/checksum';
-import * as darApi from '../../../../api/darApi';
+import * as darApi from '../../../../src/services/clients/darApi';
 import * as dbRecordSync from '../../../../src/services/jobs/harvest/dbRecordSync';
 import { CONFIG } from '../../../../config';
 import { dbValidationPhase } from '../../../../src/services/jobs/harvest/dbValidation';
@@ -33,7 +33,7 @@ import { log } from '../../../../src/services/serviceLogging';
 jest.mock('pg');
 
 // API
-jest.mock('../../../../api/darApi', () => ({
+jest.mock('../../../../src/services/clients/darApi', () => ({
   findDarRecordBySourceURL: jest.fn(),
   postToDar: jest.fn(),
   putToDar: jest.fn(),
