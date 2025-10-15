@@ -3,8 +3,6 @@
 // https://gitlab.ics.muni.cz/dataraptors/elter/elter-invenio/-/blob/master/models/dataset-type.yaml?ref_type=heads
 // https://gitlab.ics.muni.cz/dataraptors/elter/elter-invenio/-/blob/master/models/datasets-datatypes.yaml?ref_type=heads
 
-import { Metadata } from '../../api/schema/b2shareApi';
-
 export type RepositoryType = 'B2SHARE_EUDAT' | 'SITES' | 'B2SHARE_JUELICH' | 'ZENODO' | 'ZENODO_IT' | 'DATAREGISTRY';
 
 export type CommonDataset = {
