@@ -33,7 +33,7 @@ export async function syncWithDar(repositoryType: RepositoryType, pool: Pool, da
 
   const extraOnRemote = remoteDarIds.filter((item) => !localDarIdsSet.has(item));
   log('warn', `Extra on remote: ` + JSON.stringify(extraOnRemote, null, 2));
-  if (darCleanup) {
+  if (darCleanup && extraOnRemote.length > 0) {
     log('warn', `Deleting all extra resources from Dar.`);
     deleteDarRecordsByIds(extraOnRemote);
   }
