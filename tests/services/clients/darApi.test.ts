@@ -1,11 +1,12 @@
 import {
   deleteDarRecordsByIds,
+  fetchDarRecordsByRepository,
   findDarRecordBySourceURL,
   postToDar,
   putToDar,
 } from '../../../src/services/clients/darApi';
 import { RecordDao } from '../../../src/store/dao/recordDao';
-import { CommonDataset } from '../../../src/store/commonStructure';
+import { CommonDataset, RepositoryType } from '../../../src/store/commonStructure';
 import { log } from '../../../src/services/serviceLogging';
 import { darLimiter } from '../../../src/services/rateLimiterConcurrency';
 import { CONFIG } from '../../../config';
@@ -230,7 +231,42 @@ describe('DAR API Tests', () => {
         method: 'DELETE',
         headers: expect.any(Object),
       });
-      scheduleSpy.mockRestore();
+    });
+  });
+
+  describe('fetchDarRecordsByRepository', () => {
+    it('should handle pagination and return an list of IDs', async () => {
+      const scheduleSpy = jest.spyOn(darLimiter, 'schedule');
+      const mockFetch = global.fetch as jest.Mock;
+
+      // two-page API response
+      // has 'next' link
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            hits: { hits: [{ id: 'first-dar-id' }, { id: 'second-dar-id' }] },
+            links: { next: 'https://test-api.com/records?repo=ZENODO&page=2' },
+          }),
+      });
+
+      // page 2 with no 'next' link
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            hits: { hits: [{ id: 'third-dar-id' }] },
+            links: {},
+          }),
+      });
+
+      const results = await fetchDarRecordsByRepository('ZENODO' as RepositoryType);
+
+      expect(results).toEqual(['first-dar-id', 'second-dar-id', 'third-dar-id']);
+      expect(scheduleSpy).toHaveBeenCalledTimes(2); // limiter called for both pages
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      expect(mockFetch).toHaveBeenCalledWith(CONFIG.REPOSITORIES.ZENODO.darQuery, expect.any(Object));
+      expect(mockFetch).toHaveBeenCalledWith('https://test-api.com/records?repo=ZENODO&page=2', expect.any(Object));
     });
   });
 });
