@@ -2,9 +2,15 @@ import { findDarRecordBySourceURL, postToDar, putToDar } from '../../../src/serv
 import { RecordDao } from '../../../src/store/dao/recordDao';
 import { CommonDataset } from '../../../src/store/commonStructure';
 import { log } from '../../../src/services/serviceLogging';
+import { darLimiter } from '../../../src/services/rateLimiterConcurrency';
 
 jest.mock('../../../src/services/serviceLogging', () => ({
   log: jest.fn(),
+}));
+jest.mock('../../../src/services/rateLimiterConcurrency', () => ({
+  darLimiter: {
+    schedule: jest.fn((task) => task()),
+  },
 }));
 
 global.fetch = jest.fn();
@@ -30,6 +36,9 @@ describe('DAR API Tests', () => {
     mockRecordDao = {
       updateStatus: jest.fn().mockResolvedValue(undefined),
     } as any;
+
+    (darLimiter.schedule as jest.Mock).mockClear();
+    (global.fetch as jest.Mock).mockClear();
   });
 
   describe('postToDar', () => {
@@ -39,6 +48,7 @@ describe('DAR API Tests', () => {
         ok: true,
         json: () => Promise.resolve({ id: newDarId }),
       });
+      const scheduleSpy = jest.spyOn(darLimiter, 'schedule');
 
       const result = await postToDar(mockRecordDao, sourceUrl, mockDataset);
 
@@ -50,16 +60,19 @@ describe('DAR API Tests', () => {
       });
       // called only to set to failure
       expect(mockRecordDao.updateStatus).not.toHaveBeenCalled();
+      expect(scheduleSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should return null and set record status to failed on empty apiResponse', async () => {
       mockFetch.mockResolvedValueOnce(null);
+      const scheduleSpy = jest.spyOn(darLimiter, 'schedule');
 
       const result = await postToDar(mockRecordDao, sourceUrl, mockDataset);
 
       expect(result).toBeNull();
       expect(mockRecordDao.updateStatus).toHaveBeenCalledWith(sourceUrl, { status: 'failed' });
       expect(mockLog).toHaveBeenCalledWith('error', expect.stringContaining(`Posting ${sourceUrl} into dar failed`));
+      expect(scheduleSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should return null and set record status to failed if response not ok', async () => {
@@ -69,12 +82,14 @@ describe('DAR API Tests', () => {
         status: 400,
         text: () => Promise.resolve(errorResponse),
       });
+      const scheduleSpy = jest.spyOn(darLimiter, 'schedule');
 
       const result = await postToDar(mockRecordDao, sourceUrl, mockDataset);
 
       expect(result).toBeNull();
       expect(mockRecordDao.updateStatus).toHaveBeenCalledWith(sourceUrl, { status: 'failed' });
       expect(mockLog).toHaveBeenCalledWith('error', expect.stringContaining(`failed with : 400: ${errorResponse}`));
+      expect(scheduleSpy).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -84,6 +99,7 @@ describe('DAR API Tests', () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
       });
+      const scheduleSpy = jest.spyOn(darLimiter, 'schedule');
 
       await putToDar(darId, mockRecordDao, sourceUrl, mockDataset);
 
@@ -94,10 +110,12 @@ describe('DAR API Tests', () => {
       });
       // called only to set to failure
       expect(mockRecordDao.updateStatus).toHaveBeenCalledWith(sourceUrl, { status: 'success' });
+      expect(scheduleSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should set record status to failed on empty apiResponse', async () => {
       mockFetch.mockResolvedValueOnce(null);
+      const scheduleSpy = jest.spyOn(darLimiter, 'schedule');
 
       await putToDar(darId, mockRecordDao, sourceUrl, mockDataset);
 
@@ -106,6 +124,7 @@ describe('DAR API Tests', () => {
         'error',
         expect.stringContaining(`PUT request ${sourceUrl} into dar failed`),
       );
+      expect(scheduleSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should set record status to failed if response not ok', async () => {
@@ -115,11 +134,13 @@ describe('DAR API Tests', () => {
         status: 400,
         text: () => Promise.resolve(errorResponse),
       });
+      const scheduleSpy = jest.spyOn(darLimiter, 'schedule');
 
       await putToDar(darId, mockRecordDao, sourceUrl, mockDataset);
 
       expect(mockRecordDao.updateStatus).toHaveBeenCalledWith(sourceUrl, { status: 'failed' });
       expect(mockLog).toHaveBeenCalledWith('error', expect.stringContaining(`failed with : 400: ${errorResponse}`));
+      expect(scheduleSpy).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -133,10 +154,12 @@ describe('DAR API Tests', () => {
             data: [],
           }),
       });
+      const scheduleSpy = jest.spyOn(darLimiter, 'schedule');
 
       const result = await findDarRecordBySourceURL(sourceUrl);
 
       expect(result).toBeNull();
+      expect(scheduleSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should return null when no records are found', async () => {
@@ -149,10 +172,12 @@ describe('DAR API Tests', () => {
             },
           }),
       });
+      const scheduleSpy = jest.spyOn(darLimiter, 'schedule');
 
       const result = await findDarRecordBySourceURL(sourceUrl);
 
       expect(result).toBeNull();
+      expect(scheduleSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should return the DAR ID when a record is found', async () => {
@@ -166,12 +191,14 @@ describe('DAR API Tests', () => {
             },
           }),
       });
+      const scheduleSpy = jest.spyOn(darLimiter, 'schedule');
 
       const result = await findDarRecordBySourceURL(sourceUrl);
 
       expect(result).toBe(foundDarId);
       const expectedEncodedUrl = encodeURIComponent(sourceUrl);
       expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining(expectedEncodedUrl), expect.any(Object));
+      expect(scheduleSpy).toHaveBeenCalledTimes(1);
     });
   });
 });

@@ -27,14 +27,16 @@ interface DarApiResponse {
  */
 export async function putToDar(darId: string, recordDao: RecordDao, sourceUrl: string, dataset: CommonDataset) {
   log('info', `PUT ${sourceUrl} to Dar record with id ${darId}.`);
-  const apiResponse = await fetch(`${CONFIG.API_URL}/${darId}`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: CONFIG.AUTH_TOKEN,
-    },
-    body: JSON.stringify(dataset, null, 2),
-  });
+  const apiResponse = await darLimiter.schedule(() =>
+    fetch(`${CONFIG.API_URL}/${darId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: CONFIG.AUTH_TOKEN,
+      },
+      body: JSON.stringify(dataset, null, 2),
+    }),
+  );
 
   if (!apiResponse) {
     log('error', `PUT request ${sourceUrl} into dar failed`);
@@ -72,14 +74,16 @@ export async function postToDar(
   dataset: CommonDataset,
 ): Promise<string | null> {
   log('info', `Posting ${sourceUrl} to Dar.`);
-  const apiResponse = await fetch(CONFIG.API_URL!, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: CONFIG.AUTH_TOKEN,
-    },
-    body: JSON.stringify(dataset, null, 2),
-  });
+  const apiResponse = await darLimiter.schedule(() =>
+    fetch(CONFIG.API_URL!, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: CONFIG.AUTH_TOKEN,
+      },
+      body: JSON.stringify(dataset, null, 2),
+    }),
+  );
 
   if (!apiResponse) {
     log('error', `Posting ${sourceUrl} into dar failed`);
@@ -166,10 +170,12 @@ function getUrlWithExternalSourceURIQuery(externalSourceURI: string): string {
  * @returns {string | null} The ID of the matching record in DAR, null if no record found.
  */
 export async function findDarRecordBySourceURL(sourceUrl: string): Promise<string | null> {
-  const response = await fetch(getUrlWithExternalSourceURIQuery(sourceUrl), {
-    method: 'GET',
-    headers: { Authorization: CONFIG.AUTH_TOKEN, Accept: 'application/json' },
-  });
+  const response = await darLimiter.schedule(() =>
+    fetch(getUrlWithExternalSourceURIQuery(sourceUrl), {
+      method: 'GET',
+      headers: { Authorization: CONFIG.AUTH_TOKEN, Accept: 'application/json' },
+    }),
+  );
 
   const searchResult: DarApiResponse = (await response.json()) as DarApiResponse;
   if (searchResult?.hits?.hits?.length > 0 && searchResult.hits.hits[0]?.id) {
