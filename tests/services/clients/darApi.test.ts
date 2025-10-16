@@ -1,8 +1,14 @@
-import { findDarRecordBySourceURL, postToDar, putToDar } from '../../../src/services/clients/darApi';
+import {
+  deleteDarRecordsByIds,
+  findDarRecordBySourceURL,
+  postToDar,
+  putToDar,
+} from '../../../src/services/clients/darApi';
 import { RecordDao } from '../../../src/store/dao/recordDao';
 import { CommonDataset } from '../../../src/store/commonStructure';
 import { log } from '../../../src/services/serviceLogging';
 import { darLimiter } from '../../../src/services/rateLimiterConcurrency';
+import { CONFIG } from '../../../config';
 
 jest.mock('../../../src/services/serviceLogging', () => ({
   log: jest.fn(),
@@ -199,6 +205,32 @@ describe('DAR API Tests', () => {
       const expectedEncodedUrl = encodeURIComponent(sourceUrl);
       expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining(expectedEncodedUrl), expect.any(Object));
       expect(scheduleSpy).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('deleteDarRecordsByIds', () => {
+    it('should fetch with delete each id', async () => {
+      const scheduleSpy = jest.spyOn(darLimiter, 'schedule');
+      (global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+      });
+
+      const idsToDelete = ['id1', 'id2'];
+
+      await deleteDarRecordsByIds(idsToDelete);
+
+      expect(scheduleSpy).toHaveBeenCalledTimes(2);
+      expect(global.fetch).toHaveBeenCalledTimes(2);
+
+      expect(global.fetch).toHaveBeenCalledWith(`${CONFIG.API_URL}/id1`, {
+        method: 'DELETE',
+        headers: expect.any(Object),
+      });
+      expect(global.fetch).toHaveBeenCalledWith(`${CONFIG.API_URL}/id2`, {
+        method: 'DELETE',
+        headers: expect.any(Object),
+      });
+      scheduleSpy.mockRestore();
     });
   });
 });
