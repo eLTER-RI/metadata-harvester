@@ -1,4 +1,4 @@
-import { postToDar } from '../../../src/services/clients/darApi';
+import { postToDar, putToDar } from '../../../src/services/clients/darApi';
 import { RecordDao } from '../../../src/store/dao/recordDao';
 import { CommonDataset } from '../../../src/store/commonStructure';
 import { log } from '../../../src/services/serviceLogging';
@@ -29,7 +29,6 @@ describe('DAR API Tests', () => {
 
     mockRecordDao = {
       updateStatus: jest.fn().mockResolvedValue(undefined),
-      updateDarIdStatus: jest.fn().mockResolvedValue(undefined),
     } as any;
   });
 
@@ -50,7 +49,7 @@ describe('DAR API Tests', () => {
         body: JSON.stringify(mockDataset, null, 2),
       });
       // called only to set to failure
-      expect(mockRecordDao.updateDarIdStatus).not.toHaveBeenCalled();
+      expect(mockRecordDao.updateStatus).not.toHaveBeenCalled();
     });
 
     it('should return null and set record status to failed on empty apiResponse', async () => {
@@ -59,7 +58,7 @@ describe('DAR API Tests', () => {
       const result = await postToDar(mockRecordDao, sourceUrl, mockDataset);
 
       expect(result).toBeNull();
-      expect(mockRecordDao.updateDarIdStatus).toHaveBeenCalledWith(sourceUrl, { dar_id: '', status: 'failed' });
+      expect(mockRecordDao.updateStatus).toHaveBeenCalledWith(sourceUrl, { status: 'failed' });
       expect(mockLog).toHaveBeenCalledWith('error', expect.stringContaining(`Posting ${sourceUrl} into dar failed`));
     });
 
@@ -74,7 +73,7 @@ describe('DAR API Tests', () => {
       const result = await postToDar(mockRecordDao, sourceUrl, mockDataset);
 
       expect(result).toBeNull();
-      expect(mockRecordDao.updateDarIdStatus).toHaveBeenCalledWith(sourceUrl, { dar_id: '', status: 'failed' });
+      expect(mockRecordDao.updateStatus).toHaveBeenCalledWith(sourceUrl, { status: 'failed' });
       expect(mockLog).toHaveBeenCalledWith('error', expect.stringContaining(`failed with : 400: ${errorResponse}`));
     });
   });

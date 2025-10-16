@@ -23,7 +23,7 @@ export async function putToDar(darId: string, recordDao: RecordDao, sourceUrl: s
 
   if (!apiResponse) {
     log('error', `PUT request ${sourceUrl} into dar failed`);
-    await recordDao.updateDarIdStatus(sourceUrl, {
+    await recordDao.updateStatus(sourceUrl, {
       status: 'failed',
     });
     return;
@@ -32,7 +32,7 @@ export async function putToDar(darId: string, recordDao: RecordDao, sourceUrl: s
   if (!apiResponse.ok) {
     const responseText = await apiResponse.text().catch(() => 'Could not read error response.');
     log('error', `PUT request ${sourceUrl} into dar failed with : ${apiResponse.status}: ${responseText}`);
-    await recordDao.updateDarIdStatus(sourceUrl, {
+    await recordDao.updateStatus(sourceUrl, {
       status: 'failed',
     });
     return;
@@ -68,8 +68,7 @@ export async function postToDar(
 
   if (!apiResponse) {
     log('error', `Posting ${sourceUrl} into dar failed`);
-    await recordDao.updateDarIdStatus(sourceUrl, {
-      dar_id: '',
+    await recordDao.updateStatus(sourceUrl, {
       status: 'failed',
     });
     return null;
@@ -78,8 +77,7 @@ export async function postToDar(
   if (!apiResponse.ok) {
     const responseText = await apiResponse.text().catch(() => 'Could not read error response.');
     log('error', `Posting ${sourceUrl} into dar failed with : ${apiResponse.status}: ${responseText}`);
-    await recordDao.updateDarIdStatus(sourceUrl, {
-      dar_id: '',
+    await recordDao.updateStatus(sourceUrl, {
       status: 'failed',
     });
     return null;
