@@ -1,5 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
+import swaggerJsdoc from 'swagger-jsdoc';
+import swaggerUi from 'swagger-ui-express';
 import cors from 'cors';
 import { Pool } from 'pg';
 import { log } from './serviceLogging';
@@ -11,6 +13,7 @@ import { syncWithDar } from './jobs/syncDbWithRemote/localDarSync';
 import { RecordDao } from '../store/dao/recordDao';
 import { ResolvedRecordDao } from '../store/dao/resolvedRecordsDao';
 import { RuleDao } from '../store/dao/rulesDao';
+import swaggerOptions from '../../api/config/swaggerConfig';
 
 const pool = new Pool({
   user: process.env.DB_USER,
@@ -23,6 +26,8 @@ const pool = new Pool({
 const app = express();
 app.use(express.json());
 app.use(cors());
+const swaggerSpec = swaggerJsdoc(swaggerOptions);
+app.use('/api', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 const PORT = process.env.PORT || 3000;
 
@@ -297,3 +302,5 @@ app.listen(PORT, () => {
     console.error(e);
   });
 });
+
+export default app;
