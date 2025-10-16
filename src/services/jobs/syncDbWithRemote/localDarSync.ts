@@ -1,118 +1,9 @@
 import 'dotenv/config';
 import { Pool } from 'pg';
-import fetch from 'node-fetch';
 import { RecordDao } from '../../../store/dao/recordDao';
-import { CONFIG } from '../../../../config';
 import { RepositoryType } from '../../../store/commonStructure';
 import { log } from '../../serviceLogging';
-import { darLimiter } from '../../rateLimiterConcurrency';
-
-interface DarApiResponse {
-  hits: {
-    hits: {
-      id: string;
-    }[];
-    total: number;
-  };
-  links: {
-    self: string;
-    next?: string;
-    prev?: string;
-  };
-}
-
-/**
- * This function deletes records from DAR based on the list of ids.
- * It uses a rate limiter in order to respect rate limits of DAR.
- *
- * @param {string[]} ids A list of DAR ids to be deleted.
- */
-async function deleteDarRecordsByIds(ids: string[]) {
-  const deletePromises = ids.map((id) => {
-    return darLimiter.schedule(() => {
-      const url = `${CONFIG.API_URL}/${id}`;
-
-      log('info', `Starting with deletion of a record with ID: ${id}`);
-
-      return fetch(url, {
-        method: 'DELETE',
-        headers: {
-          Authorization: CONFIG.AUTH_TOKEN,
-        },
-      }).then((response) => {
-        if (!response.ok) {
-          const errorMessage = `
-          Error deleting record with id ${id}.
-          Request failed with status: ${response.status} ${response.statusText}
-          URL: ${response.url}
-        `;
-          throw new Error(errorMessage);
-        }
-        log('info', `Successfully deleted a record with ID: ${id}`);
-      });
-    });
-  });
-
-  try {
-    const results = await Promise.allSettled(deletePromises);
-
-    const rejectedPromises = results.filter((result) => result.status === 'rejected');
-    if (rejectedPromises.length > 0) {
-      log('error', 'The following delete operations failed:');
-      rejectedPromises.forEach((rejection) => {
-        console.error(rejection.reason);
-      });
-    }
-  } catch (error) {
-    log('error', 'An unexpected error occurred during the batch delete operation: ' + error);
-  }
-}
-
-/**
- * Fetches a list of all DAR records.
- * It uses a rate limiter in order to respect rate limits of DAR.
- * @param {string} darRepoQuery The initial URL for the DAR API query.
- * @returns {Promise<string[]>} A promise that resolves to an array of IDs of all records in DAR.
- */
-async function fetchDarRecords(darRepoQuery: string): Promise<string[]> {
-  const allDarIds: string[] = [];
-  let url = darRepoQuery;
-  while (true) {
-    await darLimiter.schedule(async () => {
-      log('info', `Fetching DAR records from: ${url}`);
-
-      try {
-        const response = await fetch(`${url}`, {
-          method: 'GET',
-          headers: {
-            Authorization: CONFIG.AUTH_TOKEN,
-            Accept: 'application/json',
-          },
-        });
-
-        if (!response.ok) {
-          log('info', `Error fetching DAR records: ${response.status} ${response.statusText}`);
-          url = '';
-        }
-
-        const data: DarApiResponse = (await response.json()) as DarApiResponse;
-        const darIds = data?.hits?.hits?.map((record) => record?.id);
-        const next = data?.links?.next;
-        if (darIds) allDarIds.push(...darIds);
-        if (!next) {
-          url = '';
-        } else {
-          url = next;
-        }
-      } catch (error) {
-        log('error', `Network error fetching from DAR: ${error}`);
-        url = '';
-      }
-    });
-    if (!url) break;
-  }
-  return allDarIds;
-}
+import { deleteDarRecordsByIds, fetchDarRecordsByRepository } from '../../clients/darApi';
 
 /**
  * This function compares records in the local database versus DAR records, and logs these in arrays.
@@ -127,8 +18,7 @@ export async function syncWithDar(repositoryType: RepositoryType, pool: Pool, da
 
   let remoteDarIds: string[] = [];
   try {
-    const endpoint = CONFIG.REPOSITORIES[repositoryType].darQuery;
-    remoteDarIds = await fetchDarRecords(endpoint);
+    remoteDarIds = await fetchDarRecordsByRepository(repositoryType);
     log('info', `Found ${remoteDarIds.length} DAR IDs from the DAR API.`);
   } catch (error) {
     log('info', `Error fetching DAR IDs: ${error}`);

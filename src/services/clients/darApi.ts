@@ -1,7 +1,22 @@
 import { log } from '../serviceLogging';
-import { CommonDataset } from '../../store/commonStructure';
+import { CommonDataset, RepositoryType } from '../../store/commonStructure';
 import { RecordDao } from '../../store/dao/recordDao';
 import { CONFIG } from '../../../config';
+import { darLimiter } from '../rateLimiterConcurrency';
+
+interface DarApiResponse {
+  hits: {
+    hits: {
+      id: string;
+    }[];
+    total: number;
+  };
+  links: {
+    self: string;
+    next?: string;
+    prev?: string;
+  };
+}
 
 /**
  * Sends a PUT request to the DAR API.
@@ -87,6 +102,53 @@ export async function postToDar(
 }
 
 /**
+ * This function deletes records from DAR based on the list of ids.
+ * It uses a rate limiter in order to respect rate limits of DAR.
+ *
+ * @param {string[]} ids A list of DAR ids to be deleted.
+ */
+export async function deleteDarRecordsByIds(ids: string[]) {
+  const deletePromises = ids.map((id) => {
+    return darLimiter.schedule(() => {
+      const url = `${CONFIG.API_URL}/${id}`;
+
+      log('info', `Starting with deletion of a record with ID: ${id}`);
+
+      return fetch(url, {
+        method: 'DELETE',
+        headers: {
+          Authorization: CONFIG.AUTH_TOKEN,
+        },
+      }).then((response) => {
+        if (!response.ok) {
+          const errorMessage = `
+          Error deleting record with id ${id}.
+          Request failed with status: ${response.status} ${response.statusText}
+          URL: ${response.url}
+        `;
+          throw new Error(errorMessage);
+        }
+        log('info', `Successfully deleted a record with ID: ${id}`);
+      });
+    });
+  });
+
+  try {
+    const results = await Promise.allSettled(deletePromises);
+
+    const rejectedPromises = results.filter((result) => result.status === 'rejected');
+    if (rejectedPromises.length > 0) {
+      log('error', 'The following delete operations failed:');
+      rejectedPromises.forEach((rejection) => {
+        console.error(rejection.reason);
+      });
+    }
+  } catch (error) {
+    log('error', 'An unexpected error occurred during the batch delete operation: ' + error);
+  }
+}
+
+/**
  * Constructs a search URL for the Data Registry (DAR) API to find a record by its external source URI.
  *
  * @param {string} externalSourceURI externalSourceURI used in the record's externalSourceInformation field in DAR.
@@ -109,9 +171,55 @@ export async function findDarRecordBySourceURL(sourceUrl: string): Promise<strin
     headers: { Authorization: CONFIG.AUTH_TOKEN, Accept: 'application/json' },
   });
 
-  const searchResult = (await response.json()) as any;
+  const searchResult: DarApiResponse = (await response.json()) as DarApiResponse;
   if (searchResult?.hits?.hits?.length > 0 && searchResult.hits.hits[0]?.id) {
     return searchResult.hits.hits[0].id;
   }
   return null;
+}
+
+/**
+ * Fetches a list of DAR records by repository.
+ * It uses a rate limiter in order to respect rate limits of DAR.
+ * @param {RepositoryType} repository Source repository of records to fetch.
+ * @returns {Promise<string[]>} A promise that resolves to an array of IDs of all records in DAR.
+ */
+export async function fetchDarRecordsByRepository(repository: RepositoryType): Promise<string[]> {
+  const allDarIds: string[] = [];
+  let url = CONFIG.REPOSITORIES[repository].darQuery;
+  while (true) {
+    await darLimiter.schedule(async () => {
+      log('info', `Fetching DAR records from: ${url}`);
+
+      try {
+        const response = await fetch(`${url}`, {
+          method: 'GET',
+          headers: {
+            Authorization: CONFIG.AUTH_TOKEN,
+            Accept: 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          log('info', `Error fetching DAR records: ${response.status} ${response.statusText}`);
+          url = '';
+        }
+
+        const data: DarApiResponse = (await response.json()) as DarApiResponse;
+        const darIds = data?.hits?.hits?.map((record) => record?.id);
+        const next = data?.links?.next;
+        if (darIds) allDarIds.push(...darIds);
+        if (!next) {
+          url = '';
+        } else {
+          url = next;
+        }
+      } catch (error) {
+        log('error', `Network error fetching from DAR: ${error}`);
+        url = '';
+      }
+    });
+    if (!url) break;
+  }
+  return allDarIds;
 }
