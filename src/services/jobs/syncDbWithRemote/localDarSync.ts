@@ -7,15 +7,6 @@ import { RepositoryType } from '../../../store/commonStructure';
 import { log } from '../../serviceLogging';
 import { darLimiter } from '../../rateLimiterConcurrency';
 
-const currentEnv = process.env.NODE_ENV;
-if (currentEnv !== 'prod' && currentEnv !== 'dev') {
-  throw new Error(`NODE_ENV must be set to 'prod' or 'dev'`);
-}
-
-const API_URL = currentEnv === 'prod' ? process.env.PROD_API_URL : process.env.DEV_API_URL;
-const AUTH_TOKEN =
-  currentEnv === 'prod' ? 'Bearer ' + process.env.PROD_AUTH_TOKEN : 'Bearer ' + process.env.DEV_AUTH_TOKEN;
-
 interface DarApiResponse {
   hits: {
     hits: {
@@ -39,14 +30,14 @@ interface DarApiResponse {
 async function deleteDarRecordsByIds(ids: string[]) {
   const deletePromises = ids.map((id) => {
     return darLimiter.schedule(() => {
-      const url = `${API_URL}/${id}`;
+      const url = `${CONFIG.API_URL}/${id}`;
 
       log('info', `Starting with deletion of a record with ID: ${id}`);
 
       return fetch(url, {
         method: 'DELETE',
         headers: {
-          Authorization: AUTH_TOKEN,
+          Authorization: CONFIG.AUTH_TOKEN,
         },
       }).then((response) => {
         if (!response.ok) {
@@ -94,7 +85,7 @@ async function fetchDarRecords(darRepoQuery: string): Promise<string[]> {
         const response = await fetch(`${url}`, {
           method: 'GET',
           headers: {
-            Authorization: AUTH_TOKEN,
+            Authorization: CONFIG.AUTH_TOKEN,
             Accept: 'application/json',
           },
         });

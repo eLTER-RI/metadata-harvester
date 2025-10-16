@@ -1,7 +1,7 @@
-import { API_URL, AUTH_TOKEN } from '../jobs/harvest/harvester';
 import { log } from '../serviceLogging';
 import { CommonDataset } from '../../store/commonStructure';
 import { RecordDao } from '../../store/dao/recordDao';
+import { CONFIG } from '../../../config';
 
 /**
  * Sends a PUT request to the DAR API.
@@ -12,11 +12,11 @@ import { RecordDao } from '../../store/dao/recordDao';
  */
 export async function putToDar(darId: string, recordDao: RecordDao, sourceUrl: string, dataset: CommonDataset) {
   log('info', `PUT ${sourceUrl} to Dar record with id ${darId}.`);
-  const apiResponse = await fetch(`${API_URL}/${darId}`, {
+  const apiResponse = await fetch(`${CONFIG.API_URL}/${darId}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: AUTH_TOKEN,
+      Authorization: CONFIG.AUTH_TOKEN,
     },
     body: JSON.stringify(dataset, null, 2),
   });
@@ -57,11 +57,11 @@ export async function postToDar(
   dataset: CommonDataset,
 ): Promise<string | null> {
   log('info', `Posting ${sourceUrl} to Dar.`);
-  const apiResponse = await fetch(API_URL!, {
+  const apiResponse = await fetch(CONFIG.API_URL!, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: AUTH_TOKEN,
+      Authorization: CONFIG.AUTH_TOKEN,
     },
     body: JSON.stringify(dataset, null, 2),
   });
@@ -95,7 +95,7 @@ export async function postToDar(
  */
 function getUrlWithExternalSourceURIQuery(externalSourceURI: string): string {
   const encodedURI = encodeURIComponent(externalSourceURI);
-  return `${API_URL}?q=&metadata_externalSourceInformation_externalSourceURI=${encodedURI}`;
+  return `${CONFIG.API_URL}?q=&metadata_externalSourceInformation_externalSourceURI=${encodedURI}`;
 }
 
 /**
@@ -106,7 +106,7 @@ function getUrlWithExternalSourceURIQuery(externalSourceURI: string): string {
 export async function findDarRecordBySourceURL(sourceUrl: string): Promise<string | null> {
   const response = await fetch(getUrlWithExternalSourceURIQuery(sourceUrl), {
     method: 'GET',
-    headers: { Authorization: AUTH_TOKEN, Accept: 'application/json' },
+    headers: { Authorization: CONFIG.AUTH_TOKEN, Accept: 'application/json' },
   });
 
   const searchResult = (await response.json()) as any;

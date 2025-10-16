@@ -1,5 +1,49 @@
 import { RepositoryType } from './src/store/commonStructure';
 
+const currentEnv = process.env.NODE_ENV;
+if (currentEnv !== 'prod' && currentEnv !== 'dev' && currentEnv !== 'test') {
+  throw new Error(`NODE_ENV must be set to 'prod', 'dev', or 'test'`);
+}
+
+export const getApiUrl = () => {
+  if (currentEnv === 'prod') return process.env.PROD_API_URL;
+  if (currentEnv === 'dev') return process.env.DEV_API_URL;
+  return 'http://mock-api-for-tests.com';
+};
+
+export const API_URL = getApiUrl();
+
+export const AUTH_TOKEN =
+  currentEnv === 'prod' ? 'Bearer ' + process.env.PROD_AUTH_TOKEN : 'Bearer ' + process.env.DEV_AUTH_TOKEN;
+
+if (!API_URL || !AUTH_TOKEN) {
+  throw new Error(
+    `API_URL or AUTH_TOKEN undefined, env: '${currentEnv}'.
+    Check the .env file and set environments correctly.`,
+  );
+}
+
+const envConfigs = {
+  prod: {
+    API_URL: process.env.PROD_API_URL,
+    AUTH_TOKEN: `Bearer ${process.env.PROD_AUTH_TOKEN}`,
+  },
+  dev: {
+    API_URL: process.env.DEV_API_URL,
+    AUTH_TOKEN: `Bearer ${process.env.DEV_AUTH_TOKEN}`,
+  },
+  test: {
+    API_URL: 'http://mock-api-for-tests.com',
+    AUTH_TOKEN: 'Bearer mock-token',
+  },
+};
+
+const envConfig = envConfigs[currentEnv as keyof typeof envConfigs];
+
+if (!envConfig) {
+  throw new Error(`Invalid NODE_ENV: '${currentEnv}'. No configuration found.`);
+}
+
 export interface RepositoryConfig {
   apiUrl: string;
   pageSize?: number;
@@ -69,4 +113,5 @@ const repositories: Record<RepositoryType, RepositoryConfig> = {
 export const CONFIG = {
   REPOSITORIES: repositories,
   DEIMS_API_URL: 'https://deims.org/api/sites',
+  ...envConfig,
 };

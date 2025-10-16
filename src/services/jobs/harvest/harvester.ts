@@ -24,30 +24,6 @@ import { findDarRecordBySourceURL, postToDar, putToDar } from '../../clients/dar
 import { dbRecordUpsert } from './dbRecordSync';
 import { ResolvedRecordDao } from '../../../store/dao/resolvedRecordsDao';
 
-// Configurations
-const currentEnv = process.env.NODE_ENV;
-if (currentEnv !== 'prod' && currentEnv !== 'dev' && currentEnv !== 'test') {
-  throw new Error(`NODE_ENV must be set to 'prod', 'dev', or 'test'`);
-}
-
-export const getApiUrl = () => {
-  if (currentEnv === 'prod') return process.env.PROD_API_URL;
-  if (currentEnv === 'dev') return process.env.DEV_API_URL;
-  return 'http://mock-api-for-tests.com';
-};
-
-export const API_URL = getApiUrl();
-
-export const AUTH_TOKEN =
-  currentEnv === 'prod' ? 'Bearer ' + process.env.PROD_AUTH_TOKEN : 'Bearer ' + process.env.DEV_AUTH_TOKEN;
-
-if (!API_URL || !AUTH_TOKEN) {
-  throw new Error(
-    `API_URL or AUTH_TOKEN undefined, env: '${currentEnv}'.
-    Check the .env file and set environments correctly.`,
-  );
-}
-
 export class HarvesterContext {
   constructor(
     public readonly pool: Pool,
