@@ -1,6 +1,7 @@
 import { CommonDataset } from '../../../src/store/commonStructure';
 import mockFieldSitesData from './apiResponses/fieldSites.json';
 import mockFieldSitesOldData from './apiResponses/fieldsSites_old.json';
+import mockFieldSitesNonArray from './apiResponses/fieldSites-non-array-coverage.json';
 import * as fetcher from '../../../src/utilities/fetchJsonFromRemote';
 import { mapFieldSitesToCommonDatasetMetadata } from '../../../src/store/parsers/fieldSitesParser';
 
@@ -138,5 +139,35 @@ describe('SITES Parser', () => {
 
     expect(fetchJsonSpy).toHaveBeenCalledTimes(1);
     expect(fetchJsonSpy).toHaveBeenCalledWith('https://meta.fieldsites.se/objects/VGRl3pJhfNW472Jd3YlgLoCg');
+  });
+
+  it('should handle non-array coverage', async () => {
+    const sourceUrl = 'https://data.fieldsites.se/objects/v4QDZJ6fTm34fX0k6dpJAnqs';
+    const commonDataset: CommonDataset = await mapFieldSitesToCommonDatasetMetadata(
+      sourceUrl,
+      mockFieldSitesNonArray as any,
+      [],
+    );
+    expect(commonDataset.metadata.geoLocations).toBeDefined();
+    expect(commonDataset.metadata.geoLocations![0].boundingPolygon).toBeDefined();
+    expect(commonDataset.metadata.geoLocations![0].boundingPolygon).toHaveLength(1);
+    expect(commonDataset.metadata.geoLocations![0].boundingPolygon![0].inPolygonPoint).toEqual({
+      latitude: 67.9068,
+      longitude: 18.5765,
+    });
+    expect(commonDataset.metadata.geoLocations![0].boundingPolygon![0].points).toHaveLength(23);
+    expect(commonDataset.metadata.geoLocations![0].boundingPolygon![0].points[0]).toEqual({
+      latitude: 67.9068,
+      longitude: 18.5765,
+    });
+    expect(commonDataset.metadata.geoLocations![0].boundingPolygon![0].points).toHaveLength(23);
+    expect(commonDataset.metadata.geoLocations![0].boundingPolygon![0].points[1]).toEqual({
+      latitude: 67.9042,
+      longitude: 18.598,
+    });
+    expect(commonDataset.metadata.geoLocations![0].boundingPolygon![0].points[22]).toEqual({
+      latitude: 67.9068,
+      longitude: 18.5765,
+    });
   });
 });

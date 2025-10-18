@@ -17,9 +17,24 @@ import {
 } from '../commonStructure';
 
 function extractSitesGeolocation(input: any): Geolocation[] {
-  const coverages: Geolocation[] = [];
+  const coverageGeo = input.coverageGeo;
+  if (!coverageGeo) {
+    return [];
+  }
 
-  input.coverageGeo?.features?.map((coverage: any) => {
+  const coverages: Geolocation[] = [];
+  let featuresToProcess: any[] = [];
+  if (coverageGeo.type === 'FeatureCollection' && Array.isArray(coverageGeo.features)) {
+    featuresToProcess = coverageGeo.features;
+  } else if (coverageGeo.type === 'Feature') {
+    featuresToProcess = [coverageGeo];
+  } else {
+    return [];
+  }
+  featuresToProcess.forEach((coverage: any) => {
+    if (!coverage?.geometry) {
+      return;
+    }
     const geographicDescription = coverage.properties?.label || '';
     if (coverage.geometry.type === 'Point') {
       const coords = coverage.geometry.coordinates as number[];
