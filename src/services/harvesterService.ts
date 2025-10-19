@@ -486,6 +486,18 @@ app.post('/api/harvest/single', async (req, res) => {
   res.status(200).json({ message: `Harvesting job completed.` });
 });
 
+/**
+ * @swagger
+ * /api/sync/sites:
+ *   post:
+ *     tags: [Jobs]
+ *     summary: Synchronize sites from DEIMS.og.
+ *     responses:
+ *       200:
+ *         description: Job started.
+ *       400:
+ *         description: Failed to start the job.
+ */
 app.post('/api/sync/sites', async (req, res) => {
   log('info', 'Command received: sync-deims');
   try {
@@ -497,6 +509,31 @@ app.post('/api/sync/sites', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/sync/records:
+ *   post:
+ *     tags: [Jobs]
+ *     summary: Synchronize local database records with dar.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               repository:
+ *                 type: string
+ *                 example: ZENODO
+ *               darCleanup:
+ *                 type: boolean
+ *                 default: false
+ *     responses:
+ *       200:
+ *         description: Sync job started successfully.
+ *       400:
+ *         description: Invalid repository.
+ */
 app.post('/api/sync/records', async (req, res) => {
   const { repository, darCleanup = false } = req.body;
   let repositoryType = repository.toUpperCase() as RepositoryType;
@@ -513,7 +550,24 @@ app.post('/api/sync/records', async (req, res) => {
   res.status(200).json({ message: `Sync job of DAR with the local database started successfully.` });
 });
 
-// This endpoint will be used as a proxy from the frontend-side
+/**
+ * @swagger
+ * /api/external-record/{darId}:
+ *   get:
+ *     tags: [DAR]
+ *     summary: Proxy to fetch a record directly from the DAR API.
+ *     parameters:
+ *       - in: path
+ *         name: darId
+ *         required: true
+ *         schema:{ type: string }
+ *         description: The dar id of the record.
+ *     responses:
+ *       200:
+ *         description: The external record data.
+ *       500:
+ *         description: Failed to fetch the record from DAR.
+ */
 app.get('/api/external-record/:darId', async (req, res) => {
   try {
     const { darId } = req.params;
