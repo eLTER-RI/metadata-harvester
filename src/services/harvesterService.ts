@@ -13,7 +13,23 @@ import { syncWithDar } from './jobs/syncDbWithRemote/localDarSync';
 import { RecordDao } from '../store/dao/recordDao';
 import { ResolvedRecordDao } from '../store/dao/resolvedRecordsDao';
 import { RuleDao } from '../store/dao/rulesDao';
-import swaggerOptions from '../../api/config/swaggerConfig';
+
+const swaggerOptions = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'Data Harvester API',
+      version: '1.0.0',
+      description: 'API for managing records, rules, and background harvesting jobs.',
+    },
+    servers: [
+      {
+        url: `http://localhost:${process.env.PORT || 3000}`,
+      },
+    ],
+  },
+  apis: ['./src/services/harvesterService.ts'],
+};
 
 const pool = new Pool({
   user: process.env.DB_USER,
@@ -31,6 +47,40 @@ app.use('/api', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 const PORT = process.env.PORT || 3000;
 
+/**
+ * @swagger
+ * /api/records:
+ *   get:
+ *     tags: [Records]
+ *     summary: Retrieve a paginated list of records
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema: { type: integer, default: 1 }
+ *         description: The page number to retrieve.
+ *       - in: query
+ *         name: size
+ *         schema: { type: integer, default: 10 }
+ *         description: The number of records per page.
+ *       - in: query
+ *         name: resolved
+ *         schema: { type: boolean }
+ *         description: Filter by resolved status.
+ *       - in: query
+ *         name: repositories[]
+ *         description: Filter by source repositories.
+ *         schema: { type: array, items: { type: string } }
+ *       - in: query
+ *         name: title
+ *         description: Search for records by title.
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: A paginated list of records.
+ *       500:
+ *         description: Failed to retrieve records.
+ */
 app.get('/api/records', async (req, res) => {
   try {
     const recordDao = new RecordDao(pool);
@@ -64,6 +114,28 @@ app.get('/api/records', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/repositories:
+ *   get:
+ *     tags: [Records]
+ *     summary: Retrieve a list of repositories with the number of harvested records from each repository.
+ *              This endpoint helps to update the filter.
+ *     parameters:
+ *       - in: query
+ *         name: resolved
+ *         schema: { type: boolean }
+ *         description: Filter by resolved status.
+ *       - in: query
+ *         name: title
+ *         description: Search for records by title.
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: A list of repositories and the number of harvested records.
+ *       500:
+ *         description: Failed to retrieve repositories.
+ */
 app.get('/api/repositories', async (req, res) => {
   try {
     const resolvedParam = req.query.resolved as string;
@@ -82,6 +154,31 @@ app.get('/api/repositories', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/resolved:
+ *   get:
+ *     tags: [Records]
+ *     summary: Get counts of resolved and unresolved records. This endpoint helps to update the filter.
+ *     parameters:
+ *       - in: query
+ *         name: resolved
+ *         schema: { type: boolean }
+ *         description: Filter by resolved status.
+ *       - in: query
+ *         name: repositories[]
+ *         description: Filter by source repositories.
+ *         schema: { type: array, items: { type: string } }
+ *       - in: query
+ *         name: title
+ *         description: Filter by record title.
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Counts of resolved and unresolved records.
+ *       500:
+ *         description: Failed to retrieve counts.
+ */
 app.get('/api/resolved', async (req, res) => {
   try {
     const resolvedParam = req.query.resolved as string;
@@ -105,6 +202,36 @@ app.get('/api/resolved', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/records/{darId}/status:
+ *   patch:
+ *     tags: [Records]
+ *     summary: Update the resolved status of a record.
+ *     parameters:
+ *       - in: path
+ *         name: darId
+ *         required: true
+ *         schema:{ type: string }
+ *         description: The dar id of the record to update.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [resolved, unresolved]
+ *               resolvedBy:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Status successfully updated.
+ *       500:
+ *         description: Invalid input or missing fields.
+ */
 app.patch('/api/records/:darId/status', async (req, res) => {
   const darId = req.params.darId as string;
   const { status, resolvedBy } = req.body;
