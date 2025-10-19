@@ -375,6 +375,31 @@ app.delete('/api/records/:darId/rules/:ruleId', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/harvest:
+ *   post:
+ *     tags: [Jobs]
+ *     summary: Start a harvesting job for an entire repository.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               repository:
+ *                 type: string
+ *                 example: ZENODO
+ *               checkHarvestChanges:
+ *                 type: boolean
+ *                 default: true
+ *     responses:
+ *       200:
+ *         description: Job started.
+ *       400:
+ *         description: Invalid input or repository not implemented.
+ */
 app.post('/api/harvest', async (req, res) => {
   const { repository, checkHarvestChanges = true } = req.body;
   if (!repository) {
@@ -407,6 +432,31 @@ app.post('/api/harvest', async (req, res) => {
   res.status(200).json({ message: `Harvesting job completed.` });
 });
 
+/**
+ * @swagger
+ * /api/harvest/single:
+ *   post:
+ *     tags: [Jobs]
+ *     summary: Start a harvesting job for one record.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               sourceUrl:
+ *                 type: string
+ *                 example: ZENODO
+ *               checkHarvestChanges:
+ *                 type: boolean
+ *                 default: true
+ *     responses:
+ *       200:
+ *         description: Job started.
+ *       400:
+ *         description: Invalid input or missing fields.
+ */
 app.post('/api/harvest/single', async (req, res) => {
   const { sourceUrl, repository, checkHarvestChanges = true } = req.body;
 
