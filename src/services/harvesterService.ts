@@ -43,7 +43,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
-app.use('/api', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 const PORT = process.env.PORT || 3000;
 
