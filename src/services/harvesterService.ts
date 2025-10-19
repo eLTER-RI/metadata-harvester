@@ -252,6 +252,24 @@ app.patch('/api/records/:darId/status', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/records/{darId}/rules:
+ *   patch:
+ *     tags: [Rules]
+ *     summary: Get all rules for transformation of a record.
+ *     parameters:
+ *       - in: path
+ *         name: darId
+ *         required: true
+ *         schema:{ type: string }
+ *         description: The dar id of the record.
+ *     responses:
+ *       200:
+ *         description: A list of rules.
+ *       500:
+ *         description: Failed to retrive rules.
+ */
 app.get('/api/records/:darId/rules', async (req, res) => {
   try {
     const { darId } = req.params;
@@ -264,6 +282,36 @@ app.get('/api/records/:darId/rules', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/records/{darId}/rules:
+ *   post:
+ *     tags: [Rules]
+ *     summary: Create rules for a record and trigger a re-harvest.
+ *     parameters:
+ *       - in: path
+ *         name: darId
+ *         required: true
+ *         schema:{ type: string }
+ *         description: The dar id of the record to update.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: array
+ *             items:
+ *               type: object
+ *     responses:
+ *       201:
+ *         description: Rules successfully created.
+ *       400:
+ *         description: Invalid input.
+ *       404:
+ *         description: Record not found.
+ *       500:
+ *         description: Failed to create rules.
+ */
 app.post('/api/records/:darId/rules', async (req, res) => {
   try {
     const { darId } = req.params;
@@ -276,7 +324,7 @@ app.post('/api/records/:darId/rules', async (req, res) => {
     const recordDao = new RecordDao(pool);
     const record = await recordDao.getRecordByDarId(darId);
     if (!record || !record?.source_url || !record?.source_repository) {
-      return res.status(400).json({ error: `Record with dar id ${darId}. not found` });
+      return res.status(404).json({ error: `Record with dar id ${darId}. not found` });
     }
 
     const ruleDao = new RuleDao(pool);
@@ -297,6 +345,24 @@ app.post('/api/records/:darId/rules', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/records/{darId}/rules/{ruleId}:
+ *   delete:
+ *     tags: [Rules]
+ *     summary: Delete a rule by its id.
+ *     parameters:
+ *       - in: path
+ *         name: ruleId
+ *         required: true
+ *         schema:{ type: string }
+ *         description: The id of a rule to delete.
+ *     responses:
+ *       204:
+ *         description: Rules successfully deleted.
+ *       500:
+ *         description: Failed to delete rule.
+ */
 app.delete('/api/records/:darId/rules/:ruleId', async (req, res) => {
   try {
     const { ruleId } = req.params;
