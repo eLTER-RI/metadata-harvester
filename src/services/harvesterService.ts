@@ -317,8 +317,8 @@ app.post('/api/records/:darId/rules', async (req, res) => {
     const { darId } = req.params;
     const rulesData = req.body;
 
-    if (!Array.isArray(rulesData)) {
-      return res.status(400).json({ error: 'Invalid rules data. Expected an array.' });
+    if (!Array.isArray(rulesData) || rulesData.length === 0) {
+      return res.status(400).json({ error: 'Invalid rules data. Expected non-empty array.' });
     }
 
     const recordDao = new RecordDao(pool);
