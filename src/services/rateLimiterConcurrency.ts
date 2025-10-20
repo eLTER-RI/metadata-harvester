@@ -1,5 +1,7 @@
 import Bottleneck from 'bottleneck';
 
+// How long to wait after launching a job before launching another one.
+
 export const b2shareLimiter = new Bottleneck({
   minTime: 10000 / 80, // 60 requests per minute = 750ms between requests
 });
@@ -17,5 +19,5 @@ export const deimsLimiter = new Bottleneck({
 });
 
 export const darLimiter = new Bottleneck({
-  minTime: 600000 / 80, // 60000ms / 80 requests = 750ms between requests
+  minTime: 60000 / 60, // 1000 ms between requests (1 per second)
 });
