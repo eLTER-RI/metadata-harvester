@@ -413,7 +413,7 @@ app.post('/api/harvest', async (req, res) => {
   // if changes to harvesting not expected, set to false
   // gives up effort of changes detection if source is not changed
   if (typeof checkHarvestChanges !== 'boolean') {
-    return res.status(400).json({ error: "Invalid data type for 'rewriteAll'. Expected a boolean." });
+    return res.status(400).json({ error: "Invalid data type for 'checkHarvestChanges'. Expected a boolean." });
   }
 
   const repositoryType = repository.toUpperCase() as RepositoryType;
@@ -467,7 +467,7 @@ app.post('/api/harvest/single', async (req, res) => {
   // if changes to harvesting not expected, set to false
   // gives up effort of changes detection if source is not changed
   if (typeof checkHarvestChanges !== 'boolean') {
-    return res.status(400).json({ error: "Invalid data type for 'rewriteAll'. Expected a boolean." });
+    return res.status(400).json({ error: "Invalid data type for 'checkHarvestChanges'. Expected a boolean." });
   }
 
   const repositoryType = repository.toUpperCase() as RepositoryType;

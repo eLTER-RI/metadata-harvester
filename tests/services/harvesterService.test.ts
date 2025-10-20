@@ -299,4 +299,37 @@ describe('Harvester Service API', () => {
       expect(response.body.error).toBe("Invalid data type for 'checkHarvestChanges'. Expected a boolean.");
     });
   });
+
+  describe('jobs: POST /api/sync/sites', () => {
+    it('should start a DEIMS sync', async () => {
+      mockSyncDeims.mockResolvedValue(undefined);
+      const response = await request(app).post('/api/sync/sites');
+      expect(response.status).toBe(200);
+      expect(response.body.message).toBe('DEIMS sites synchronization started successfully.');
+      expect(mockSyncDeims).toHaveBeenCalled();
+    });
+
+    it('should return 500 if sync fails', async () => {
+      mockSyncDeims.mockRejectedValue(new Error('Sync Error'));
+      const response = await request(app).post('/api/sync/sites');
+      expect(response.status).toBe(500);
+      expect(response.body.error).toBe('Failed to start DEIMS sites synchronization.');
+    });
+  });
+
+  describe('jobs: POST /api/sync/records', () => {
+    it('should start a DAR sync', async () => {
+      mockSyncDar.mockResolvedValue(undefined);
+      const response = await request(app).post('/api/sync/records').send({ repository: 'ZENODO', darCleanup: true });
+      expect(response.status).toBe(200);
+      expect(mockSyncDar).toHaveBeenCalledWith('ZENODO', expect.any(Object), true);
+    });
+
+    it('should map ZENODO_IT to ZENODO', async () => {
+      mockSyncDar.mockResolvedValue(undefined);
+      const response = await request(app).post('/api/sync/records').send({ repository: 'ZENODO_IT' });
+      expect(response.status).toBe(200);
+      expect(mockSyncDar).toHaveBeenCalledWith('ZENODO', expect.any(Object), false);
+    });
+  });
 });
