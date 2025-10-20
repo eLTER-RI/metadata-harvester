@@ -1,14 +1,17 @@
 import request from 'supertest';
 import app, { server } from '../../src/services/harvesterService';
+import { HarvesterContext, startRecordSync } from '../../src/services/jobs/harvest/harvester';
 import { log } from '../../src/services/serviceLogging';
 
 // dao
 const mockListRecords = jest.fn();
 const mockListReposWithCount = jest.fn();
+const mockGetRecordByDarId = jest.fn();
 jest.mock('../../src/store/dao/recordDao', () => ({
   RecordDao: jest.fn().mockImplementation(() => ({
     listRecords: mockListRecords,
     listRepositoriesWithCount: mockListReposWithCount,
+    getRecordByDarId: mockGetRecordByDarId,
   })),
 }));
 const mockListResolvedCount = jest.fn();
@@ -21,6 +24,20 @@ jest.mock('../../src/store/dao/resolvedRecordsDao', () => ({
     delete: mockDeleteResolved,
   })),
 }));
+const mockGetRules = jest.fn();
+const mockCreateRules = jest.fn();
+const mockDeleteRule = jest.fn();
+jest.mock('../../src/store/dao/rulesDao', () => ({
+  RuleDao: jest.fn().mockImplementation(() => ({
+    getRulesForRecord: mockGetRules,
+    createRules: mockCreateRules,
+    deleteRule: mockDeleteRule,
+  })),
+}));
+
+jest.mock('../../src/services/jobs/harvest/harvester');
+const mockStartRecordSync = startRecordSync as jest.Mock;
+const mockHarvesterContextCreate = HarvesterContext.create as jest.Mock;
 
 // services
 jest.mock('../../src/services/serviceLogging', () => ({
@@ -162,6 +179,54 @@ describe('Harvester Service API', () => {
       const response = await request(app).patch('/api/records/123/status').send({ status: 'aaaa' });
       expect(response.status).toBe(400);
       expect(response.body.error).toContain('Invalid status value');
+    });
+  });
+
+  describe('GET /api/records/:darId/rules', () => {
+    it('should return rules for a record', async () => {
+      const mockData = [{ id: 'firstRule', field: 'metadata.name' }];
+      mockGetRules.mockResolvedValue(mockData);
+      const response = await request(app).get('/api/records/123/rules');
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual(mockData);
+      expect(mockGetRules).toHaveBeenCalledWith('123');
+    });
+  });
+
+  describe('POST /api/records/:darId/rules', () => {
+    it('should create rules and trigger a re-harvest', async () => {
+      const mockRules = [{ field: 'title', type: 'REPLACE' }];
+      mockGetRecordByDarId.mockResolvedValue({ source_url: 'http://example.com', source_repository: 'ZENODO' });
+      mockCreateRules.mockResolvedValue(undefined);
+      mockHarvesterContextCreate.mockResolvedValue({});
+      mockStartRecordSync.mockResolvedValue(undefined);
+      const response = await request(app).post('/api/records/123/rules').send(mockRules);
+      expect(response.status).toBe(201);
+      expect(mockGetRecordByDarId).toHaveBeenCalledWith('123');
+      expect(mockCreateRules).toHaveBeenCalledWith('123', mockRules);
+      expect(mockStartRecordSync).toHaveBeenCalledWith({}, 'http://example.com');
+    });
+
+    it('should return 400 if rules are not an array', async () => {
+      const response = await request(app).post('/api/records/123/rules').send({ not: 'an array' });
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe('Invalid rules data. Expected an array.');
+    });
+
+    it('should return 404 if record not found', async () => {
+      mockGetRecordByDarId.mockResolvedValue(null);
+      const response = await request(app).post('/api/records/123/rules').send([]);
+      expect(response.status).toBe(404);
+      expect(response.body.error).toBe('Record with dar id 123. not found');
+    });
+  });
+
+  describe('DELETE /api/records/:darId/rules/:ruleId', () => {
+    it('should delete a rule', async () => {
+      mockDeleteRule.mockResolvedValue(undefined);
+      const response = await request(app).delete('/api/records/123/rules/abc');
+      expect(response.status).toBe(204);
+      expect(mockDeleteRule).toHaveBeenCalledWith('abc');
     });
   });
 });
