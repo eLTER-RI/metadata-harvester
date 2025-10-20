@@ -69,3 +69,14 @@ export const useFetchRecord = (darId: string | undefined) => {
     enabled: !!darId,
   });
 };
+
+export const useFetchRules = (darId: string | undefined) => {
+  return useQuery({
+    queryKey: ['rules', darId],
+    queryFn: async () => {
+      const response = await api.get(`/records/${darId}/rules`);
+      return response.data || [];
+    },
+    enabled: !!darId,
+  });
+};
