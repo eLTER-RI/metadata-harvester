@@ -5,7 +5,7 @@ export interface RuleDbRecord {
   dar_id: string;
   rule_type: 'REPLACE' | 'ADD' | 'REMOVE';
   target_path: string;
-  orig_value: any;
+  orig_value?: any; // null if rule_type is add
   new_value?: any; // null if rule_type is remove
 }
 

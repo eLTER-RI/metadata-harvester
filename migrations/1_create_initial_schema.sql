@@ -23,9 +23,15 @@ CREATE TABLE IF NOT EXISTS record_rules (
   dar_id TEXT NOT NULL,
   rule_type VARCHAR(50) NOT NULL,
   target_path TEXT NOT NULL,
-  orig_value JSONB NOT NULL,
+  orig_value JSONB,
   new_value JSONB NULL,
   UNIQUE (dar_id, target_path)
+);
+
+ALTER TABLE record_rules
+ADD CONSTRAINT record_rules_value_check
+CHECK (
+  orig_value IS NOT NULL OR new_value IS NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS resolved_records (
