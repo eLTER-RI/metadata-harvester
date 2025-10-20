@@ -38,7 +38,7 @@ export const FilterSidebar = () => {
       <Segment style={{ height: '50vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Header as="h2" color="red">
           Error loading filters.
-          <Header.Subheader>{filterError}</Header.Subheader>
+          <Header.Subheader>{filterError.message}</Header.Subheader>
         </Header>
       </Segment>
     );
