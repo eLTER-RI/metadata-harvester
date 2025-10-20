@@ -88,6 +88,17 @@ describe('Harvester Service API', () => {
         title: 'search',
       });
     });
+
+    it('should return 500 if the DAO fails', async () => {
+      const dbError = new Error('DB Error');
+      mockListReposWithCount.mockRejectedValue(dbError);
+
+      const response = await request(app).get('/api/repositories');
+
+      expect(response.status).toBe(500);
+      expect(response.body.error).toBe('Failed to retrieve repositories.');
+      expect(log).toHaveBeenCalledWith('error', 'Failed to retrieve repositories: Error: DB Error');
+    });
   });
 
   describe('GET /api/resolved', () => {
@@ -104,6 +115,17 @@ describe('Harvester Service API', () => {
           repositories: ['ZENODO'],
         }),
       );
+    });
+
+    it('should return 500 if the DAO fails', async () => {
+      const dbError = new Error('DB Error');
+      mockListResolvedCount.mockRejectedValue(dbError);
+
+      const response = await request(app).get('/api/resolved?repositories[]=ZENODO');
+
+      expect(response.status).toBe(500);
+      expect(response.body.error).toBe('Failed to retrieve resolved/unresolved counts.');
+      expect(log).toHaveBeenCalledWith('error', 'Failed to retrieve resolved/unresolved counts: Error: DB Error');
     });
   });
 });
