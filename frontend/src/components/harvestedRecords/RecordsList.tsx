@@ -21,7 +21,7 @@ export const RecordsList = () => {
       <Segment style={{ height: '50vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Header as="h2" color="red">
           Error loading records.
-          <Header.Subheader>{error}</Header.Subheader>
+          <Header.Subheader>{error.message}</Header.Subheader>
         </Header>
       </Segment>
     );
