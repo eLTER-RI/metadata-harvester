@@ -12,9 +12,13 @@ jest.mock('../../src/store/dao/recordDao', () => ({
   })),
 }));
 const mockListResolvedCount = jest.fn();
+const mockCreateResolved = jest.fn();
+const mockDeleteResolved = jest.fn();
 jest.mock('../../src/store/dao/resolvedRecordsDao', () => ({
   ResolvedRecordDao: jest.fn().mockImplementation(() => ({
     listResolvedUnresolvedCount: mockListResolvedCount,
+    create: mockCreateResolved,
+    delete: mockDeleteResolved,
   })),
 }));
 
@@ -126,6 +130,38 @@ describe('Harvester Service API', () => {
       expect(response.status).toBe(500);
       expect(response.body.error).toBe('Failed to retrieve resolved/unresolved counts.');
       expect(log).toHaveBeenCalledWith('error', 'Failed to retrieve resolved/unresolved counts: Error: DB Error');
+    });
+  });
+
+  describe('PATCH /api/records/:darId/status', () => {
+    it('should set status to "resolved"', async () => {
+      mockCreateResolved.mockResolvedValue(undefined);
+      const response = await request(app)
+        .patch('/api/records/123/status')
+        .send({ status: 'resolved', resolvedBy: 'user' });
+      expect(response.status).toBe(200);
+      expect(mockCreateResolved).toHaveBeenCalledWith('123', 'user');
+      expect(mockDeleteResolved).not.toHaveBeenCalled();
+    });
+
+    it('should set status to "unresolved"', async () => {
+      mockDeleteResolved.mockResolvedValue(undefined);
+      const response = await request(app).patch('/api/records/123/status').send({ status: 'unresolved' });
+      expect(response.status).toBe(200);
+      expect(mockDeleteResolved).toHaveBeenCalledWith('123');
+      expect(mockCreateResolved).not.toHaveBeenCalled();
+    });
+
+    it('should return 400 for missing status', async () => {
+      const response = await request(app).patch('/api/records/123/status').send({});
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe('Missing required fields.');
+    });
+
+    it('should return 400 for invalid status', async () => {
+      const response = await request(app).patch('/api/records/123/status').send({ status: 'aaaa' });
+      expect(response.status).toBe(400);
+      expect(response.body.error).toContain('Invalid status value');
     });
   });
 });
