@@ -127,7 +127,7 @@ export function applyRuleToRecord(record: CommonDataset, rule: RuleDbRecord): bo
     if (!isAtomicOrNull(targetValue)) {
       log(
         `error`,
-        `ERror for rule "${rule.target_path}". Only atomic values (string, number, boolean) can be replaced or removed.`,
+        `Error for rule "${rule.target_path}". Only atomic values (string, number, boolean) can be replaced or removed.`,
       );
       return false;
     }
