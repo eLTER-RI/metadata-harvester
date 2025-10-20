@@ -5,12 +5,7 @@ import { useRecords } from '../../store/RecordsProvider';
 import { useState } from 'react';
 
 export const LandingPage = () => {
-  const context = useContext(RecordsContext);
-  if (!context) {
-    throw new Error('RecordsPagination must be used within a RecordsProvider');
-  }
-
-  const { setSearchQuery, setCurrentPage } = context;
+  const { setSearchQuery, setCurrentPage } = useRecords();
   const [searchBarContent, setSearchBarContent] = useState<string>('');
 
   const handleSearch = () => {
