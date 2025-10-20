@@ -2,6 +2,7 @@ import request from 'supertest';
 import app, { server } from '../../src/services/harvesterService';
 import { log } from '../../src/services/serviceLogging';
 
+// dao
 const mockListRecords = jest.fn();
 const mockListReposWithCount = jest.fn();
 jest.mock('../../src/store/dao/recordDao', () => ({
@@ -10,12 +11,16 @@ jest.mock('../../src/store/dao/recordDao', () => ({
     listRepositoriesWithCount: mockListReposWithCount,
   })),
 }));
-
 const mockListResolvedCount = jest.fn();
 jest.mock('../../src/store/dao/resolvedRecordsDao', () => ({
   ResolvedRecordDao: jest.fn().mockImplementation(() => ({
     listResolvedUnresolvedCount: mockListResolvedCount,
   })),
+}));
+
+// services
+jest.mock('../../src/services/serviceLogging', () => ({
+  log: jest.fn(),
 }));
 
 jest.mock('pg', () => ({
@@ -66,7 +71,7 @@ describe('Harvester Service API', () => {
 
       expect(response.status).toBe(500);
       expect(response.body.error).toBe('Failed to retrieve records.');
-      expect(log).toHaveBeenCalledWith('error', 'Failed to retrieve records:', dbError.message);
+      expect(log).toHaveBeenCalledWith('error', 'Failed to retrieve records: Error: DB Error');
     });
   });
   describe('GET /api/repositories', () => {
