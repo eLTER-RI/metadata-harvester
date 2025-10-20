@@ -7,10 +7,10 @@ export const useResolveRecord = () => {
   return useMutation({
     mutationFn: async (record: any) => {
       const newStatus = record.is_resolved ? 'unresolved' : 'resolved';
-      return api.patch(`/records/${record.dar_id}/status`, {
+      const response = await api.patch(`/records/${record.dar_id}/status`, {
         status: newStatus,
-        resolvedBy: 'admin',
       });
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['records'] });
@@ -31,7 +31,8 @@ export const useCreateRules = () => {
       if (rules.length === 0) {
         // TODO:  add toast notification
       }
-      return api.post(`/records/${darId}/rules`, rules);
+      const response = await api.post(`/records/${darId}/rules`, rules);
+      return response.data;
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['records'] });

@@ -1,5 +1,12 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { api } from '../api';
+import { FilterValues, Record } from '../store/RecordsProvider';
+
+interface RecordsResponse {
+  records: Record[];
+  totalCount: number;
+  totalPages: number;
+}
 
 export const useFetchRecords = (
   currentPage: number,
@@ -8,7 +15,7 @@ export const useFetchRecords = (
   repositoryFilter: string[],
   searchQuery: string,
 ) => {
-  return useQuery({
+  return useQuery<RecordsResponse>({
     queryKey: ['records', { currentPage, pageSize, resolvedFilter, repositoryFilter, searchQuery }],
     queryFn: async () => {
       const params = {
@@ -18,7 +25,8 @@ export const useFetchRecords = (
         resolved: resolvedFilter,
         repositories: repositoryFilter,
       };
-      return api.get('/records', { params });
+      const response = await api.get<RecordsResponse>('/records', { params });
+      return response.data || { records: [], totalCount: 0, totalPages: 0 };
     },
     placeholderData: keepPreviousData,
   });
@@ -29,21 +37,23 @@ export const useFetchFilterValues = (
   repositoryFilter: string[],
   searchQuery: string,
 ) => {
-  return useQuery({
+  return useQuery<FilterValues>({
     queryKey: ['filters', { resolvedFilter, repositoryFilter, searchQuery }],
-    queryFn: async () => {
+    queryFn: async (): Promise<FilterValues> => {
       const params = {
         resolved: resolvedFilter,
         repositories: repositoryFilter,
         title: searchQuery || null,
       };
 
-      const [repositories, resolved] = await Promise.all([
-        api.get('/repositories', { params }),
-        api.get('/resolved', { params }),
+      const [repoResponse, resolvedResponse] = await Promise.all([
+        api.get<FilterValues['repositories']>('/repositories', { params }),
+        api.get<FilterValues['resolved']>('/resolved', { params }),
       ]);
-
-      return { repositories, resolved };
+      return {
+        repositories: repoResponse.data || [],
+        resolved: resolvedResponse.data || [],
+      };
     },
     placeholderData: keepPreviousData,
   });
@@ -51,7 +61,10 @@ export const useFetchFilterValues = (
 
 export const useFetchRecord = (darId: string) => {
   return useQuery({
-    queryKey: ['darRecord', darId],
-    queryFn: async () => api.get(`/external-record/${darId}`),
+    queryKey: ['record', darId],
+    queryFn: async () => {
+      const response = await api.get(`/external-record/${darId}`);
+      return response.data || null;
+    },
   });
 };
