@@ -11,10 +11,17 @@ jest.mock('../../../src/services/serviceLogging', () => ({
   log: jest.fn(),
 }));
 
-// TODO: versioning testy
 describe('SITES Parser', () => {
+  let fetchJsonSpy: jest.SpyInstance;
+
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    if (fetchJsonSpy) {
+      fetchJsonSpy.mockRestore();
+    }
   });
 
   it('should correctly map a standard SITES record', async () => {
@@ -118,7 +125,7 @@ describe('SITES Parser', () => {
   it('should fetch the latest version when starting with an old record', async () => {
     const oldSourceUrl = 'https://meta.fieldsites.se/objects/Y3ct4eNvkD7goZFtdYwIb4wK';
 
-    const fetchJsonSpy = jest.spyOn(fetcher, 'fetchJson').mockResolvedValue(mockFieldSitesData);
+    fetchJsonSpy = jest.spyOn(fetcher, 'fetchJson').mockResolvedValue(mockFieldSitesData);
 
     const commonDataset: CommonDataset = await mapFieldSitesToCommonDatasetMetadata(
       oldSourceUrl,
