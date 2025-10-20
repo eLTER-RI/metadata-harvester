@@ -1,13 +1,13 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
-import axios from 'axios';
+import React, { createContext, useContext, useState } from 'react';
+import { useFetchFilterValues, useFetchRecords } from '../hooks/recordQueries';
 
-interface Record {
+export interface Record {
   dar_id: string;
   source_url: string;
   title: string;
 }
 
-interface FilterValues {
+export interface FilterValues {
   repositories: {
     source_repository: string;
     count: number;
@@ -19,16 +19,8 @@ interface FilterValues {
 }
 
 interface RecordsContextType {
-  records: Record[];
-  totalRecords: number;
-  totalPages: number;
   pageSize: number;
   currentPage: number;
-  isLoading: boolean;
-  error: string | null;
-  filterValues: FilterValues;
-  isFilterLoading: boolean;
-  filterError: string | null;
   resolvedFilter: boolean | undefined;
   repositoryFilter: string[];
   searchQuery: string;
@@ -37,97 +29,20 @@ interface RecordsContextType {
   setResolvedFilter: (resolved: boolean | undefined) => void;
   setRepositoryFilter: (repository: string[]) => void;
   setSearchQuery: (title: string) => void;
-  fetchRecords: () => void;
-  fetchFilterValues: () => void;
 }
-
-const API_BASE_URL = 'http://localhost:3000/api';
 
 const RecordsContext = createContext<RecordsContextType | undefined>(undefined);
 
 export const RecordsProvider = ({ children }: { children: React.ReactNode }) => {
-  const [records, setRecords] = useState<Record[]>([]);
-  const [totalRecords, setTotalRecords] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [filterValues, setFilterValues] = useState<FilterValues>({
-    repositories: [],
-    resolved: [],
-  });
-  const [isFilterLoading, setIsFilterLoading] = useState<boolean>(true);
-  const [filterError, setFilterError] = useState<string | null>(null);
   const [resolvedFilter, setResolvedFilter] = useState<boolean | undefined>(undefined);
   const [repositoryFilter, setRepositoryFilter] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const fetchRecords = async () => {
-    setIsLoading(true);
-    try {
-      const params = {
-        page: currentPage,
-        size: pageSize,
-        title: searchQuery ?? null,
-        resolved: resolvedFilter,
-        repositories: repositoryFilter,
-      };
-      const response = await axios.get(`${API_BASE_URL}/records`, { params });
-      const { records, totalCount, totalPages } = response.data;
-      setRecords(records);
-      setTotalRecords(totalCount);
-      setTotalPages(totalPages);
-      setError(null);
-    } catch (e: any) {
-      setError('Failed to fetch records. Please check the backend server.');
-      console.error(e);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchFilterValues = async () => {
-    setIsFilterLoading(true);
-    try {
-      const params = {
-        resolved: resolvedFilter,
-        repositories: repositoryFilter,
-        title: searchQuery ?? null,
-      };
-      const repoResponse = await axios.get(`${API_BASE_URL}/repositories`, { params });
-      const resolvedResponse = await axios.get(`${API_BASE_URL}/resolved`, { params });
-      setFilterValues({
-        repositories: repoResponse.data,
-        resolved: resolvedResponse.data,
-      });
-    } catch (e: any) {
-      setFilterError('Failed to fetch repositories. Please check the backend server.');
-      console.error(e);
-    } finally {
-      setIsFilterLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchRecords();
-  }, [currentPage, pageSize, resolvedFilter, repositoryFilter, searchQuery]);
-
-  useEffect(() => {
-    fetchFilterValues();
-  }, [resolvedFilter, repositoryFilter, searchQuery]);
-
   const value = {
-    records,
-    totalRecords,
-    totalPages,
     pageSize,
     currentPage,
-    isLoading,
-    error,
-    filterValues,
-    isFilterLoading,
-    filterError,
     resolvedFilter,
     repositoryFilter,
     searchQuery,
@@ -136,8 +51,6 @@ export const RecordsProvider = ({ children }: { children: React.ReactNode }) => 
     setResolvedFilter,
     setRepositoryFilter,
     setSearchQuery,
-    fetchRecords,
-    fetchFilterValues,
   };
 
   return <RecordsContext.Provider value={value}>{children}</RecordsContext.Provider>;
@@ -148,5 +61,31 @@ export const useRecords = () => {
   if (context === undefined) {
     throw new Error('Context cannot be undefined.');
   }
-  return context;
+
+  const { currentPage, pageSize, resolvedFilter, repositoryFilter, searchQuery } = context;
+
+  const {
+    data: recordsData,
+    isLoading: isRecordsLoading,
+    error: recordsError,
+  } = useFetchRecords(currentPage, pageSize, resolvedFilter, repositoryFilter, searchQuery);
+
+  const {
+    data: filterValuesData,
+    isLoading: isFilterLoading,
+    error: filterError,
+  } = useFetchFilterValues(resolvedFilter, repositoryFilter, searchQuery);
+
+  return {
+    ...context,
+    records: recordsData?.records || [],
+    totalRecords: recordsData?.totalCount || 0,
+    totalPages: recordsData?.totalPages || 0,
+    isLoading: isRecordsLoading,
+    error: recordsError,
+
+    filterValues: filterValuesData || { repositories: [], resolved: [] },
+    isFilterLoading,
+    filterError,
+  };
 };
