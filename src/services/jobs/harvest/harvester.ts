@@ -137,19 +137,22 @@ export class HarvesterContext {
    * It fetches the record data, gets mapping for the given repository type, and then calls a function to synchronize data.
    * @param {string} sourceUrl The source URL of the record on the remote repository.
    */
+
   public async processOneRecordTask(sourceUrl: string) {
     // todo: change for the db validation
+    if (!sourceUrl) return null;
+
     let dbRecord = await this.recordDao.getRecordBySourceId(sourceUrl);
-    if (dbRecord && dbRecord[0] && dbRecord[0].status === 'success') {
+    const hasRules = !dbRecord || !dbRecord[0] || this.ruleDao.getRulesForRecord(dbRecord[0].dar_id);
+    if (!hasRules && dbRecord && dbRecord[0] && dbRecord[0].status === 'success') {
       return;
     }
-    if (!sourceUrl) return null;
 
     const recordData = await fetchJson(sourceUrl);
     if (!recordData) return;
     const newSourceChecksum = calculateChecksum(recordData);
     const isSourceChanged = dbRecord[0]?.source_checksum !== newSourceChecksum;
-    if (!this.checkHarvestChanges && !isSourceChanged) return;
+    if (!hasRules && !this.checkHarvestChanges && !isSourceChanged) return;
 
     const finalMappedDataset = await this.mapToCommonStructure(sourceUrl, recordData);
     const mappedSourceUrl = finalMappedDataset.metadata.externalSourceInformation.externalSourceURI || sourceUrl;
