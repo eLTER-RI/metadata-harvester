@@ -10,7 +10,9 @@ jest.mock('../../../../src/services/clients/darApi', () => ({
 }));
 
 jest.mock('../../../../src/store/dao/recordDao');
-jest.mock('../../../../src/services/serviceLogging');
+jest.mock('../../../../src/services/serviceLogging', () => ({
+  log: jest.fn(),
+}));
 jest.mock('../../../../src/store/dao/recordDao', () => {
   return {
     RecordDao: jest.fn().mockImplementation(() => {
@@ -22,7 +24,6 @@ jest.mock('../../../../src/store/dao/recordDao', () => {
 });
 const mockFetchDarRecords = fetchDarRecordsByRepository as jest.Mock;
 const mockDeleteDarRecords = deleteDarRecordsByIds as jest.Mock;
-const mockLog = log as jest.Mock;
 const mockListRepositoryDarIds = jest.fn();
 
 describe('syncWithDar', () => {
@@ -38,7 +39,7 @@ describe('syncWithDar', () => {
 
     await syncWithDar('ZENODO' as RepositoryType, mockPool, true);
 
-    expect(mockLog).toHaveBeenCalledWith('info', 'Error fetching DAR IDs: Error: Network Error');
+    expect(log).toHaveBeenCalledWith('info', 'Error fetching DAR IDs: Error: Network Error');
 
     expect(mockListRepositoryDarIds).not.toHaveBeenCalled();
     expect(mockDeleteDarRecords).not.toHaveBeenCalled();
@@ -51,8 +52,8 @@ describe('syncWithDar', () => {
 
     await syncWithDar('ZENODO' as RepositoryType, mockPool, true);
 
-    expect(mockLog).toHaveBeenCalledWith('warn', 'Extra on remote: []');
-    expect(mockLog).toHaveBeenCalledWith('warn', 'Extra in local: []');
+    expect(log).toHaveBeenCalledWith('warn', 'Extra on remote: []');
+    expect(log).toHaveBeenCalledWith('warn', 'Extra in local: []');
 
     expect(mockDeleteDarRecords).not.toHaveBeenCalled();
   });
@@ -68,8 +69,8 @@ describe('syncWithDar', () => {
     expect(mockFetchDarRecords).toHaveBeenCalledWith('ZENODO');
     expect(mockListRepositoryDarIds).toHaveBeenCalledWith('ZENODO');
 
-    expect(mockLog).toHaveBeenCalledWith('warn', 'Extra on remote: [\n  "extra-remote"\n]');
-    expect(mockLog).toHaveBeenCalledWith('warn', 'Extra in local: [\n  "extra-local"\n]');
+    expect(log).toHaveBeenCalledWith('warn', 'Extra on remote: [\n  "extra-remote"\n]');
+    expect(log).toHaveBeenCalledWith('warn', 'Extra in local: [\n  "extra-local"\n]');
 
     expect(mockDeleteDarRecords).not.toHaveBeenCalled();
   });
@@ -82,9 +83,9 @@ describe('syncWithDar', () => {
 
     await syncWithDar('ZENODO' as RepositoryType, mockPool, true);
 
-    expect(mockLog).toHaveBeenCalledWith('warn', 'Extra on remote: [\n  "extra-remote"\n]');
-    expect(mockLog).toHaveBeenCalledWith('warn', 'Extra in local: [\n  "extra-local"\n]');
-    expect(mockLog).toHaveBeenCalledWith('warn', 'Deleting all extra resources from Dar.');
+    expect(log).toHaveBeenCalledWith('warn', 'Extra on remote: [\n  "extra-remote"\n]');
+    expect(log).toHaveBeenCalledWith('warn', 'Extra in local: [\n  "extra-local"\n]');
+    expect(log).toHaveBeenCalledWith('warn', 'Deleting all extra resources from Dar.');
     expect(mockDeleteDarRecords).toHaveBeenCalledTimes(1);
     expect(mockDeleteDarRecords).toHaveBeenCalledWith(['extra-remote']);
   });

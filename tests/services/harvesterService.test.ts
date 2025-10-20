@@ -1,6 +1,8 @@
 import request from 'supertest';
 import app, { server } from '../../src/services/harvesterService';
 import { HarvesterContext, startRecordSync, startRepositorySync } from '../../src/services/jobs/harvest/harvester';
+import { syncDeimsSites } from '../../src/services/jobs/deimsSync/syncDeimsSites';
+import { syncWithDar } from '../../src/services/jobs/syncDbWithRemote/localDarSync';
 import { log } from '../../src/services/serviceLogging';
 
 // dao
@@ -41,6 +43,8 @@ jest.mock('../../src/services/jobs/deimsSync/syncDeimsSites');
 jest.mock('../../src/services/jobs/syncDbWithRemote/localDarSync');
 const mockStartRepoSync = startRepositorySync as jest.Mock;
 const mockStartRecordSync = startRecordSync as jest.Mock;
+const mockSyncDeims = syncDeimsSites as jest.Mock;
+const mockSyncDar = syncWithDar as jest.Mock;
 const mockHarvesterContextCreate = HarvesterContext.create as jest.Mock;
 
 // services
@@ -258,7 +262,39 @@ describe('Harvester Service API', () => {
     });
 
     it('should return 400 for an invalid check flag', async () => {
-      const response = await request(app).post('/api/harvest').send({ checkHarvestChanges: 'invalid value' });
+      const response = await request(app)
+        .post('/api/harvest')
+        .send({ repository: 'ZENODO', checkHarvestChanges: 'invalid value' });
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe("Invalid data type for 'checkHarvestChanges'. Expected a boolean.");
+    });
+  });
+
+  describe('jobs: POST /api/harvest/single', () => {
+    it('should start a single record harvest', async () => {
+      mockHarvesterContextCreate.mockResolvedValue({});
+      mockStartRecordSync.mockResolvedValue(undefined);
+      const response = await request(app)
+        .post('/api/harvest/single')
+        .send({ sourceUrl: 'http://b2share.eudat.eu/a1b2c3-d4e5f6', repository: 'ZENODO' });
+      expect(response.status).toBe(200);
+      expect(response.body.message).toBe('Harvesting job completed.');
+      expect(mockHarvesterContextCreate).toHaveBeenCalledWith(expect.any(Object), 'ZENODO', true);
+      expect(mockStartRecordSync).toHaveBeenCalledWith({}, 'http://b2share.eudat.eu/a1b2c3-d4e5f6');
+    });
+
+    it('should return 400 for missing fields', async () => {
+      const response = await request(app).post('/api/harvest/single').send({});
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe("Missing required fields: 'source_url' and 'repository'.");
+    });
+
+    it('should return 400 for an invalid check flag', async () => {
+      const response = await request(app).post('/api/harvest/single').send({
+        sourceUrl: 'http://b2share.eudat.eu/a1b2c3-d4e5f6',
+        repository: 'ZENODO',
+        checkHarvestChanges: 'invalid value',
+      });
       expect(response.status).toBe(400);
       expect(response.body.error).toBe("Invalid data type for 'checkHarvestChanges'. Expected a boolean.");
     });
