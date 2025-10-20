@@ -149,8 +149,8 @@ app.get('/api/repositories', async (req, res) => {
 
     res.status(200).json(repositoriesWithCount);
   } catch (error) {
-    log('error', `Failed to retrieve records: ${error}`);
-    res.status(500).json({ error: 'Failed to retrieve records.' });
+    log('error', `Failed to retrieve repositories: ${error}`);
+    res.status(500).json({ error: 'Failed to retrieve repositories.' });
   }
 });
 
@@ -197,8 +197,8 @@ app.get('/api/resolved', async (req, res) => {
     const resolvedsWithCount = await resolvedDao.listResolvedUnresolvedCount(options);
     res.status(200).json(resolvedsWithCount);
   } catch (error) {
-    log('error', `Failed to retrieve records: ${error}`);
-    res.status(500).json({ error: 'Failed to retrieve records.' });
+    log('error', `Failed to retrieve resolved/unresolved counts: ${error}`);
+    res.status(500).json({ error: 'Failed to retrieve resolved/unresolved counts.' });
   }
 });
 
@@ -588,7 +588,7 @@ app.get('/api/external-record/:darId', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   log('info', `Data Harvester API listening at http://localhost:${PORT}`);
   // health check for db
   pool.query('SELECT 1').catch((e) => {
@@ -600,4 +600,5 @@ app.listen(PORT, () => {
   });
 });
 
+export { server };
 export default app;

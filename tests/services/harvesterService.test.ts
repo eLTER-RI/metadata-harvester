@@ -1,0 +1,104 @@
+import request from 'supertest';
+import app, { server } from '../../src/services/harvesterService';
+import { log } from '../../src/services/serviceLogging';
+
+const mockListRecords = jest.fn();
+const mockListReposWithCount = jest.fn();
+jest.mock('../../src/store/dao/recordDao', () => ({
+  RecordDao: jest.fn().mockImplementation(() => ({
+    listRecords: mockListRecords,
+    listRepositoriesWithCount: mockListReposWithCount,
+  })),
+}));
+
+const mockListResolvedCount = jest.fn();
+jest.mock('../../src/store/dao/resolvedRecordsDao', () => ({
+  ResolvedRecordDao: jest.fn().mockImplementation(() => ({
+    listResolvedUnresolvedCount: mockListResolvedCount,
+  })),
+}));
+
+jest.mock('pg', () => ({
+  Pool: jest.fn(() => ({
+    query: jest.fn().mockResolvedValue({ rows: [] }),
+  })),
+}));
+
+describe('Harvester Service API', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  afterAll((done) => {
+    server.close(done);
+  });
+
+  describe('GET /api/records', () => {
+    it('should return a paginated list of records', async () => {
+      const mockData = { records: [{ id: 1, title: 'Test API' }], totalCount: 1 };
+      mockListRecords.mockResolvedValue(mockData);
+
+      const response = await request(app).get(
+        '/api/records?page=1&size=10&resolved=true&repositories[]=ZENODO&title=test',
+      );
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({
+        records: mockData.records,
+        totalCount: 1,
+        currentPage: 1,
+        totalPages: 1,
+      });
+      expect(mockListRecords).toHaveBeenCalledWith({
+        resolved: true,
+        repositories: ['ZENODO'],
+        title: 'test',
+        size: 10,
+        offset: 0,
+      });
+    });
+
+    it('should return 500 if the DAO fails', async () => {
+      const dbError = new Error('DB Error');
+      mockListRecords.mockRejectedValue(dbError);
+
+      const response = await request(app).get('/api/records');
+
+      expect(response.status).toBe(500);
+      expect(response.body.error).toBe('Failed to retrieve records.');
+      expect(log).toHaveBeenCalledWith('error', 'Failed to retrieve records:', dbError.message);
+    });
+  });
+  describe('GET /api/repositories', () => {
+    it('should return a list of repositories with counts', async () => {
+      const mockData = [{ repository: 'ZENODO', count: 10 }];
+      mockListReposWithCount.mockResolvedValue(mockData);
+
+      const response = await request(app).get('/api/repositories?resolved=false&title=search');
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual(mockData);
+      expect(mockListReposWithCount).toHaveBeenCalledWith({
+        resolved: false,
+        title: 'search',
+      });
+    });
+  });
+
+  describe('GET /api/resolved', () => {
+    it('should return resolved/unresolved counts', async () => {
+      const mockData = [{ status: 'resolved', count: 5 }];
+      mockListResolvedCount.mockResolvedValue(mockData);
+
+      const response = await request(app).get('/api/resolved?repositories[]=ZENODO');
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual(mockData);
+      expect(mockListResolvedCount).toHaveBeenCalledWith(
+        expect.objectContaining({
+          repositories: ['ZENODO'],
+        }),
+      );
+    });
+  });
+});
