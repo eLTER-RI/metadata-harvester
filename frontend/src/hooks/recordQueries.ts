@@ -59,12 +59,13 @@ export const useFetchFilterValues = (
   });
 };
 
-export const useFetchRecord = (darId: string) => {
+export const useFetchRecord = (darId: string | undefined) => {
   return useQuery({
     queryKey: ['record', darId],
     queryFn: async () => {
       const response = await api.get(`/external-record/${darId}`);
       return response.data || null;
     },
+    enabled: !!darId,
   });
 };
