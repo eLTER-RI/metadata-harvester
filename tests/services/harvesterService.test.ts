@@ -1,6 +1,6 @@
 import request from 'supertest';
 import app, { server } from '../../src/services/harvesterService';
-import { HarvesterContext, startRecordSync } from '../../src/services/jobs/harvest/harvester';
+import { HarvesterContext, startRecordSync, startRepositorySync } from '../../src/services/jobs/harvest/harvester';
 import { log } from '../../src/services/serviceLogging';
 
 // dao
@@ -35,7 +35,11 @@ jest.mock('../../src/store/dao/rulesDao', () => ({
   })),
 }));
 
+// jobs
 jest.mock('../../src/services/jobs/harvest/harvester');
+jest.mock('../../src/services/jobs/deimsSync/syncDeimsSites');
+jest.mock('../../src/services/jobs/syncDbWithRemote/localDarSync');
+const mockStartRepoSync = startRepositorySync as jest.Mock;
 const mockStartRecordSync = startRecordSync as jest.Mock;
 const mockHarvesterContextCreate = HarvesterContext.create as jest.Mock;
 
@@ -227,6 +231,36 @@ describe('Harvester Service API', () => {
       const response = await request(app).delete('/api/records/123/rules/abc');
       expect(response.status).toBe(204);
       expect(mockDeleteRule).toHaveBeenCalledWith('abc');
+    });
+  });
+
+  describe('jobs: POST /api/harvest', () => {
+    it('should start a repository harvest', async () => {
+      mockHarvesterContextCreate.mockResolvedValue({});
+      mockStartRepoSync.mockResolvedValue(undefined);
+      const response = await request(app).post('/api/harvest').send({ repository: 'ZENODO' });
+      expect(response.status).toBe(200);
+      expect(response.body.message).toBe('Harvesting job completed.');
+      expect(mockHarvesterContextCreate).toHaveBeenCalledWith(expect.any(Object), 'ZENODO', true);
+      expect(mockStartRepoSync).toHaveBeenCalled();
+    });
+
+    it('should return 400 for a missing repository', async () => {
+      const response = await request(app).post('/api/harvest').send({});
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe("Missing required field: 'repository'.");
+    });
+
+    it('should return 400 for an invalid repository', async () => {
+      const response = await request(app).post('/api/harvest').send({ repository: 'FAKE_REPO' });
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe("Invalid repository: 'FAKE_REPO'.");
+    });
+
+    it('should return 400 for an invalid check flag', async () => {
+      const response = await request(app).post('/api/harvest').send({ checkHarvestChanges: 'invalid value' });
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe("Invalid data type for 'checkHarvestChanges'. Expected a boolean.");
     });
   });
 });

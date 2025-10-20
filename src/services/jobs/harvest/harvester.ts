@@ -138,6 +138,7 @@ export class HarvesterContext {
    * @param {string} sourceUrl The source URL of the record on the remote repository.
    */
   public async processOneRecordTask(sourceUrl: string) {
+    // todo: change for the db validation
     let dbRecord = await this.recordDao.getRecordBySourceId(sourceUrl);
     if (dbRecord && dbRecord[0] && dbRecord[0].status === 'success') {
       return;
