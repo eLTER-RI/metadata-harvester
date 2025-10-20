@@ -1,10 +1,26 @@
 import { Container, Header, Dimmer, Loader, Segment, Message } from 'semantic-ui-react';
 import { useParams } from 'react-router-dom';
 import { useFetchRecord } from '../../hooks/recordQueries';
+import { useEffect, useState } from 'react';
+import { cloneDeep, set } from 'lodash';
+import { JsonForm } from '../../components/editRecord/JsonForm';
 
 export const EditRecordPage = () => {
   const { darId } = useParams();
   const { data: originalRecord, isLoading, error } = useFetchRecord(darId);
+  const [editedRecord, setEditedRecord] = useState<any>(null);
+
+  useEffect(() => {
+    if (originalRecord) {
+      setEditedRecord(cloneDeep(originalRecord));
+    }
+  }, [originalRecord]);
+
+  const handleDataChange = (path: string, value: any) => {
+    const newRecord = cloneDeep(editedRecord);
+    set(newRecord, path, value);
+    setEditedRecord(newRecord);
+  };
 
   if (isLoading) {
     return (
@@ -27,7 +43,6 @@ export const EditRecordPage = () => {
     );
   }
 
-  console.log(originalRecord);
   return (
     <Container>
       <Header as="h1">Edit Record {darId}</Header>
@@ -39,7 +54,7 @@ export const EditRecordPage = () => {
         </p>
       </Message>
       <p>{originalRecord.id}</p>
-      <p>{originalRecord.metadata.titles.join(' ')}</p>
+      {editedRecord && <JsonForm data={editedRecord} onDataChange={handleDataChange} />}
     </Container>
   );
 };
