@@ -30,6 +30,7 @@ export const useCreateRules = () => {
     mutationFn: async ({ darId, rules }: { darId: string; rules: any[] }) => {
       if (rules.length === 0) {
         // TODO:  add toast notification
+        return;
       }
       const response = await api.post(`/records/${darId}/rules`, rules);
       return response.data;
