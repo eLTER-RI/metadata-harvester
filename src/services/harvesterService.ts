@@ -447,6 +447,9 @@ app.post('/api/harvest', async (req, res) => {
  *             properties:
  *               sourceUrl:
  *                 type: string
+ *                 example: b2share.eudat.eu/records/id
+ *               repository:
+ *                 type: string
  *                 example: ZENODO
  *               checkHarvestChanges:
  *                 type: boolean
@@ -461,7 +464,7 @@ app.post('/api/harvest/single', async (req, res) => {
   const { sourceUrl, repository, checkHarvestChanges = true } = req.body;
 
   if (!sourceUrl || !repository) {
-    return res.status(400).json({ error: "Missing required fields: 'source_url' and 'repository'." });
+    return res.status(400).json({ error: "Missing required fields: 'sourceUrl' or 'repository'." });
   }
 
   // if changes to harvesting not expected, set to false
