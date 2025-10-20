@@ -1,30 +1,16 @@
-import axios from 'axios';
-import { useState } from 'react';
 import { Dropdown } from 'semantic-ui-react';
-import { useRecords } from '../../store/RecordsProvider';
 import { Link } from 'react-router-dom';
+import { useResolveRecord } from '../../hooks/recordMutations';
 
 interface ActionButtonProps {
   record: any;
 }
 
 export const ActionButton = ({ record }: ActionButtonProps) => {
-  const { fetchRecords, fetchFilterValues } = useRecords();
-  const [isResolving, setIsResolving] = useState(false);
+  const { mutate: resolveRecord, isPending: isResolving } = useResolveRecord();
 
   const handleResolve = async () => {
-    setIsResolving(true);
-
-    try {
-      await axios.patch(`http://localhost:3000/api/records/${record.dar_id}/status`, {
-        status: record.is_resolved ? 'unresolved' : 'resolved',
-        resolvedBy: 'admin',
-      });
-      fetchRecords();
-      fetchFilterValues();
-    } finally {
-      setIsResolving(false);
-    }
+    resolveRecord(record);
   };
 
   return (
