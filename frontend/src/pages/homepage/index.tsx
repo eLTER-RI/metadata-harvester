@@ -64,6 +64,7 @@ export const HomePage = () => {
           unresolvedCount={unresolvedCount}
           repositoryStats={filterValuesData.repositories}
         />
+        <MenuCards />
       </Container>
     </div>
   );
