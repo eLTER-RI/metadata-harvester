@@ -2,6 +2,7 @@ import { createBrowserRouter, createRoutesFromElements, Route, RouterProvider } 
 import { LandingPage } from './pages/landingPage/LandingPage';
 import { EditRecordPage } from './pages/editRecord/EditRecordPage';
 import { HomePage } from './pages/homepage';
+import { HarvestPage } from './pages/harvest';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -9,6 +10,7 @@ const router = createBrowserRouter(
       <Route path={'/'} element={<HomePage />} />
       <Route path={'/harvested_records'} element={<LandingPage />} />
       <Route path={'/harvested_records/:darId/edit'} element={<EditRecordPage />} />
+      <Route path={'/harvest'} element={<HarvestPage />} />
     </>,
   ),
 );

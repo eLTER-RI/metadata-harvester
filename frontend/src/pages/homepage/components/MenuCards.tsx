@@ -7,7 +7,9 @@ export const MenuCards = () => {
   const navigateToRecords = () => {
     navigate('/harvested_records');
   };
-  // TODO: Add a function to trigger to go to harvesting
+  const navigateToHarvesting = () => {
+    navigate('/harvest');
+  };
 
   return (
     <Grid columns={2} stackable>
@@ -34,7 +36,7 @@ export const MenuCards = () => {
               <Icon name="cloud download" size="huge" style={{ color: 'dodgerBlue', marginBottom: '1rem' }} />
               <Header as="h2">Start Data Harvesting</Header>
               <p style={{ marginBottom: '1.5rem' }}>Trigger harvesting jobs to update them on DAR.</p>
-              <Button secondary size="large" style={{ backgroundColor: 'dodgerBlue' }}>
+              <Button secondary size="large" onClick={navigateToHarvesting} style={{ backgroundColor: 'dodgerBlue' }}>
                 <Icon name="download" />
                 Start Harvesting
               </Button>
