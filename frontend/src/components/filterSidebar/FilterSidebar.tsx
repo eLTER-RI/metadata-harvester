@@ -66,34 +66,37 @@ export const FilterSidebar = () => {
           ))}
         </List>
       </Accordion.Content>
-
-      <Accordion.Title active={activeIndices.includes(1)} index={1} onClick={handleAccordionClick}>
-        Repository
-        <i className="dropdown icon"></i>
-      </Accordion.Title>
-      <Accordion.Content active={activeIndices.includes(1)}>
-        <List>
-          {filterValues?.repositories.map((option) => (
-            <List.Item key={option.source_repository}>
-              <Checkbox
-                label={`${option.source_repository} (${option.count})`}
-                value={option.source_repository}
-                checked={repositoryFilter.includes(option.source_repository)}
-                onClick={() => {
-                  let newFilters = [...repositoryFilter];
-                  if (newFilters.includes(option.source_repository)) {
-                    newFilters = newFilters.filter((filter) => filter !== option.source_repository);
-                  } else {
-                    newFilters.push(option.source_repository);
-                  }
-                  setRepositoryFilter(newFilters);
-                  setCurrentPage(1);
-                }}
-              />
-            </List.Item>
-          ))}
-        </List>
-      </Accordion.Content>
+      {filterValues?.repositories.length > 0 && (
+        <>
+          <Accordion.Title active={activeIndices.includes(1)} index={1} onClick={handleAccordionClick}>
+            Repository
+            <i className="dropdown icon"></i>
+          </Accordion.Title>
+          <Accordion.Content active={activeIndices.includes(1)}>
+            <List>
+              {filterValues?.repositories.map((option) => (
+                <List.Item key={option.source_repository}>
+                  <Checkbox
+                    label={`${option.source_repository} (${option.count})`}
+                    value={option.source_repository}
+                    checked={repositoryFilter.includes(option.source_repository)}
+                    onClick={() => {
+                      let newFilters = [...repositoryFilter];
+                      if (newFilters.includes(option.source_repository)) {
+                        newFilters = newFilters.filter((filter) => filter !== option.source_repository);
+                      } else {
+                        newFilters.push(option.source_repository);
+                      }
+                      setRepositoryFilter(newFilters);
+                      setCurrentPage(1);
+                    }}
+                  />
+                </List.Item>
+              ))}
+            </List>
+          </Accordion.Content>
+        </>
+      )}
     </Accordion>
   );
 };
