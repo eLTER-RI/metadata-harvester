@@ -6,7 +6,7 @@ export const ProjectsGroup = () => {
       <Header as="h3">
         <Icon name="folder" />
         Projects
-        <Header.Subheader>Projects associated with the dataset</Header.Subheader>
+        <Header.Subheader>Provide projects associated with the dataset</Header.Subheader>
       </Header>
 
       <Segment style={{ marginBottom: '1rem' }}>
