@@ -2,24 +2,55 @@ import { Container, Header, Dimmer, Loader, Segment, Message } from 'semantic-ui
 import { useParams } from 'react-router-dom';
 import { useFetchRecord } from '../../hooks/recordQueries';
 import { useEffect, useState } from 'react';
-import { cloneDeep, set } from 'lodash';
-import { JsonForm } from '../../components/editRecord/JsonForm';
+import { CommonDatasetMetadata } from '../../../../src/store/commonStructure';
+import { MetadataForm } from '../../components/MetadataForm';
 
 export const EditRecordPage = () => {
   const { darId } = useParams();
-  const { data: originalRecord, isLoading, error } = useFetchRecord(darId);
-  const [editedRecord, setEditedRecord] = useState<any>(null);
+  const { data: originalRecord, isLoading, error: fetchError } = useFetchRecord(darId);
+  const [formData, setFormData] = useState<CommonDatasetMetadata | undefined>();
+  const [validationErrors, setValidationErrors] = useState<string[] | null>(null);
 
   useEffect(() => {
     if (originalRecord) {
-      setEditedRecord(cloneDeep(originalRecord));
+      const commonFormData: CommonDatasetMetadata = {
+        assetType: originalRecord.metadata?.assetType || 'Dataset',
+        datasetType: originalRecord.metadata?.datasetType,
+        alternateIdentifiers: originalRecord.metadata?.alternateIdentifiers || [],
+        titles: originalRecord.metadata?.titles || [],
+        creators: originalRecord.metadata?.creators || [],
+        contactPoints: originalRecord.metadata?.contactPoints || [],
+        descriptions: originalRecord.metadata?.descriptions || [],
+        keywords: originalRecord.metadata?.keywords || [],
+        temporalCoverages: originalRecord.metadata?.temporalCoverages || [],
+        geoLocations: originalRecord.metadata?.geoLocations || [],
+        licenses: originalRecord.metadata?.licenses || [],
+        files: originalRecord.metadata?.files || [],
+        responsibleOrganizations: originalRecord.metadata?.responsibleOrganizations || [],
+        contributors: originalRecord.metadata?.contributors || [],
+        publicationDate: originalRecord.metadata?.publicationDate,
+        taxonomicCoverages: originalRecord.metadata?.taxonomicCoverages || [],
+        methods: originalRecord.metadata?.methods || [],
+        language: originalRecord.metadata?.language,
+        projects: originalRecord.metadata?.projects || [],
+        siteReferences: originalRecord.metadata?.siteReferences || [],
+        additionalMetadata: originalRecord.metadata?.additionalMetadata || [],
+        habitatReferences: originalRecord.metadata?.habitatReferences || [],
+        relatedIdentifiers: originalRecord.metadata?.relatedIdentifiers || [],
+        dataLevel: originalRecord.metadata?.dataLevel,
+        externalSourceInformation: originalRecord.metadata?.externalSourceInformation || {
+          externalSourceName: '',
+          externalSourceURI: '',
+          externalSourceInfo: '',
+        },
+      };
+      setFormData(commonFormData);
     }
   }, [originalRecord]);
 
-  const handleDataChange = (path: string, value: any) => {
-    const newRecord = cloneDeep(editedRecord);
-    set(newRecord, path, value);
-    setEditedRecord(newRecord);
+  const handleSave = async (data: CommonDatasetMetadata) => {
+    setValidationErrors(null);
+    setFormData(data);
   };
 
   if (isLoading) {
@@ -32,12 +63,12 @@ export const EditRecordPage = () => {
     );
   }
 
-  if (error) {
+  if (fetchError) {
     return (
       <Segment style={{ height: '50vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Header as="h2" color="red">
           Error loading data.
-          <Header.Subheader>{error.message}</Header.Subheader>
+          <Header.Subheader>{fetchError.message}</Header.Subheader>
         </Header>
       </Segment>
     );
@@ -53,8 +84,19 @@ export const EditRecordPage = () => {
           repository.
         </p>
       </Message>
-      <p>{originalRecord.id}</p>
-      {editedRecord && <JsonForm data={editedRecord} onDataChange={handleDataChange} />}
+
+      {validationErrors && (
+        <Message negative>
+          <Message.Header>Validation Errors</Message.Header>
+          <ul>
+            {validationErrors.map((error, index) => (
+              <li key={index}>{error}</li>
+            ))}
+          </ul>
+        </Message>
+      )}
+
+      {formData && <MetadataForm data={formData} onSubmit={handleSave} />}
     </Container>
   );
 };
