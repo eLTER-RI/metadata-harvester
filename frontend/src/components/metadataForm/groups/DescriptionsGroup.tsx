@@ -1,4 +1,6 @@
+import { useFormContext, useFieldArray } from 'react-hook-form';
 import { Form, Button, Segment, Header, Icon } from 'semantic-ui-react';
+import { CommonDatasetMetadata } from '../../../../../src/store/commonStructure';
 
 const descriptionTypeOptions = [
   { key: 'Abstract', text: 'Abstract', value: 'Abstract' },
@@ -11,6 +13,24 @@ const descriptionTypeOptions = [
 ];
 
 export const DescriptionsGroup = () => {
+  const {
+    control,
+    register,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useFormContext<CommonDatasetMetadata>();
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: 'descriptions',
+  });
+
+  const addDescription = () => {
+    append({
+      descriptionText: '',
+      descriptionType: 'Abstract',
+    });
+  };
   return (
     <Segment>
       <Header as="h3">
@@ -19,19 +39,50 @@ export const DescriptionsGroup = () => {
         <Header.Subheader>Provide descriptions of the dataset</Header.Subheader>
       </Header>
 
-      <Segment style={{ marginBottom: '1rem' }}>
-        <Form.Field>
-          <label>Description Type</label>
-          <Form.Select options={descriptionTypeOptions} placeholder="Select description type" />
-        </Form.Field>
+      {fields.map((field, index) => (
+        <Segment key={field.id} style={{ marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <Header as="h4">Description {index + 1}</Header>
+            <Button
+              icon="trash"
+              color="red"
+              size="small"
+              onClick={() => {
+                remove(index);
+              }}
+            />
+          </div>
+          <Form.Field>
+            <label>Description Type</label>
+            <Form.Select
+              options={descriptionTypeOptions}
+              placeholder="Select description type"
+              value={watch(`descriptions.${index}.descriptionType`) || ''}
+              onChange={(e, { value }) => setValue(`descriptions.${index}.descriptionType`, value as string)}
+            />
+          </Form.Field>
 
-        <Form.Field>
-          <label>Description Text *</label>
-          <Form.TextArea placeholder="Enter the description" rows={4} />
-        </Form.Field>
-      </Segment>
+          <Form.Field>
+            <label>Description Text *</label>
+            <Form.TextArea
+              placeholder="Enter the description"
+              rows={4}
+              {...register(`descriptions.${index}.descriptionText`)}
+              error={
+                errors.descriptions?.[index]?.descriptionText ? { content: 'Description text is required' } : false
+              }
+            />
+          </Form.Field>
+        </Segment>
+      ))}
 
-      <Button type="button" icon="plus" content="Add Description" style={{ marginTop: '1rem' }} />
+      <Button
+        type="button"
+        icon="plus"
+        content="Add Description"
+        onClick={addDescription}
+        style={{ marginTop: '1rem' }}
+      />
     </Segment>
   );
 };

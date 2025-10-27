@@ -1,4 +1,7 @@
+import { useFieldArray, useFormContext } from 'react-hook-form';
 import { Form, Button, Segment, Header, Icon } from 'semantic-ui-react';
+import { CommonDatasetMetadata, IdentifierType } from '../../../../../src/store/commonStructure';
+import { RelatedResourceType, RelationTypeValues } from 'elter-metadata-validation-schemas';
 
 const identifierTypeOptions = [
   { key: 'DOI', text: 'DOI', value: 'DOI' },
@@ -30,6 +33,27 @@ const relationTypeOptions = [
 ];
 
 export const RelatedIdentifiersGroup = () => {
+  const {
+    control,
+    register,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useFormContext<CommonDatasetMetadata>();
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: 'relatedIdentifiers',
+  });
+
+  const addRelatedIdentifier = () => {
+    append({
+      relatedID: '',
+      relatedIDType: 'DOI',
+      relatedResourceType: 'Dataset',
+      relationType: 'References',
+    });
+  };
+
   return (
     <Segment>
       <Header as="h3">
@@ -38,31 +62,67 @@ export const RelatedIdentifiersGroup = () => {
         <Header.Subheader>Identifiers of related resources</Header.Subheader>
       </Header>
 
-      <Segment style={{ marginBottom: '1rem' }}>
-        <Form.Group widths="equal">
-          <Form.Field>
-            <label>Related ID *</label>
-            <Form.Input placeholder="Related ID" />
-          </Form.Field>
-          <Form.Field>
-            <label>ID Type</label>
-            <Form.Select options={identifierTypeOptions} placeholder="Select ID type" />
-          </Form.Field>
-        </Form.Group>
+      {fields.map((field, index) => (
+        <Segment key={field.id} style={{ marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <Header as="h4">Related Identifier {index + 1}</Header>
+            <Button icon="trash" color="red" size="small" onClick={() => remove(index)} />
+          </div>
+          <Form.Group widths="equal">
+            <Form.Field
+              {...register(`relatedIdentifiers.${index}.relatedID`)}
+              error={errors.relatedIdentifiers?.[index]?.relatedID ? { content: 'Related ID is required' } : false}
+            >
+              <label>Related ID *</label>
+              <Form.Input placeholder="Related ID" />
+            </Form.Field>
+            <Form.Field>
+              <label>ID Type</label>
+              <Form.Select
+                options={identifierTypeOptions}
+                placeholder="Select ID type"
+                value={watch(`relatedIdentifiers.${index}.relatedIDType`) || ''}
+                onChange={(e, { value }) =>
+                  setValue(`relatedIdentifiers.${index}.relatedIDType`, value as IdentifierType)
+                }
+              />
+            </Form.Field>
+          </Form.Group>
 
-        <Form.Group widths="equal">
-          <Form.Field>
-            <label>Resource Type</label>
-            <Form.Select options={resourceTypeOptions} placeholder="Select resource type" />
-          </Form.Field>
-          <Form.Field>
-            <label>Relation Type</label>
-            <Form.Select options={relationTypeOptions} placeholder="Select relation type" />
-          </Form.Field>
-        </Form.Group>
-      </Segment>
+          <Form.Group widths="equal">
+            <Form.Field>
+              <label>Resource Type</label>
+              <Form.Select
+                options={resourceTypeOptions}
+                placeholder="Select resource type"
+                value={watch(`relatedIdentifiers.${index}.relatedResourceType`) || ''}
+                onChange={(e, { value }) =>
+                  setValue(`relatedIdentifiers.${index}.relatedResourceType`, value as RelatedResourceType)
+                }
+              />
+            </Form.Field>
+            <Form.Field>
+              <label>Relation Type</label>
+              <Form.Select
+                options={relationTypeOptions}
+                placeholder="Select relation type"
+                value={watch(`relatedIdentifiers.${index}.relationType`) || ''}
+                onChange={(e, { value }) =>
+                  setValue(`relatedIdentifiers.${index}.relationType`, value as RelationTypeValues)
+                }
+              />
+            </Form.Field>
+          </Form.Group>
+        </Segment>
+      ))}
 
-      <Button type="button" icon="plus" content="Add Related Identifier" style={{ marginTop: '1rem' }} />
+      <Button
+        type="button"
+        icon="plus"
+        content="Add Related Identifier"
+        onClick={addRelatedIdentifier}
+        style={{ marginTop: '1rem' }}
+      />
     </Segment>
   );
 };

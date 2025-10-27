@@ -1,4 +1,6 @@
+import { useFormContext, useFieldArray } from 'react-hook-form';
 import { Form, Button, Segment, Header, Icon } from 'semantic-ui-react';
+import { CommonDatasetMetadata, IdentifierType } from '../../../../../src/store/commonStructure';
 
 const identifierTypeOptions = [
   { key: 'DOI', text: 'DOI', value: 'DOI' },
@@ -11,6 +13,25 @@ const identifierTypeOptions = [
 ];
 
 export const AlternateIdentifiersGroup = () => {
+  const {
+    control,
+    register,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useFormContext<CommonDatasetMetadata>();
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: 'alternateIdentifiers',
+  });
+
+  const addAlternateIdentifier = () => {
+    append({
+      alternateID: '',
+      alternateIDType: 'DOI',
+    });
+  };
+
   return (
     <Segment>
       <Header as="h3">
@@ -19,20 +40,46 @@ export const AlternateIdentifiersGroup = () => {
         <Header.Subheader>Provide alternative identifiers for the dataset</Header.Subheader>
       </Header>
 
-      <Segment style={{ marginBottom: '1rem' }}>
-        <Form.Group widths="equal">
-          <Form.Field>
-            <label>Alternate ID *</label>
-            <Form.Input placeholder="Alternate ID" />
-          </Form.Field>
-          <Form.Field>
-            <label>ID Type</label>
-            <Form.Select options={identifierTypeOptions} placeholder="Select ID type" />
-          </Form.Field>
-        </Form.Group>
-      </Segment>
+      {fields.map((field, index) => (
+        <Segment key={field.id} style={{ marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <Header as="h4">Alternate Identifier {index + 1}</Header>
+            <Button icon="trash" color="red" size="small" onClick={() => remove(index)} />
+          </div>
 
-      <Button type="button" icon="plus" content="Add Alternate Identifier" style={{ marginTop: '1rem' }} />
+          <Form.Group widths="equal">
+            <Form.Field>
+              <label>Alternate ID *</label>
+              <Form.Input
+                placeholder="Alternate ID"
+                {...register(`alternateIdentifiers.${index}.alternateID`)}
+                error={
+                  errors.alternateIdentifiers?.[index]?.alternateID ? { content: 'Alternate ID is required' } : false
+                }
+              />
+            </Form.Field>
+            <Form.Field>
+              <label>ID Type</label>
+              <Form.Select
+                value={watch(`alternateIdentifiers.${index}.alternateIDType`) || ''}
+                onChange={(e, { value }) =>
+                  setValue(`alternateIdentifiers.${index}.alternateIDType`, value as IdentifierType)
+                }
+                options={identifierTypeOptions}
+                placeholder="Select ID type"
+              />
+            </Form.Field>
+          </Form.Group>
+        </Segment>
+      ))}
+
+      <Button
+        type="button"
+        icon="plus"
+        onClick={addAlternateIdentifier}
+        content="Add Alternate Identifier"
+        style={{ marginTop: '1rem' }}
+      />
     </Segment>
   );
 };
