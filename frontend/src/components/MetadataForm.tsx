@@ -19,6 +19,7 @@ import { RelatedIdentifiersGroup } from './metadataForm/groups/RelatedIdentifier
 import { AlternateIdentifiersGroup } from './metadataForm/groups/AlternateIdentifiersGroup';
 import { MethodsGroup } from './metadataForm/groups/MethodsGroup';
 import { SimpleMetadataGroup } from './metadataForm/groups/SimpleMetadataGroup';
+import { RuleProvider } from './ruleVisualization/RuleContext';
 
 interface MetadataFormProps {
   data: CommonDatasetMetadata;
@@ -26,7 +27,7 @@ interface MetadataFormProps {
   rules?: any[];
 }
 
-export const MetadataForm = ({ data, onSubmit }: MetadataFormProps) => {
+export const MetadataForm = ({ data, onSubmit, rules = [] }: MetadataFormProps) => {
   const [activeGroup, setActiveGroup] = useState<string>('titles');
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
@@ -69,77 +70,79 @@ export const MetadataForm = ({ data, onSubmit }: MetadataFormProps) => {
   ];
 
   return (
-    <FormProvider {...form}>
-      <Form onSubmit={handleSubmit(onFormSubmit)}>
-        <div style={{ display: 'flex', gap: '1rem' }}>
-          <div style={{ width: '18rem', flexShrink: 0 }}>
-            <Segment>
-              <Header as="h4">Metadata Sections</Header>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {metadataGroups.map((group) => (
-                  <Button
-                    key={group.id}
-                    fluid
-                    basic={activeGroup !== group.id}
-                    primary={activeGroup === group.id}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setActiveGroup(group.id);
-                    }}
-                    style={{ textAlign: 'left' }}
-                  >
-                    {group.label}
-                    {group.required && <span style={{ color: 'red' }}> *</span>}
-                  </Button>
-                ))}
-              </div>
-            </Segment>
-          </div>
-
-          <div style={{ flex: 1 }}>
-            {validationErrors.length > 0 && (
-              <Message negative>
-                <Message.Header>Validation Errors</Message.Header>
-                <ul>
-                  {validationErrors.map((error, index) => (
-                    <li key={index}>{error}</li>
+    <RuleProvider rules={rules}>
+      <FormProvider {...form}>
+        <Form onSubmit={handleSubmit(onFormSubmit)}>
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <div style={{ width: '18rem', flexShrink: 0 }}>
+              <Segment>
+                <Header as="h4">Metadata Sections</Header>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {metadataGroups.map((group) => (
+                    <Button
+                      key={group.id}
+                      fluid
+                      basic={activeGroup !== group.id}
+                      primary={activeGroup === group.id}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setActiveGroup(group.id);
+                      }}
+                      style={{ textAlign: 'left' }}
+                    >
+                      {group.label}
+                      {group.required && <span style={{ color: 'red' }}> *</span>}
+                    </Button>
                   ))}
-                </ul>
-              </Message>
-            )}
+                </div>
+              </Segment>
+            </div>
 
-            {activeGroup === 'titles' && <TitlesGroup />}
-            {activeGroup === 'creators' && <CreatorsGroup />}
-            {activeGroup === 'contactPoints' && <ContactPointsGroup />}
-            {activeGroup === 'descriptions' && <DescriptionsGroup />}
-            {activeGroup === 'keywords' && <KeywordsGroup />}
-            {activeGroup === 'geoLocations' && <GeoLocationsGroup />}
-            {activeGroup === 'temporalCoverages' && <TemporalCoverageGroup />}
-            {activeGroup === 'licenses' && <LicensesGroup />}
-            {activeGroup === 'responsibleOrganizations' && <ResponsibleOrganizationsGroup />}
-            {activeGroup === 'contributors' && <ContributorsGroup />}
-            {activeGroup === 'projects' && <ProjectsGroup />}
-            {activeGroup === 'siteReferences' && <SiteReferencesGroup />}
-            {activeGroup === 'additionalMetadata' && <AdditionalMetadataGroup />}
-            {activeGroup === 'relatedIdentifiers' && <RelatedIdentifiersGroup />}
-            {activeGroup === 'alternateIdentifiers' && <AlternateIdentifiersGroup />}
-            {activeGroup === 'methods' && <MethodsGroup />}
-            {activeGroup === 'simple' && <SimpleMetadataGroup />}
+            <div style={{ flex: 1 }}>
+              {validationErrors.length > 0 && (
+                <Message negative>
+                  <Message.Header>Validation Errors</Message.Header>
+                  <ul>
+                    {validationErrors.map((error, index) => (
+                      <li key={index}>{error}</li>
+                    ))}
+                  </ul>
+                </Message>
+              )}
+
+              {activeGroup === 'titles' && <TitlesGroup />}
+              {activeGroup === 'creators' && <CreatorsGroup />}
+              {activeGroup === 'contactPoints' && <ContactPointsGroup />}
+              {activeGroup === 'descriptions' && <DescriptionsGroup />}
+              {activeGroup === 'keywords' && <KeywordsGroup />}
+              {activeGroup === 'geoLocations' && <GeoLocationsGroup />}
+              {activeGroup === 'temporalCoverages' && <TemporalCoverageGroup />}
+              {activeGroup === 'licenses' && <LicensesGroup />}
+              {activeGroup === 'responsibleOrganizations' && <ResponsibleOrganizationsGroup />}
+              {activeGroup === 'contributors' && <ContributorsGroup />}
+              {activeGroup === 'projects' && <ProjectsGroup />}
+              {activeGroup === 'siteReferences' && <SiteReferencesGroup />}
+              {activeGroup === 'additionalMetadata' && <AdditionalMetadataGroup />}
+              {activeGroup === 'relatedIdentifiers' && <RelatedIdentifiersGroup />}
+              {activeGroup === 'alternateIdentifiers' && <AlternateIdentifiersGroup />}
+              {activeGroup === 'methods' && <MethodsGroup />}
+              {activeGroup === 'simple' && <SimpleMetadataGroup />}
+            </div>
           </div>
-        </div>
 
-        <div style={{ marginTop: '2rem', textAlign: 'center' }}>
-          <Button
-            type="submit"
-            primary
-            size="large"
-            icon="save"
-            content="Generate Rules & Trigger Re-Harvest"
-            style={{ minWidth: '300px' }}
-          />
-        </div>
-      </Form>
-    </FormProvider>
+          <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+            <Button
+              type="submit"
+              primary
+              size="large"
+              icon="save"
+              content="Generate Rules & Trigger Re-Harvest"
+              style={{ minWidth: '300px' }}
+            />
+          </div>
+        </Form>
+      </FormProvider>
+    </RuleProvider>
   );
 };
