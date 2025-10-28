@@ -458,18 +458,16 @@ describe('Test harvester file', () => {
       id: '1',
       dar_id: 'abc-def',
       target_path: 'metadata.keywords',
-      orig_value: undefined,
-      rule_type: 'ADD',
-      new_value: { keywordLabel: 'First Keyword' },
+      before_value: undefined,
+      after_value: { keywordLabel: 'First Keyword' },
     };
 
     const brokenRule: RuleDbRecord = {
       id: '2',
       dar_id: 'ghi-jkl',
       target_path: 'metadata.keywords',
-      orig_value: undefined,
-      rule_type: 'ADD',
-      new_value: [{ notExistingFieldName: 'Second Keyword' }],
+      before_value: undefined,
+      after_value: [{ notExistingFieldName: 'Second Keyword' }],
     };
 
     it('should apply a rule that works and not delete it', async () => {
@@ -499,9 +497,8 @@ describe('Test harvester file', () => {
         id: '3',
         dar_id: 'ccc-ddd',
         target_path: 'metadata.descriptions[0].descriptionType',
-        orig_value: 'Abstract',
-        rule_type: 'REPLACE',
-        new_value: 'Other',
+        before_value: 'Abstract',
+        after_value: 'Other',
       };
       mockRuleDao.getRulesForRecord.mockResolvedValue([workingRule, brokenRule, workingRule2]);
 
