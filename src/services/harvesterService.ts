@@ -321,6 +321,25 @@ app.post('/api/records/:darId/rules', async (req, res) => {
       return res.status(400).json({ error: 'Invalid rules data. Expected non-empty array.' });
     }
 
+    for (const rule of rulesData) {
+      if (
+        !rule.target_path ||
+        !Object.prototype.hasOwnProperty.call(rule, 'before_value') ||
+        !Object.prototype.hasOwnProperty.call(rule, 'after_value')
+      ) {
+        return res.status(400).json({
+          error: 'Invalid rule data. All rules must have target_path, before_value, and after_value.',
+        });
+      }
+
+      // Allow null before_value (for new fields) or null after_value (for removed fields)
+      if (rule.before_value === null && rule.after_value === null) {
+        return res.status(400).json({
+          error: 'Invalid rule data. Either before_value or after_value must not be null.',
+        });
+      }
+    }
+
     const recordDao = new RecordDao(pool);
     const record = await recordDao.getRecordByDarId(darId);
     if (!record || !record?.source_url || !record?.source_repository) {
@@ -328,8 +347,28 @@ app.post('/api/records/:darId/rules', async (req, res) => {
     }
 
     const ruleDao = new RuleDao(pool);
-    await ruleDao.createRules(darId, rulesData);
-    log('info', `${rulesData.length} rules created for ${darId}. Triggering single record re-harvest.`);
+    const processedRules = [];
+
+    for (const rule of rulesData) {
+      const wasProcessed = await ruleDao.createOrUpdateRule(
+        darId,
+        rule.target_path,
+        rule.before_value,
+        rule.after_value,
+      );
+
+      if (wasProcessed) {
+        processedRules.push(rule.target_path);
+      }
+    }
+
+    if (processedRules.length === 0) {
+      return res.status(200).json({ message: 'No rules needed - all values are unchanged.' });
+    }
+
+    log('info', `Processed ${processedRules.length} rules for ${darId}: ${processedRules.join(', ')}`);
+
+    // Trigger re-harvest
     const repositoryType = record.source_repository.toUpperCase() as RepositoryType;
     const context = await HarvesterContext.create(pool, repositoryType, false);
     try {
@@ -338,7 +377,7 @@ app.post('/api/records/:darId/rules', async (req, res) => {
     } catch (e) {
       log('error', `Re-harvest job for ${record.source_url} failed with error: ${e}`);
     }
-    res.status(201).json({ message: `${rulesData.length} rules created successfully.` });
+    res.status(201).json({ message: `${processedRules.length} rules processed successfully.` });
   } catch (error) {
     log('error', `Failed to create rules: ${error}`);
     res.status(500).json({ error: 'Failed to create rules.' });
@@ -365,9 +404,24 @@ app.post('/api/records/:darId/rules', async (req, res) => {
  */
 app.delete('/api/records/:darId/rules/:ruleId', async (req, res) => {
   try {
-    const { ruleId } = req.params;
+    const { darId, ruleId } = req.params;
     const ruleDao = new RuleDao(pool);
     await ruleDao.deleteRule(ruleId);
+
+    const recordDao = new RecordDao(pool);
+    const record = await recordDao.getRecordByDarId(darId);
+    if (record) {
+      log('info', `Rule ${ruleId} deleted for ${darId}. Triggering single record re-harvest.`);
+      const repositoryType = record.source_repository.toUpperCase() as RepositoryType;
+      const context = await HarvesterContext.create(pool, repositoryType, false);
+      try {
+        await startRecordSync(context, record.source_url);
+        log('info', `Re-harvest job for ${record.source_url} completed successfully.`);
+      } catch (e) {
+        log('error', `Re-harvest job for ${record.source_url} failed with error: ${e}`);
+      }
+    }
+
     res.status(204).send();
   } catch (error) {
     log('error', `Failed to delete rule: ${error}`);
