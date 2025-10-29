@@ -28,16 +28,31 @@ export const useCreateRules = () => {
 
   return useMutation({
     mutationFn: async ({ darId, rules }: { darId: string; rules: any[] }) => {
-      if (rules.length === 0) {
-        // TODO:  add toast notification
-        return;
-      }
       const response = await api.post(`/records/${darId}/rules`, rules);
       return response.data;
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['records'] });
       queryClient.invalidateQueries({ queryKey: ['record', variables.darId] });
+      queryClient.invalidateQueries({ queryKey: ['rules', variables.darId] });
+    },
+    onError: () => {
+      // TODO: add toast notification
+    },
+  });
+};
+
+export const useDeleteRule = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ darId, ruleId }: { darId: string; ruleId: string }) => {
+      const response = await api.delete(`/records/${darId}/rules/${ruleId}`);
+      return response.data;
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['records'] });
+      queryClient.invalidateQueries({ queryKey: ['rules', variables.darId] });
     },
     onError: () => {
       // TODO: add toast notification
