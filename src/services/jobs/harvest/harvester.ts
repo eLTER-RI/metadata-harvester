@@ -4,7 +4,7 @@ import { CONFIG } from '../../../../config';
 import { Pool } from 'pg';
 import { mapFieldSitesToCommonDatasetMetadata } from '../../../store/parsers/fieldSitesParser';
 import { fetchJson, fetchXml } from '../../../utilities/fetchJsonFromRemote';
-import { applyRuleToRecord, getNestedValue } from '../../../utilities/rules';
+import { applyRuleToRecord } from '../../../utilities/rules';
 import { calculateChecksum } from '../../../utilities/checksum';
 import {
   fetchSites,
@@ -23,6 +23,7 @@ import { RuleDao } from '../../../store/dao/rulesDao';
 import { findDarRecordBySourceURL, postToDar, putToDar } from '../../clients/darApi';
 import { dbRecordUpsert } from './dbRecordSync';
 import { ResolvedRecordDao } from '../../../store/dao/resolvedRecordsDao';
+import { getNestedValue } from '../../../../shared/utils';
 
 export class HarvesterContext {
   constructor(
