@@ -120,7 +120,7 @@ export function appendValue(obj: any, path: string, value: any): void {
  * Works recursively for objects and arrays.
  */
 
-const isEmptyValue = (value: any): boolean => {
+export const isEmptyValue = (value: any): boolean => {
   if (value === null || value === undefined) return true;
   if (typeof value === 'string') return value.trim() === '';
   if (typeof value === 'number') return false;
