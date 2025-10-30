@@ -199,24 +199,13 @@ export const findDifferences = (path: string, originalData: any, editedData: any
     return;
   }
 
-  // Check if either is an array - if so, both must be arrays to be comparable
-  if (isArray(originalData) || isArray(editedData)) {
-    if (isArray(originalData) && isArray(editedData)) {
-      rules.push({
-        dar_id: darId,
-        target_path: path,
-        before_value: originalData,
-        after_value: editedData,
-      });
-    } else {
-      // One is array, other isn't - they're different
-      rules.push({
-        dar_id: darId,
-        target_path: path,
-        before_value: originalData,
-        after_value: editedData,
-      });
-    }
+  if (isArray(originalData) && isArray(editedData)) {
+    rules.push({
+      dar_id: darId,
+      target_path: path,
+      before_value: originalData,
+      after_value: editedData,
+    });
     return;
   }
 
