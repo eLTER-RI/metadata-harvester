@@ -18,6 +18,9 @@ export type Rule = {
  * @param {any} value Value to use as a value on 'path'.
  */
 export function setNestedValue(obj: any, path: string, value: any): void {
+  if (value === null) {
+    return;
+  }
   const parts = path.split('.');
   let current = obj;
 

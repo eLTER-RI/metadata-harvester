@@ -1,4 +1,4 @@
-import { getNestedValue, isEmptyValue, setNestedValue } from '../../shared/utils';
+import { getNestedValue, setNestedValue } from '../../shared/utils';
 import { log } from '../services/serviceLogging';
 import { CommonDataset } from '../store/commonStructure';
 import { commonDatasetSchema } from '../store/commonStructure.zod.gen';
@@ -13,7 +13,18 @@ import isEqual from 'lodash/isEqual';
 export function applyRuleToRecord(record: CommonDataset, rule: RuleDbRecord): boolean {
   const targetValue = getNestedValue(record, rule.target_path);
 
-  if (!isEqual(targetValue, rule.before_value) || (isEmptyValue(targetValue) && isEmptyValue(rule.before_value))) {
+  // null, and empty arrays/objects considered equivalent
+  const normalizeValue = (value: any) => {
+    if (value === null || (Array.isArray(value) && value.length === 0)) {
+      return undefined;
+    }
+    return value;
+  };
+
+  const normalizedTargetValue = normalizeValue(targetValue);
+  const normalizedBeforeValue = normalizeValue(rule.before_value);
+
+  if (!isEqual(normalizedTargetValue, normalizedBeforeValue)) {
     log('info', `Rule for path '${rule.target_path}' not applied: current value doesn't match expected before value`);
     return false;
   }
