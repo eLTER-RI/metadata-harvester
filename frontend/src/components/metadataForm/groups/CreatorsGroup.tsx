@@ -1,5 +1,6 @@
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import { Form, Button, Segment, Header, Icon } from 'semantic-ui-react';
+import { GroupDiffAccordion } from '../../rules/GroupDiffAccordion';
 import { CommonDatasetMetadata } from '../../../../../src/store/commonStructure';
 
 export const CreatorsGroup = () => {
@@ -28,6 +29,8 @@ export const CreatorsGroup = () => {
         Creators
         <Header.Subheader>Provide information about creators of the dataset</Header.Subheader>
       </Header>
+
+      <GroupDiffAccordion basePath="metadata.creators" />
 
       {fields.map((field, index) => (
         <Segment key={field.id} style={{ marginBottom: '1rem' }}>

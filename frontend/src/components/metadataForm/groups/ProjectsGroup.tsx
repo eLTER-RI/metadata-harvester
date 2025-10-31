@@ -1,5 +1,6 @@
 import { useFormContext, useFieldArray } from 'react-hook-form';
 import { Form, Button, Segment, Header, Icon } from 'semantic-ui-react';
+import { GroupDiffAccordion } from '../../rules/GroupDiffAccordion';
 import { CommonDatasetMetadata } from '../../../../../src/store/commonStructure';
 
 export const ProjectsGroup = () => {
@@ -27,6 +28,8 @@ export const ProjectsGroup = () => {
         Projects
         <Header.Subheader>Provide projects associated with the dataset</Header.Subheader>
       </Header>
+
+      <GroupDiffAccordion basePath="metadata.projects" />
 
       {fields.map((field, index) => (
         <Segment key={field.id} style={{ marginBottom: '1rem' }}>

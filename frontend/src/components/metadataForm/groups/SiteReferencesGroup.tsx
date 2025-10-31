@@ -1,6 +1,7 @@
 import { useFormContext, useFieldArray } from 'react-hook-form';
 import { Form, Button, Segment, Header, Icon } from 'semantic-ui-react';
 import { CommonDatasetMetadata } from '../../../../../src/store/commonStructure';
+import { GroupDiffAccordion } from '../../rules/GroupDiffAccordion';
 
 export const SiteReferencesGroup = () => {
   const {
@@ -26,6 +27,8 @@ export const SiteReferencesGroup = () => {
         Site References
         <Header.Subheader>Provide data about research sites associated with the dataset</Header.Subheader>
       </Header>
+
+      <GroupDiffAccordion basePath="metadata.siteReferences" />
 
       {fields.map((field, index) => (
         <Segment key={field.id} style={{ marginBottom: '1rem' }}>

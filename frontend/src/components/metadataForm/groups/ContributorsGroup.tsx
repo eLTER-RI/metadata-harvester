@@ -2,6 +2,7 @@ import { Form, Button, Segment, Header, Icon } from 'semantic-ui-react';
 import { ContributorTypeOptions } from '../constants';
 import { CommonDatasetMetadata, ContributorType } from '../../../../../src/store/commonStructure';
 import { useFieldArray, useFormContext } from 'react-hook-form';
+import { GroupDiffAccordion } from '../../rules/GroupDiffAccordion';
 
 export const ContributorsGroup = () => {
   const { control, register, watch, setValue } = useFormContext<CommonDatasetMetadata>();
@@ -30,6 +31,8 @@ export const ContributorsGroup = () => {
         Contributors
         <Header.Subheader>Provide the list of contributors</Header.Subheader>
       </Header>
+
+      <GroupDiffAccordion basePath="metadata.contributors" />
 
       {fields.map((field, index) => (
         <Segment key={field.id} style={{ marginBottom: '1rem' }}>

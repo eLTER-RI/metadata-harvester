@@ -1,5 +1,6 @@
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import { Form, Button, Segment, Header, Icon } from 'semantic-ui-react';
+import { GroupDiffAccordion } from '../../rules/GroupDiffAccordion';
 import { CommonDatasetMetadata, IdentifierType } from '../../../../../src/store/commonStructure';
 import { RelatedResourceType, RelationTypeValues } from 'elter-metadata-validation-schemas';
 
@@ -62,6 +63,8 @@ export const RelatedIdentifiersGroup = () => {
         <Header.Subheader>Identifiers of related resources</Header.Subheader>
       </Header>
 
+      <GroupDiffAccordion basePath="metadata.relatedIdentifiers" />
+
       {fields.map((field, index) => (
         <Segment key={field.id} style={{ marginBottom: '1rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
@@ -82,7 +85,7 @@ export const RelatedIdentifiersGroup = () => {
                 options={identifierTypeOptions}
                 placeholder="Select ID type"
                 value={watch(`relatedIdentifiers.${index}.relatedIDType`) || ''}
-                onChange={(e, { value }) =>
+                onChange={(_, { value }) =>
                   setValue(`relatedIdentifiers.${index}.relatedIDType`, value as IdentifierType)
                 }
               />
@@ -96,7 +99,7 @@ export const RelatedIdentifiersGroup = () => {
                 options={resourceTypeOptions}
                 placeholder="Select resource type"
                 value={watch(`relatedIdentifiers.${index}.relatedResourceType`) || ''}
-                onChange={(e, { value }) =>
+                onChange={(_, { value }) =>
                   setValue(`relatedIdentifiers.${index}.relatedResourceType`, value as RelatedResourceType)
                 }
               />
@@ -107,7 +110,7 @@ export const RelatedIdentifiersGroup = () => {
                 options={relationTypeOptions}
                 placeholder="Select relation type"
                 value={watch(`relatedIdentifiers.${index}.relationType`) || ''}
-                onChange={(e, { value }) =>
+                onChange={(_, { value }) =>
                   setValue(`relatedIdentifiers.${index}.relationType`, value as RelationTypeValues)
                 }
               />

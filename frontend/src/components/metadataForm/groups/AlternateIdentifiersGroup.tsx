@@ -1,6 +1,7 @@
 import { useFormContext, useFieldArray } from 'react-hook-form';
 import { Form, Button, Segment, Header, Icon } from 'semantic-ui-react';
 import { CommonDatasetMetadata, IdentifierType } from '../../../../../src/store/commonStructure';
+import { GroupDiffAccordion } from '../../rules/GroupDiffAccordion';
 
 const identifierTypeOptions = [
   { key: 'DOI', text: 'DOI', value: 'DOI' },
@@ -39,6 +40,8 @@ export const AlternateIdentifiersGroup = () => {
         Alternate Identifiers
         <Header.Subheader>Provide alternative identifiers for the dataset</Header.Subheader>
       </Header>
+
+      <GroupDiffAccordion basePath="metadata.alternateIdentifiers" />
 
       {fields.map((field, index) => (
         <Segment key={field.id} style={{ marginBottom: '1rem' }}>

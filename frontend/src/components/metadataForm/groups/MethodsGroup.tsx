@@ -1,6 +1,7 @@
 import { Form, Button, Segment, Header, Icon } from 'semantic-ui-react';
 import { CommonDatasetMetadata } from '../../../../../src/store/commonStructure';
 import { useFieldArray, useFormContext } from 'react-hook-form';
+import { GroupDiffAccordion } from '../../rules/GroupDiffAccordion';
 
 export const MethodsGroup = () => {
   const { control, register } = useFormContext<CommonDatasetMetadata>();
@@ -29,6 +30,8 @@ export const MethodsGroup = () => {
         Methods
         <Header.Subheader>Methodological information about the dataset</Header.Subheader>
       </Header>
+
+      <GroupDiffAccordion basePath="metadata.methods" />
 
       {fields.map((field, index) => (
         <Segment key={field.id} style={{ marginBottom: '1rem' }}>

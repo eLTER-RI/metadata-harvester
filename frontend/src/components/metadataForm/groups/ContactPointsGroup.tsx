@@ -1,5 +1,6 @@
 import { useFormContext, useFieldArray } from 'react-hook-form';
 import { Form, Button, Segment, Header, Icon } from 'semantic-ui-react';
+import { GroupDiffAccordion } from '../../rules/GroupDiffAccordion';
 import { CommonDatasetMetadata } from '../../../../../src/store/commonStructure';
 
 export const ContactPointsGroup = () => {
@@ -23,6 +24,9 @@ export const ContactPointsGroup = () => {
         Contact Points
         <Header.Subheader>Provide contact information for the dataset</Header.Subheader>
       </Header>
+
+      <GroupDiffAccordion basePath="metadata.contactPoints" />
+
       {fields.map((field, index) => (
         <Segment key={field.id} style={{ marginBottom: '1rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>

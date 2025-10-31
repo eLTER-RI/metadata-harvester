@@ -1,6 +1,7 @@
 import { Form, Button, Segment, Header, Icon } from 'semantic-ui-react';
 import { CommonDatasetMetadata } from '../../../../../src/store/commonStructure';
 import { useFieldArray, useFormContext } from 'react-hook-form';
+import { GroupDiffAccordion } from '../../rules/GroupDiffAccordion';
 
 export const TitlesGroup = () => {
   const {
@@ -27,6 +28,8 @@ export const TitlesGroup = () => {
         Titles
         <Header.Subheader>Provide titles for the dataset</Header.Subheader>
       </Header>
+
+      <GroupDiffAccordion basePath="metadata.titles" />
 
       {fields.map((field, index) => (
         <Segment key={field.id} style={{ marginBottom: '1rem' }}>

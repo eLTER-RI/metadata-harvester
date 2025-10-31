@@ -1,5 +1,6 @@
 import { useFormContext, useFieldArray } from 'react-hook-form';
 import { Form, Button, Segment, Header, Icon } from 'semantic-ui-react';
+import { GroupDiffAccordion } from '../../rules/GroupDiffAccordion';
 import { CommonDatasetMetadata } from '../../../../../src/store/commonStructure';
 
 export const TemporalCoverageGroup = () => {
@@ -26,6 +27,8 @@ export const TemporalCoverageGroup = () => {
         Temporal Coverage
         <Header.Subheader>Provide time period covered by the dataset</Header.Subheader>
       </Header>
+
+      <GroupDiffAccordion basePath="metadata.temporalCoverages" />
 
       {fields.map((field, index) => (
         <Segment key={field.id} style={{ marginBottom: '1rem' }}>

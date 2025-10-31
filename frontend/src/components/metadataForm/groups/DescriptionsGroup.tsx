@@ -1,6 +1,7 @@
 import { useFormContext, useFieldArray } from 'react-hook-form';
 import { Form, Button, Segment, Header, Icon } from 'semantic-ui-react';
 import { CommonDatasetMetadata } from '../../../../../src/store/commonStructure';
+import { GroupDiffAccordion } from '../../rules/GroupDiffAccordion';
 
 const descriptionTypeOptions = [
   { key: 'Abstract', text: 'Abstract', value: 'Abstract' },
@@ -39,6 +40,8 @@ export const DescriptionsGroup = () => {
         <Header.Subheader>Provide descriptions of the dataset</Header.Subheader>
       </Header>
 
+      <GroupDiffAccordion basePath="metadata.descriptions" />
+
       {fields.map((field, index) => (
         <Segment key={field.id} style={{ marginBottom: '1rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
@@ -58,7 +61,7 @@ export const DescriptionsGroup = () => {
               options={descriptionTypeOptions}
               placeholder="Select description type"
               value={watch(`descriptions.${index}.descriptionType`) || ''}
-              onChange={(e, { value }) => setValue(`descriptions.${index}.descriptionType`, value as string)}
+              onChange={(_, { value }) => setValue(`descriptions.${index}.descriptionType`, value as string)}
             />
           </Form.Field>
 

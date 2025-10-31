@@ -1,6 +1,7 @@
 import { useFormContext, useFieldArray } from 'react-hook-form';
 import { Form, Button, Segment, Header, Icon } from 'semantic-ui-react';
 import { CommonDatasetMetadata } from '../../../../../src/store/commonStructure';
+import { GroupDiffAccordion } from '../../rules/GroupDiffAccordion';
 
 export const AdditionalMetadataGroup = () => {
   const {
@@ -26,6 +27,9 @@ export const AdditionalMetadataGroup = () => {
         Additional Metadata
         <Header.Subheader>Custom metadata fields</Header.Subheader>
       </Header>
+
+      <GroupDiffAccordion basePath="metadata.additionalMetadata" />
+
       {fields.map((field, index) => (
         <Segment key={field.id} style={{ marginBottom: '1rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
