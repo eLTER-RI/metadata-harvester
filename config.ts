@@ -56,7 +56,7 @@ export interface RepositoryConfig {
 
 const repositories: Record<RepositoryType, RepositoryConfig> = {
   B2SHARE_EUDAT: {
-    apiUrl: 'https://b2share.eudat.eu/api/records/?q=community:d952913c-451e-4b5c-817e-d578dc8a4469&sort=oldest',
+    apiUrl: 'https://b2share.eudat.eu/api/communities/d952913c-451e-4b5c-817e-d578dc8a4469/records?q=&sort=oldest',
     pageSize: 100,
     selfLinkKey: 'links.self',
     dataKey: 'hits.hits',
