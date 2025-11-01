@@ -198,6 +198,10 @@ export const applyRulesToData = (data: any, rules: Rule[]): any => {
  * @param {string} darId The DAR ID to add to the rules.
  */
 export const findDifferences = (path: string, originalData: any, editedData: any, rules: Rule[], darId: string) => {
+  if (path.startsWith('metadata.externalSourceInformation')) {
+    return;
+  }
+
   if (isEqual(originalData, editedData)) {
     return;
   }
@@ -219,6 +223,11 @@ export const findDifferences = (path: string, originalData: any, editedData: any
 
     for (const key of allKeys) {
       const itemPath = path ? `${path}.${key}` : key;
+
+      if (itemPath.startsWith('metadata.externalSourceInformation')) {
+        continue;
+      }
+
       const originalValue = (originalData as any)[key];
       const editedValue = (editedData as any)[key];
 

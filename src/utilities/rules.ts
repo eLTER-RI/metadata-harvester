@@ -11,6 +11,11 @@ import isEqual from 'lodash/isEqual';
  * @param {RuleDbRecord} rule Specific rule to apply.
  */
 export function applyRuleToRecord(record: CommonDataset, rule: RuleDbRecord): boolean {
+  if (rule.target_path.startsWith('metadata.externalSourceInformation')) {
+    log('info', `Rule for path '${rule.target_path}' not created: externalSourceInformation cannot be changed`);
+    return false;
+  }
+
   const targetValue = getNestedValue(record, rule.target_path);
 
   // null, and empty arrays/objects considered equivalent
