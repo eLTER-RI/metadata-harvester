@@ -33,7 +33,7 @@ export const FieldDiffToggle = ({ basePath }: FieldDiffToggleProps) => {
   if (!hasDifference) return null;
 
   return (
-    <div style={{ textAlign: 'left', display: 'flex', alignItems: 'flex' }}>
+    <div style={{ textAlign: 'left', display: 'flex', alignItems: 'flex-start' }}>
       <Label color="blue" basic size="mini" style={{ marginTop: '0.5rem' }}>
         Changed
       </Label>
