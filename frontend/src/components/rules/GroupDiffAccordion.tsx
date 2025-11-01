@@ -30,7 +30,7 @@ export const GroupDiffAccordion = ({ basePath }: GroupDiffToggleProps) => {
 
   return (
     <Segment>
-      <Accordion styled>
+      <Accordion styled fluid>
         <AccordionTitle as="h4" active={open} index={0} onClick={() => setOpen((v) => !v)}>
           <Icon name="dropdown" />
           Changes
