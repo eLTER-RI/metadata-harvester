@@ -1,10 +1,11 @@
 import { Container, Header, Grid, Card, Button, Icon, Segment } from 'semantic-ui-react';
+import { useHarvestRepository } from '../../hooks/recordMutations';
 
 interface RepositoryInfo {
   name: string;
   displayName: string;
   description: string;
-  color: 'blue' | 'green' | 'violet' | 'orange' | 'teal';
+  color: 'blue' | 'green' | 'violet' | 'orange' | 'teal' | 'purple';
 }
 
 const repositories: RepositoryInfo[] = [
@@ -23,8 +24,14 @@ const repositories: RepositoryInfo[] = [
   {
     name: 'ZENODO',
     displayName: 'Zenodo',
-    description: 'Zenodo eu and italy communities',
+    description: 'Zenodo eLTER community',
     color: 'violet',
+  },
+  {
+    name: 'ZENODO_IT',
+    displayName: 'Zenodo Italy',
+    description: 'Zenodo LTER-Italy community',
+    color: 'purple',
   },
   {
     name: 'DATAREGISTRY',
@@ -41,6 +48,24 @@ const repositories: RepositoryInfo[] = [
 ];
 
 export const HarvestPage = () => {
+  const harvestMutation = useHarvestRepository();
+
+  const handleHarvest = (repositoryName: string) => {
+    harvestMutation.mutate({
+      repository: repositoryName,
+      checkHarvestChanges: false,
+    });
+  };
+
+  const handleHarvestAll = () => {
+    repositories.forEach((repo) => {
+      harvestMutation.mutate({
+        repository: repo.name,
+        checkHarvestChanges: false,
+      });
+    });
+  };
+
   return (
     <div>
       <Container style={{ paddingTop: '2rem', paddingBottom: '2rem' }}>
@@ -54,7 +79,7 @@ export const HarvestPage = () => {
             manually.
           </p>
 
-          <Button primary size="large" style={{ marginBottom: '1rem' }}>
+          <Button primary size="large" style={{ marginBottom: '1rem' }} onClick={handleHarvestAll}>
             <Icon name="download" />
             Harvest All Repositories
           </Button>
@@ -71,9 +96,9 @@ export const HarvestPage = () => {
                   </Card.Header>
                   <Card.Description style={{ marginBottom: '1rem' }}>{repo.description}</Card.Description>
 
-                  <Button color={repo.color} fluid>
+                  <Button color={repo.color} fluid onClick={() => handleHarvest(repo.name)}>
                     <Icon name="download" />
-                    {'Start Harvest'}
+                    Start Harvest
                   </Button>
                 </Card.Content>
               </Card>

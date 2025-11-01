@@ -59,3 +59,30 @@ export const useDeleteRule = () => {
     },
   });
 };
+
+export const useHarvestRepository = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      repository,
+      checkHarvestChanges = false,
+    }: {
+      repository: string;
+      checkHarvestChanges?: boolean;
+    }) => {
+      const response = await api.post('/harvest', {
+        repository,
+        checkHarvestChanges,
+      });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['records'] });
+      queryClient.invalidateQueries({ queryKey: ['filters'] });
+    },
+    onError: () => {
+      // TODO: add toast notification
+    },
+  });
+};
