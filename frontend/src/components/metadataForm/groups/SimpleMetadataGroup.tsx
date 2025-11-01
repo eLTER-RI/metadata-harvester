@@ -2,6 +2,7 @@ import React from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Form, Segment, Header, Icon } from 'semantic-ui-react';
 import { CommonDatasetMetadata } from '../../../../../src/store/commonStructure';
+import { FieldDiffToggle } from '../../rules/FieldDiffToggle';
 
 export const SimpleMetadataGroup: React.FC = () => {
   const {
@@ -27,10 +28,12 @@ export const SimpleMetadataGroup: React.FC = () => {
             {...register('publicationDate')}
             error={errors.publicationDate ? { content: 'Invalid date format' } : false}
           />
+          <FieldDiffToggle basePath="metadata.publicationDate" />
         </Form.Field>
         <Form.Field>
           <label>Language</label>
           <Form.Input placeholder="e.g., English, en" {...register('language')} />
+          <FieldDiffToggle basePath="metadata.language" />
         </Form.Field>
       </Form.Group>
 
@@ -46,18 +49,21 @@ export const SimpleMetadataGroup: React.FC = () => {
             ]}
             placeholder="Select data level"
             value={watch('dataLevel.dataLevelCode') || ''}
-            onChange={(e, { value }) => setValue('dataLevel.dataLevelCode', value as string)}
+            onChange={(_, { value }) => setValue('dataLevel.dataLevelCode', value as string)}
           />
+          <FieldDiffToggle basePath="metadata.dataLevel.dataLevelCode" />
         </Form.Field>
         <Form.Field>
           <label>Data Level URI</label>
           <Form.Input placeholder="https://example.com/data-level" {...register('dataLevel.dataLevelURI')} />
+          <FieldDiffToggle basePath="metadata.dataLevel.dataLevelURI" />
         </Form.Field>
       </Form.Group>
 
       <Form.Field>
         <label>Dataset Type</label>
         <Form.Input placeholder="Type of dataset" {...register('datasetType')} />
+        <FieldDiffToggle basePath="metadata.datasetType" />
       </Form.Field>
     </Segment>
   );
