@@ -3,7 +3,7 @@ import mockZenodoData from './apiResponses/zenodo.json';
 import mockZenodoOldData from './apiResponses/zenodo_versions_old.json';
 import mockZenodoVersions from './apiResponses/zenodo_versions.json';
 import * as fetcher from '../../../src/utilities/fetchJsonFromRemote';
-import { mapZenodoToCommonDatasetMetadata } from '../../../src/store/parsers/zenodoParser';
+import { mapZenodoToCommonDatasetMetadata } from '../../../src/store/mappers/zenodoMapper';
 
 jest.mock('../../../src/utilities/fetchJsonFromRemote');
 
@@ -11,7 +11,7 @@ jest.mock('../../../src/services/serviceLogging', () => ({
   log: jest.fn(),
 }));
 
-describe('Zenodo Parser', () => {
+describe('Zenodo Mapper', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });

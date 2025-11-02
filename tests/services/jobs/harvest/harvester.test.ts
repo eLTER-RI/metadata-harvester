@@ -11,10 +11,10 @@ import {
   getB2ShareMatchedSites,
   getDataRegistryMatchedSites,
 } from '../../../../src/utilities/matchDeimsId';
-import { mapB2ShareToCommonDatasetMetadata } from '../../../../src/store/parsers/b2shareParser';
-import { mapDataRegistryToCommonDatasetMetadata } from '../../../../src/store/parsers/dataregistryParser';
-import { mapZenodoToCommonDatasetMetadata } from '../../../../src/store/parsers/zenodoParser';
-import { mapFieldSitesToCommonDatasetMetadata } from '../../../../src/store/parsers/fieldSitesParser';
+import { mapB2ShareToCommonDatasetMetadata } from '../../../../src/store/mappers/b2shareMapper';
+import { mapDataRegistryToCommonDatasetMetadata } from '../../../../src/store/mappers/dataregistryMapper';
+import { mapZenodoToCommonDatasetMetadata } from '../../../../src/store/mappers/zenodoMapper';
+import { mapFieldSitesToCommonDatasetMetadata } from '../../../../src/store/mappers/fieldSitesMapper';
 import { RuleDao, RuleDbRecord } from '../../../../src/store/dao/rulesDao';
 import * as rulesUtilities from '../../../../src/utilities/rules';
 import * as fetchers from '../../../../src/utilities/fetchJsonFromRemote';
@@ -63,11 +63,11 @@ const mockedPostToDar = darApi.postToDar as jest.Mock;
 const mockedFindDar = darApi.findDarRecordBySourceURL as jest.Mock;
 const mockedDbRecordUpsert = dbRecordSync.dbRecordUpsert as jest.Mock;
 
-// parsers
-jest.mock('../../../../src/store/parsers/b2shareParser');
-jest.mock('../../../../src/store/parsers/dataregistryParser');
-jest.mock('../../../../src/store/parsers/zenodoParser');
-jest.mock('../../../../src/store/parsers/fieldSitesParser');
+// mappers
+jest.mock('../../../../src/store/mappers/b2shareMapper');
+jest.mock('../../../../src/store/mappers/dataregistryMapper');
+jest.mock('../../../../src/store/mappers/zenodoMapper');
+jest.mock('../../../../src/store/mappers/fieldSitesMapper');
 
 // services
 jest.mock('../../../../src/services/jobs/harvest/dbValidation');

@@ -1,4 +1,4 @@
-import { mapB2ShareToCommonDatasetMetadata } from '../../../src/store/parsers/b2shareParser';
+import { mapB2ShareToCommonDatasetMetadata } from '../../../src/store/mappers/b2shareMapper';
 import { CommonDataset } from '../../../src/store/commonStructure';
 import mockB2ShareData from './apiResponses/b2share.json';
 import mockB2ShareOldData from './apiResponses/b2share_versions_old.json';
@@ -11,7 +11,7 @@ jest.mock('../../../src/services/serviceLogging', () => ({
   log: jest.fn(),
 }));
 
-describe('B2Share Parser', () => {
+describe('B2Share Mapper', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });

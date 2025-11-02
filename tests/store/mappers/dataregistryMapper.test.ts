@@ -1,6 +1,6 @@
 import { CommonDataset } from '../../../src/store/commonStructure';
 import mockDataregistryData from './apiResponses/dataregistry.json';
-import { mapDataRegistryToCommonDatasetMetadata } from '../../../src/store/parsers/dataregistryParser';
+import { mapDataRegistryToCommonDatasetMetadata } from '../../../src/store/mappers/dataregistryMapper';
 
 jest.mock('../../../src/utilities/fetchJsonFromRemote');
 
@@ -8,7 +8,7 @@ jest.mock('../../../src/services/serviceLogging', () => ({
   log: jest.fn(),
 }));
 
-describe('DataRegistry Parser', () => {
+describe('DataRegistry Mapper', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
