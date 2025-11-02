@@ -36,24 +36,21 @@ describe('Tests for RulesDao', () => {
 
     const newRule1: Partial<RuleDbRecord> = {
       dar_id: 'uuid-uuid',
-      rule_type: 'REPLACE',
       target_path: 'metadata.creators[0].creatorGivenName',
-      orig_value: 'Ian',
-      new_value: 'Jan',
+      before_value: 'Ian',
+      after_value: 'Jan',
     };
     const newRule2: Partial<RuleDbRecord> = {
       dar_id: 'uuid-uuid',
-      rule_type: 'REPLACE',
       target_path: 'metadata.creators[0].creatorEmail',
-      orig_value: 'iannovak@google.com',
-      new_value: 'jannovak@google.com',
+      before_value: 'iannovak@google.com',
+      after_value: 'jannovak@google.com',
     };
     const newRule3: Partial<RuleDbRecord> = {
       dar_id: 'uuid-uuid',
-      rule_type: 'REPLACE',
       target_path: 'metadata.keywords[0].keywordLabel',
-      orig_value: 'aqua',
-      new_value: 'water',
+      before_value: 'aqua',
+      after_value: 'water',
     };
     await ruleDao.createRules('uuid-uuid', [newRule1, newRule2, newRule3]);
     const rulesForRecord = await ruleDao.getRulesForRecord('uuid-uuid');

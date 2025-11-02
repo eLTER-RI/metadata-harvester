@@ -1,7 +1,8 @@
 import { CommonDataset } from '../../../src/store/commonStructure';
 import { commonDatasetSchema } from '../../../src/store/commonStructure.zod.gen';
 import { RuleDbRecord } from '../../../src/store/dao/rulesDao';
-import { appendValue, applyRuleToRecord, getNestedValue, setNestedValue } from '../../../src/utilities/rules';
+import { applyRuleToRecord } from '../../../src/utilities/rules';
+import { appendValue, getNestedValue, setNestedValue } from '../../../shared/utils';
 
 jest.mock('../../../src/store/commonStructure.zod.gen', () => ({
   commonDatasetSchema: {
@@ -213,9 +214,8 @@ describe('Rules Utility Functions', () => {
           id: '1',
           dar_id: 'abc-def',
           target_path: 'metadata.keywords',
-          orig_value: undefined,
-          rule_type: 'ADD',
-          new_value: { keywordLabel: 'First Keyword' },
+          before_value: undefined,
+          after_value: [{ keywordLabel: 'First Keyword' }],
         },
       ];
 
@@ -231,17 +231,15 @@ describe('Rules Utility Functions', () => {
           id: '1',
           dar_id: 'abc-def',
           target_path: 'metadata.keywords',
-          orig_value: undefined,
-          rule_type: 'ADD',
-          new_value: { keywordLabel: 'First Keyword' },
+          before_value: undefined,
+          after_value: [{ keywordLabel: 'First Keyword' }],
         },
         {
           id: '2',
           dar_id: 'ghi-jkl',
           target_path: 'metadata.keywords',
-          orig_value: [{ keywordLabel: 'First Keyword' }],
-          rule_type: 'ADD',
-          new_value: { keywordLabel: 'Second Keyword' },
+          before_value: [{ keywordLabel: 'First Keyword' }],
+          after_value: [{ keywordLabel: 'First Keyword' }, { keywordLabel: 'Second Keyword' }],
         },
       ];
 
@@ -266,9 +264,8 @@ describe('Rules Utility Functions', () => {
         id: '2',
         dar_id: 'ghi-jkl',
         target_path: 'metadata.keywords',
-        orig_value: undefined,
-        rule_type: 'ADD',
-        new_value: [{ notExistingFieldName: 'Second Keyword' }],
+        before_value: undefined,
+        after_value: [{ notExistingFieldName: 'Second Keyword' }],
       };
 
       const changed = applyRuleToRecord(sampleRecord2, rule);
@@ -280,9 +277,8 @@ describe('Rules Utility Functions', () => {
         id: '2',
         dar_id: 'ghi-jkl',
         target_path: 'metadata.keywords[0]',
-        orig_value: undefined,
-        rule_type: 'REPLACE',
-        new_value: { notExistingFieldName: 'Second Keyword' },
+        before_value: undefined,
+        after_value: { notExistingFieldName: 'Second Keyword' },
       };
 
       const changed2 = applyRuleToRecord(sampleRecord2, rule2);
@@ -301,9 +297,8 @@ describe('Rules Utility Functions', () => {
         id: '1',
         dar_id: 'abc-def',
         target_path: 'metadata.idonotexist',
-        orig_value: undefined,
-        rule_type: 'ADD',
-        new_value: { keywordLabel: 'First Keyword' },
+        before_value: undefined,
+        after_value: { keywordLabel: 'First Keyword' },
       };
 
       const changed = applyRuleToRecord(sampleRecord2, rule);
@@ -317,9 +312,8 @@ describe('Rules Utility Functions', () => {
         id: '1',
         dar_id: 'abc-def',
         target_path: 'metadata.assetType',
-        orig_value: 'Dataset',
-        rule_type: 'REPLACE',
-        new_value: 'Book',
+        before_value: 'Dataset',
+        after_value: 'Book',
       };
 
       const changed = applyRuleToRecord(sampleRecord2, rule);
@@ -338,18 +332,16 @@ describe('Rules Utility Functions', () => {
         id: '1',
         dar_id: 'abc-def',
         target_path: 'metadata.datasetType',
-        orig_value: 'Dataset',
-        rule_type: 'REPLACE',
-        new_value: { keywordLabel: 'First Keyword' },
+        before_value: 'Dataset',
+        after_value: { keywordLabel: 'First Keyword' },
       };
 
       const rule2: RuleDbRecord = {
         id: '1',
         dar_id: 'abc-def',
         target_path: 'metadata.assetType',
-        orig_value: 'Dataset',
-        rule_type: 'REPLACE',
-        new_value: 'something else',
+        before_value: 'Dataset',
+        after_value: 'something else',
       };
 
       const changed = applyRuleToRecord(sampleRecord2, rule);
@@ -360,21 +352,20 @@ describe('Rules Utility Functions', () => {
       expect(sampleRecord2).toEqual(originalRecordState);
     });
 
-    it('should fail changing non-atomic field by rules', () => {
+    it('should allow changing non-atomic field by rules', () => {
       const rule: RuleDbRecord = {
         id: '222',
         dar_id: 'ccc-ddd',
         target_path: 'metadata.descriptions',
-        orig_value: [{ descriptionText: 'Description text.', descriptionType: 'Abstract' }],
-        rule_type: 'REPLACE',
-        new_value: [{ descriptionText: 'replaced description', descriptionType: 'Other' }],
+        before_value: [{ descriptionText: 'Description text.', descriptionType: 'Abstract' }],
+        after_value: [{ descriptionText: 'replaced description', descriptionType: 'Other' }],
       };
 
       const changed = applyRuleToRecord(sampleRecord2, rule);
 
-      expect(changed).toBe(false);
+      expect(changed).toBe(true);
       expect(sampleRecord2.metadata.descriptions).toEqual([
-        { descriptionText: 'Description text.', descriptionType: 'Abstract' },
+        { descriptionText: 'replaced description', descriptionType: 'Other' },
       ]);
     });
 
@@ -384,17 +375,15 @@ describe('Rules Utility Functions', () => {
           id: '222',
           dar_id: 'ccc-ddd',
           target_path: 'metadata.descriptions[0].descriptionType',
-          orig_value: 'Abstract',
-          rule_type: 'REPLACE',
-          new_value: 'Other',
+          before_value: 'Abstract',
+          after_value: 'Other',
         },
         {
           id: '333',
           dar_id: 'eee-fff',
           target_path: 'metadata.descriptions[0].descriptionText',
-          orig_value: 'Description text.',
-          rule_type: 'REPLACE',
-          new_value: 'replaced specific description text',
+          before_value: 'Description text.',
+          after_value: 'replaced specific description text',
         },
       ];
 
@@ -414,17 +403,15 @@ describe('Rules Utility Functions', () => {
         id: '6',
         dar_id: 'opq-rst',
         target_path: 'metadata.titles[0].titleText',
-        orig_value: 'Some title of a record from remote repository',
-        rule_type: 'REPLACE',
-        new_value: 'Intermediate Title',
+        before_value: 'Some title of a record from remote repository',
+        after_value: 'Intermediate Title',
       };
       const rule2: RuleDbRecord = {
         id: '7',
         dar_id: 'opq-rst',
         target_path: 'metadata.titles[0].titleText',
-        orig_value: 'Intermediate Title',
-        rule_type: 'REPLACE',
-        new_value: 'Some title of a record from remote repository',
+        before_value: 'Intermediate Title',
+        after_value: 'Some title of a record from remote repository',
       };
 
       const changedFst = applyRuleToRecord(sampleRecord2, rule1);

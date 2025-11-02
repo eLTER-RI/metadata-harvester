@@ -28,11 +28,13 @@ jest.mock('../../src/store/dao/resolvedRecordsDao', () => ({
 }));
 const mockGetRules = jest.fn();
 const mockCreateRules = jest.fn();
+const mockCreateOrUpdateRule = jest.fn();
 const mockDeleteRule = jest.fn();
 jest.mock('../../src/store/dao/rulesDao', () => ({
   RuleDao: jest.fn().mockImplementation(() => ({
     getRulesForRecord: mockGetRules,
     createRules: mockCreateRules,
+    createOrUpdateRule: mockCreateOrUpdateRule,
     deleteRule: mockDeleteRule,
   })),
 }));
@@ -64,7 +66,13 @@ describe('Harvester Service API', () => {
   });
 
   afterAll((done) => {
-    server.close(done);
+    if (server && server.listening) {
+      server.close(() => {
+        done();
+      });
+    } else {
+      done();
+    }
   });
 
   describe('GET /api/records', () => {
@@ -203,27 +211,51 @@ describe('Harvester Service API', () => {
 
   describe('POST /api/records/:darId/rules', () => {
     it('should create rules and trigger a re-harvest', async () => {
-      const mockRules = [{ field: 'title', type: 'REPLACE' }];
+      const mockRules = [
+        {
+          target_path: 'metadata.titles[0].titleText',
+          before_value: 'Old Title',
+          after_value: 'New Title',
+        },
+      ];
       mockGetRecordByDarId.mockResolvedValue({ source_url: 'http://example.com', source_repository: 'ZENODO' });
-      mockCreateRules.mockResolvedValue(undefined);
+      mockCreateOrUpdateRule.mockResolvedValue(true);
       mockHarvesterContextCreate.mockResolvedValue({});
       mockStartRecordSync.mockResolvedValue(undefined);
       const response = await request(app).post('/api/records/123/rules').send(mockRules);
       expect(response.status).toBe(201);
       expect(mockGetRecordByDarId).toHaveBeenCalledWith('123');
-      expect(mockCreateRules).toHaveBeenCalledWith('123', mockRules);
+      expect(mockCreateOrUpdateRule).toHaveBeenCalledWith(
+        '123',
+        'metadata.titles[0].titleText',
+        'Old Title',
+        'New Title',
+      );
       expect(mockStartRecordSync).toHaveBeenCalledWith({}, 'http://example.com');
     });
 
     it('should return 400 if rules are not an array', async () => {
       const response = await request(app).post('/api/records/123/rules').send({ not: 'an array' });
       expect(response.status).toBe(400);
-      expect(response.body.error).toBe('Invalid rules data. Expected an array.');
+      expect(response.body.error).toBe('Invalid rules data. Expected non-empty array.');
+    });
+
+    it('should return 400 if rules array is empty', async () => {
+      const response = await request(app).post('/api/records/123/rules').send([]);
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe('Invalid rules data. Expected non-empty array.');
     });
 
     it('should return 404 if record not found', async () => {
+      const mockRules = [
+        {
+          target_path: 'metadata.titles[0].titleText',
+          before_value: 'Old Title',
+          after_value: 'New Title',
+        },
+      ];
       mockGetRecordByDarId.mockResolvedValue(null);
-      const response = await request(app).post('/api/records/123/rules').send([]);
+      const response = await request(app).post('/api/records/123/rules').send(mockRules);
       expect(response.status).toBe(404);
       expect(response.body.error).toBe('Record with dar id 123. not found');
     });
@@ -286,7 +318,7 @@ describe('Harvester Service API', () => {
     it('should return 400 for missing fields', async () => {
       const response = await request(app).post('/api/harvest/single').send({});
       expect(response.status).toBe(400);
-      expect(response.body.error).toBe("Missing required fields: 'source_url' and 'repository'.");
+      expect(response.body.error).toBe("Missing required fields: 'sourceUrl' or 'repository'.");
     });
 
     it('should return 400 for an invalid check flag', async () => {
