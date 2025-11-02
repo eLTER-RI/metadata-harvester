@@ -1,15 +1,29 @@
 import { Container, Header, Dimmer, Loader, Segment, Message } from 'semantic-ui-react';
-import { useParams } from 'react-router-dom';
-import { useFetchRecord } from '../../hooks/recordQueries';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useFetchRecord, useFetchRules } from '../../hooks/recordQueries';
+import { useCreateRules } from '../../hooks/recordMutations';
 import { useEffect, useState } from 'react';
 import { CommonDatasetMetadata } from '../../../../src/store/commonStructure';
 import { MetadataForm } from '../../components/MetadataForm';
+import { generateRules } from '../../utils/generateRules';
+import { ZodError } from 'zod';
 
 export const EditRecordPage = () => {
   const { darId } = useParams();
+  const navigate = useNavigate();
   const { data: originalRecord, isLoading, error: fetchError } = useFetchRecord(darId);
+  const { data: rules, isLoading: rulesLoading } = useFetchRules(darId);
+  const { mutate: createRules, error: saveError } = useCreateRules();
   const [formData, setFormData] = useState<CommonDatasetMetadata | undefined>();
   const [validationErrors, setValidationErrors] = useState<string[] | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
+  useEffect(() => {
+    if (saveSuccess) {
+      navigate('/harvested_records', { replace: true });
+    }
+  }, [saveSuccess, navigate]);
 
   useEffect(() => {
     if (originalRecord) {
@@ -51,13 +65,50 @@ export const EditRecordPage = () => {
   const handleSave = async (data: CommonDatasetMetadata) => {
     setValidationErrors(null);
     setFormData(data);
+    setIsSaving(true);
+    setSaveSuccess(false);
+
+    try {
+      const originalMetadata = originalRecord?.metadata || {};
+      const rulesToCreate = generateRules(originalMetadata, data, rules || [], darId!);
+
+      if (rulesToCreate.length === 0) {
+        setSaveSuccess(true);
+        setIsSaving(false);
+        return;
+      }
+
+      createRules(
+        { darId: darId!, rules: rulesToCreate },
+        {
+          onSuccess: () => {
+            setSaveSuccess(true);
+            setIsSaving(false);
+            navigate('/harvested_records', { replace: true });
+          },
+          onError: () => {
+            setIsSaving(false);
+            // TODO: add notification
+          },
+        },
+      );
+    } catch (error) {
+      setIsSaving(false);
+      if (error instanceof ZodError) {
+        const formattedErrors = error.errors.map((err) => {
+          return `${err.path.join('.')} ${err.message}`;
+        });
+        setValidationErrors(formattedErrors);
+      }
+      // TODO: add notification
+    }
   };
 
-  if (isLoading) {
+  if (isLoading || rulesLoading) {
     return (
       <Segment style={{ height: '50vh' }}>
         <Dimmer active inverted>
-          <Loader>Loading record...</Loader>
+          <Loader>Loading record and rules...</Loader>
         </Dimmer>
       </Segment>
     );
@@ -84,6 +135,12 @@ export const EditRecordPage = () => {
           repository.
         </p>
       </Message>
+      {saveError && (
+        <Message negative>
+          <Message.Header>Error Saving Rules</Message.Header>
+          <p>{saveError.message}</p>
+        </Message>
+      )}
 
       {validationErrors && (
         <Message negative>
@@ -96,7 +153,7 @@ export const EditRecordPage = () => {
         </Message>
       )}
 
-      {formData && <MetadataForm data={formData} onSubmit={handleSave} />}
+      {formData && <MetadataForm data={formData} onSubmit={handleSave} isLoading={isSaving} />}
     </Container>
   );
 };
