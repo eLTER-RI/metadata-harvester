@@ -34,5 +34,17 @@ export default tseslint.config(
       'prettier/prettier': ['error', { printWidth: 120 }],
     },
   },
+  {
+    files: ['**/*.js', '**/*.mjs'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      },
+    },
+    rules: {
+      'no-console': 'off',
+      'prettier/prettier': ['error', { printWidth: 120 }],
+    },
+  },
   prettierRecommended,
 );
