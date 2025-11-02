@@ -3,6 +3,8 @@ import { ContributorTypeOptions } from '../constants';
 import { CommonDatasetMetadata, ContributorType } from '../../../../../src/store/commonStructure';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import { GroupDiffAccordion } from '../../rules/GroupDiffAccordion';
+import { useState } from 'react';
+import { DeleteConfirmModal } from '../../DeleteConfirmModal';
 
 export const ContributorsGroup = () => {
   const { control, register, watch, setValue } = useFormContext<CommonDatasetMetadata>();
@@ -10,6 +12,8 @@ export const ContributorsGroup = () => {
     control,
     name: 'contributors',
   });
+  const [modalOpen, setModalOpen] = useState(false);
+  const [indexToDelete, setIndexToDelete] = useState<number | null>(null);
 
   const addContributor = () => {
     append({
@@ -22,6 +26,24 @@ export const ContributorsGroup = () => {
       contributorIDs: [],
       contributorType: 'Researcher',
     });
+  };
+
+  const handleDeleteClick = (index: number) => {
+    setIndexToDelete(index);
+    setModalOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (indexToDelete !== null) {
+      remove(indexToDelete);
+      setModalOpen(false);
+      setIndexToDelete(null);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setModalOpen(false);
+    setIndexToDelete(null);
   };
 
   return (
@@ -38,7 +60,7 @@ export const ContributorsGroup = () => {
         <Segment key={field.id} style={{ marginBottom: '1rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <Header as="h4">Contributor {index + 1}</Header>
-            <Button icon="trash" color="red" size="small" onClick={() => remove(index)} />
+            <Button icon="trash" color="red" size="small" onClick={() => handleDeleteClick(index)} />
           </div>
           <Form.Group widths="equal">
             <Form.Field>
@@ -84,6 +106,13 @@ export const ContributorsGroup = () => {
         content="Add Contributor"
         onClick={addContributor}
         style={{ marginTop: '1rem' }}
+      />
+      <DeleteConfirmModal
+        open={modalOpen}
+        onClose={handleCloseModal}
+        onConfirm={handleConfirmDelete}
+        title="Delete Contributor"
+        itemName={indexToDelete !== null ? `Contributor ${indexToDelete + 1}` : undefined}
       />
     </Segment>
   );

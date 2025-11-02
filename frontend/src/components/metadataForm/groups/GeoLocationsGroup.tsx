@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useFormContext, useFieldArray } from 'react-hook-form';
 import { Form, Button, Segment, Header, Icon, Dropdown } from 'semantic-ui-react';
 import { CommonDatasetMetadata } from '../../../../../src/store/commonStructure';
+import { DeleteConfirmModal } from '../../DeleteConfirmModal';
 import {
   getGeometryType,
   createDefaultGeoLocation,
@@ -25,10 +26,30 @@ export const GeoLocationsGroup: React.FC = () => {
     control,
     name: 'geoLocations',
   });
+  const [modalOpen, setModalOpen] = useState(false);
+  const [indexToDelete, setIndexToDelete] = useState<number | null>(null);
 
   const addGeoLocation = () => {
     const newGeoLocation = createDefaultGeoLocation();
     append(newGeoLocation);
+  };
+
+  const handleDeleteClick = (index: number) => {
+    setIndexToDelete(index);
+    setModalOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (indexToDelete !== null) {
+      remove(indexToDelete);
+      setModalOpen(false);
+      setIndexToDelete(null);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setModalOpen(false);
+    setIndexToDelete(null);
   };
 
   const handleGeometryTypeChange = (index: number, type: GeometryType) => {
@@ -65,7 +86,7 @@ export const GeoLocationsGroup: React.FC = () => {
               }}
             >
               <Header as="h4">Location {index + 1}</Header>
-              <Button icon="trash" color="red" size="small" onClick={() => remove(index)} />
+              <Button icon="trash" color="red" size="small" onClick={() => handleDeleteClick(index)} />
             </div>
 
             <Form.Field>
@@ -104,6 +125,13 @@ export const GeoLocationsGroup: React.FC = () => {
         content="Add Geographic Location"
         onClick={addGeoLocation}
         style={{ marginTop: '1rem' }}
+      />
+      <DeleteConfirmModal
+        open={modalOpen}
+        onClose={handleCloseModal}
+        onConfirm={handleConfirmDelete}
+        title="Delete Geographic Location"
+        itemName={indexToDelete !== null ? `Location ${indexToDelete + 1}` : undefined}
       />
     </Segment>
   );

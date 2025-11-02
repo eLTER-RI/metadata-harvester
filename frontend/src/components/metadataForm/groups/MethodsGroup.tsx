@@ -2,6 +2,8 @@ import { Form, Button, Segment, Header, Icon } from 'semantic-ui-react';
 import { CommonDatasetMetadata } from '../../../../../src/store/commonStructure';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import { GroupDiffAccordion } from '../../rules/GroupDiffAccordion';
+import { useState } from 'react';
+import { DeleteConfirmModal } from '../../DeleteConfirmModal';
 
 export const MethodsGroup = () => {
   const { control, register } = useFormContext<CommonDatasetMetadata>();
@@ -9,6 +11,8 @@ export const MethodsGroup = () => {
     control,
     name: 'methods',
   });
+  const [modalOpen, setModalOpen] = useState(false);
+  const [indexToDelete, setIndexToDelete] = useState<number | null>(null);
 
   const addMethod = () => {
     append({
@@ -21,6 +25,24 @@ export const MethodsGroup = () => {
       qualityControlDescription: '',
       instrumentationDescription: '',
     });
+  };
+
+  const handleDeleteClick = (index: number) => {
+    setIndexToDelete(index);
+    setModalOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (indexToDelete !== null) {
+      remove(indexToDelete);
+      setModalOpen(false);
+      setIndexToDelete(null);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setModalOpen(false);
+    setIndexToDelete(null);
   };
 
   return (
@@ -37,7 +59,7 @@ export const MethodsGroup = () => {
         <Segment key={field.id} style={{ marginBottom: '1rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <Header as="h4">Method {index + 1}</Header>
-            <Button icon="trash" color="red" size="small" onClick={() => remove(index)} />
+            <Button icon="trash" color="red" size="small" onClick={() => handleDeleteClick(index)} />
           </div>
 
           <Form.Field>
@@ -85,6 +107,13 @@ export const MethodsGroup = () => {
       ))}
 
       <Button type="button" icon="plus" content="Add Method" onClick={addMethod} style={{ marginTop: '1rem' }} />
+      <DeleteConfirmModal
+        open={modalOpen}
+        onClose={handleCloseModal}
+        onConfirm={handleConfirmDelete}
+        title="Delete Method"
+        itemName={indexToDelete !== null ? `Method ${indexToDelete + 1}` : undefined}
+      />
     </Segment>
   );
 };

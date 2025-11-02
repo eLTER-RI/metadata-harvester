@@ -2,6 +2,8 @@ import { useFormContext, useFieldArray } from 'react-hook-form';
 import { Form, Button, Segment, Header, Icon } from 'semantic-ui-react';
 import { CommonDatasetMetadata, IdentifierType } from '../../../../../src/store/commonStructure';
 import { GroupDiffAccordion } from '../../rules/GroupDiffAccordion';
+import { useState } from 'react';
+import { DeleteConfirmModal } from '../../DeleteConfirmModal';
 
 const identifierTypeOptions = [
   { key: 'DOI', text: 'DOI', value: 'DOI' },
@@ -25,12 +27,32 @@ export const AlternateIdentifiersGroup = () => {
     control,
     name: 'alternateIdentifiers',
   });
+  const [modalOpen, setModalOpen] = useState(false);
+  const [indexToDelete, setIndexToDelete] = useState<number | null>(null);
 
   const addAlternateIdentifier = () => {
     append({
       alternateID: '',
       alternateIDType: 'DOI',
     });
+  };
+
+  const handleDeleteClick = (index: number) => {
+    setIndexToDelete(index);
+    setModalOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (indexToDelete !== null) {
+      remove(indexToDelete);
+      setModalOpen(false);
+      setIndexToDelete(null);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setModalOpen(false);
+    setIndexToDelete(null);
   };
 
   return (
@@ -47,7 +69,7 @@ export const AlternateIdentifiersGroup = () => {
         <Segment key={field.id} style={{ marginBottom: '1rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <Header as="h4">Alternate Identifier {index + 1}</Header>
-            <Button icon="trash" color="red" size="small" onClick={() => remove(index)} />
+            <Button icon="trash" color="red" size="small" onClick={() => handleDeleteClick(index)} />
           </div>
 
           <Form.Group widths="equal">
@@ -82,6 +104,13 @@ export const AlternateIdentifiersGroup = () => {
         onClick={addAlternateIdentifier}
         content="Add Alternate Identifier"
         style={{ marginTop: '1rem' }}
+      />
+      <DeleteConfirmModal
+        open={modalOpen}
+        onClose={handleCloseModal}
+        onConfirm={handleConfirmDelete}
+        title="Delete Alternate Identifier"
+        itemName={indexToDelete !== null ? `Alternate Identifier ${indexToDelete + 1}` : undefined}
       />
     </Segment>
   );

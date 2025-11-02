@@ -2,6 +2,8 @@ import { Form, Button, Segment, Header, Icon } from 'semantic-ui-react';
 import { CommonDatasetMetadata } from '../../../../../src/store/commonStructure';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import { GroupDiffAccordion } from '../../rules/GroupDiffAccordion';
+import { useState } from 'react';
+import { DeleteConfirmModal } from '../../DeleteConfirmModal';
 
 export const TitlesGroup = () => {
   const {
@@ -13,12 +15,32 @@ export const TitlesGroup = () => {
     control,
     name: 'titles',
   });
+  const [modalOpen, setModalOpen] = useState(false);
+  const [indexToDelete, setIndexToDelete] = useState<number | null>(null);
 
   const addTitle = () => {
     append({
       titleText: '',
       titleLanguage: '',
     });
+  };
+
+  const handleDeleteClick = (index: number) => {
+    setIndexToDelete(index);
+    setModalOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (indexToDelete !== null) {
+      remove(indexToDelete);
+      setModalOpen(false);
+      setIndexToDelete(null);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setModalOpen(false);
+    setIndexToDelete(null);
   };
 
   return (
@@ -36,14 +58,7 @@ export const TitlesGroup = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <Header as="h4">Title {index + 1}</Header>
             {fields.length > 1 && (
-              <Button
-                icon="trash"
-                color="red"
-                size="small"
-                onClick={() => {
-                  remove(index);
-                }}
-              />
+              <Button icon="trash" color="red" size="small" onClick={() => handleDeleteClick(index)} />
             )}
           </div>
 
@@ -67,6 +82,13 @@ export const TitlesGroup = () => {
         </Segment>
       ))}
       <Button type="button" icon="plus" content="Add Title" onClick={addTitle} style={{ marginTop: '1rem' }} />
+      <DeleteConfirmModal
+        open={modalOpen}
+        onClose={handleCloseModal}
+        onConfirm={handleConfirmDelete}
+        title="Delete Title"
+        itemName={indexToDelete !== null ? `Title ${indexToDelete + 1}` : undefined}
+      />
     </Segment>
   );
 };

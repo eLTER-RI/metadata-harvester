@@ -3,6 +3,8 @@ import { Form, Button, Segment, Header, Icon } from 'semantic-ui-react';
 import { GroupDiffAccordion } from '../../rules/GroupDiffAccordion';
 import { CommonDatasetMetadata, IdentifierType } from '../../../../../src/store/commonStructure';
 import { RelatedResourceType, RelationTypeValues } from 'elter-metadata-validation-schemas';
+import { useState } from 'react';
+import { DeleteConfirmModal } from '../../DeleteConfirmModal';
 
 const identifierTypeOptions = [
   { key: 'DOI', text: 'DOI', value: 'DOI' },
@@ -45,6 +47,8 @@ export const RelatedIdentifiersGroup = () => {
     control,
     name: 'relatedIdentifiers',
   });
+  const [modalOpen, setModalOpen] = useState(false);
+  const [indexToDelete, setIndexToDelete] = useState<number | null>(null);
 
   const addRelatedIdentifier = () => {
     append({
@@ -53,6 +57,24 @@ export const RelatedIdentifiersGroup = () => {
       relatedResourceType: 'Dataset',
       relationType: 'References',
     });
+  };
+
+  const handleDeleteClick = (index: number) => {
+    setIndexToDelete(index);
+    setModalOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (indexToDelete !== null) {
+      remove(indexToDelete);
+      setModalOpen(false);
+      setIndexToDelete(null);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setModalOpen(false);
+    setIndexToDelete(null);
   };
 
   return (
@@ -69,7 +91,7 @@ export const RelatedIdentifiersGroup = () => {
         <Segment key={field.id} style={{ marginBottom: '1rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <Header as="h4">Related Identifier {index + 1}</Header>
-            <Button icon="trash" color="red" size="small" onClick={() => remove(index)} />
+            <Button icon="trash" color="red" size="small" onClick={() => handleDeleteClick(index)} />
           </div>
           <Form.Group widths="equal">
             <Form.Field
@@ -125,6 +147,13 @@ export const RelatedIdentifiersGroup = () => {
         content="Add Related Identifier"
         onClick={addRelatedIdentifier}
         style={{ marginTop: '1rem' }}
+      />
+      <DeleteConfirmModal
+        open={modalOpen}
+        onClose={handleCloseModal}
+        onConfirm={handleConfirmDelete}
+        title="Delete Related Identifier"
+        itemName={indexToDelete !== null ? `Related Identifier ${indexToDelete + 1}` : undefined}
       />
     </Segment>
   );
