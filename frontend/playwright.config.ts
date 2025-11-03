@@ -1,12 +1,18 @@
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig, devices, ReporterDescription } from '@playwright/test';
 
 const PORT = process.env.VITE_PORT || '5173';
 const BASE_URL = `http://localhost:${PORT}`;
 
+const reporters: ReporterDescription[] = [['html']];
+
+if (!process.env.CI) {
+  reporters.push(['list']);
+}
+
 export default defineConfig({
   testDir: './playwright',
   fullyParallel: true,
-  reporter: 'html',
+  reporter: reporters,
   use: {
     baseURL: BASE_URL,
     trace: 'on-first-retry',
