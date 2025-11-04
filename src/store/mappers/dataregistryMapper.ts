@@ -143,6 +143,9 @@ export async function mapDataRegistryToCommonDatasetMetadata(
         : undefined,
       externalSourceInformation: {
         externalSourceName: 'DataRegistry',
+        // CRITICAL: externalSourceURI is used as database primary key (source_url)
+        // The return value `url` of this function is used as the externalSourceURI
+        // Do not modify this logic
         externalSourceURI: url,
       },
       projects: [

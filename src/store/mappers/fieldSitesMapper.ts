@@ -74,6 +74,9 @@ function extractSitesGeolocation(input: any): Geolocation[] {
   return coverages;
 }
 
+// CRITICAL: externalSourceURI is used as database primary key (source_url)
+// The return value `url` of this function is used as the externalSourceURI
+// Do not modify this logic
 async function handleFieldSitesVersioning(url: string, fieldSites: any): Promise<[string, any, RelatedIdentifier[]]> {
   const versionRelations: RelatedIdentifier[] = [];
 
@@ -313,6 +316,8 @@ export async function mapFieldSitesToCommonDatasetMetadata(
       ],
       externalSourceInformation: {
         externalSourceName: 'FieldSites',
+        // CRITICAL: externalSourceURI is used as database primary key (source_url)
+        // DO NOT MODIFY THIS LOGIC
         externalSourceURI: latestUrl,
       },
       responsibleOrganizations: responsibleOrganization,

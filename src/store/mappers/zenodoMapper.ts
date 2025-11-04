@@ -239,6 +239,9 @@ function getAdditionalMetadata(zenodo: any): AdditionalMetadata[] {
   return additional_metadata;
 }
 
+// CRITICAL: externalSourceURI is used as database primary key (source_url)
+// The return value `url` of this function is used as the externalSourceURI
+// Do not modify this logic
 async function handleZenodoVersioning(url: string, zenodo: any): Promise<[string, any, RelatedIdentifier[]]> {
   const relatedIdentifiers: RelatedIdentifier[] = [];
 
@@ -416,6 +419,8 @@ export async function mapZenodoToCommonDatasetMetadata(
       }),
       externalSourceInformation: {
         externalSourceName: 'Zenodo',
+        // CRITICAL: externalSourceURI is used as database primary key (source_url)
+        // DO NOT MODIFY THIS LOGIC
         externalSourceURI: url,
       },
       responsibleOrganizations: responsibleOrganizations,
