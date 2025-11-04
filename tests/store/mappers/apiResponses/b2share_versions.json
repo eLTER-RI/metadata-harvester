@@ -1,18 +1,559 @@
 {
-  "versions": [
-    {
-      "created": "Wed, 17 Sep 2025 08:42:09 GMT",
-      "id": "7d03f3d9aca64626a1c2c0576ccb0d31",
-      "updated": "Wed, 17 Sep 2025 08:42:09 GMT",
-      "url": "https://b2share.eudat.eu/api/records/7d03f3d9aca64626a1c2c0576ccb0d31", 
-      "version": 1
-    }, 
-    {
-      "created": "Wed, 17 Sep 2025 09:20:09 GMT",
-      "id": "8f0fdd0163f044a082f8c2571205aaaa",
-      "updated": "Wed, 17 Sep 2025 09:20:09 GMT",
-      "url": "https://b2share.eudat.eu/api/records/8f0fdd0163f044a082f8c2571205aaaa", 
-      "version": 2
-    }
-  ]
+  "hits": {
+    "hits": [
+      {
+        "id": "6b6sm-d1k39",
+        "created": "2025-09-17T09:20:09.546376+00:00",
+        "updated": "2025-10-28T14:57:48.243141+00:00",
+        "links": {
+          "self": "https://b2share.eudat.eu/api/records/6b6sm-d1k39",
+          "self_html": "https://b2share.eudat.eu/records/6b6sm-d1k39",
+          "preview_html": "https://b2share.eudat.eu/records/6b6sm-d1k39?preview=1",
+          "doi": "https://doi.org/10.23728/b2share.8f0fdd0163f044a082f8c2571205aaaa",
+          "self_doi": "https://doi.org/10.23728/b2share.8f0fdd0163f044a082f8c2571205aaaa",
+          "self_doi_html": "https://b2share.eudat.eu/doi/10.23728/b2share.8f0fdd0163f044a082f8c2571205aaaa",
+          "reserve_doi": "https://b2share.eudat.eu/api/records/6b6sm-d1k39/draft/pids/doi",
+          "parent": "https://b2share.eudat.eu/api/records/m8b14-wrv02",
+          "parent_html": "https://b2share.eudat.eu/records/m8b14-wrv02",
+          "self_iiif_manifest": "https://b2share.eudat.eu/api/iiif/record:6b6sm-d1k39/manifest",
+          "self_iiif_sequence": "https://b2share.eudat.eu/api/iiif/record:6b6sm-d1k39/sequence/default",
+          "files": "https://b2share.eudat.eu/api/records/6b6sm-d1k39/files",
+          "media_files": "https://b2share.eudat.eu/api/records/6b6sm-d1k39/media-files",
+          "archive": "https://b2share.eudat.eu/api/records/6b6sm-d1k39/files-archive",
+          "archive_media": "https://b2share.eudat.eu/api/records/6b6sm-d1k39/media-files-archive",
+          "latest": "https://b2share.eudat.eu/api/records/6b6sm-d1k39/versions/latest",
+          "latest_html": "https://b2share.eudat.eu/records/6b6sm-d1k39/latest",
+          "versions": "https://b2share.eudat.eu/api/records/6b6sm-d1k39/versions",
+          "draft": "https://b2share.eudat.eu/api/records/6b6sm-d1k39/draft",
+          "access_links": "https://b2share.eudat.eu/api/records/6b6sm-d1k39/access/links",
+          "access_grants": "https://b2share.eudat.eu/api/records/6b6sm-d1k39/access/grants",
+          "access_users": "https://b2share.eudat.eu/api/records/6b6sm-d1k39/access/users",
+          "access_request": "https://b2share.eudat.eu/api/records/6b6sm-d1k39/access/request",
+          "access": "https://b2share.eudat.eu/api/records/6b6sm-d1k39/access",
+          "communities": "https://b2share.eudat.eu/api/records/6b6sm-d1k39/communities",
+          "communities-suggestions": "https://b2share.eudat.eu/api/records/6b6sm-d1k39/communities-suggestions",
+          "requests": "https://b2share.eudat.eu/api/records/6b6sm-d1k39/requests"
+        },
+        "revision_id": 7,
+        "parent": {
+          "id": "m8b14-wrv02",
+          "access": {
+            "owned_by": {
+              "user": "1912"
+            },
+            "settings": {
+              "allow_user_requests": false,
+              "allow_guest_requests": false,
+              "accept_conditions_text": null,
+              "secret_link_expiration": 0
+            }
+          },
+          "communities": {
+            "ids": [
+              "d952913c-451e-4b5c-817e-d578dc8a4469"
+            ],
+            "entries": [
+              {
+                "id": "d952913c-451e-4b5c-817e-d578dc8a4469",
+                "created": "2025-10-27T11:13:15.028471+00:00",
+                "updated": "2025-10-30T10:40:18.675340+00:00",
+                "links": {
+
+                },
+                "revision_id": 5,
+                "slug": "lter",
+                "metadata": {
+                  "title": "LTER"
+                },
+                "access": {
+                  "visibility": "public",
+                  "members_visibility": "public",
+                  "member_policy": "open",
+                  "record_submission_policy": "open",
+                  "review_policy": "closed",
+                  "record_restricted_policy": "restricted"
+                },
+                "deletion_status": {
+                  "is_deleted": false,
+                  "status": "P"
+                },
+                "children": {
+                  "allow": false
+                }
+              }
+            ]
+          },
+          "pids": {
+
+          }
+        },
+        "versions": {
+          "is_latest": true,
+          "index": 2
+        },
+        "is_published": true,
+        "is_draft": false,
+        "pids": {
+          "doi": {
+            "identifier": "10.23728/b2share.8f0fdd0163f044a082f8c2571205aaaa",
+            "provider": "datacite"
+          },
+          "oai": {
+            "identifier": "oai:b2share-:6b6sm-d1k39",
+            "provider": "oai"
+          },
+          "epic": {
+            "identifier": "http://hdl.handle.net/11304/067cb4a5-5143-406d-84e8-018ecc39601a",
+            "provider": "epic"
+          },
+          "b2rec": {
+            "identifier": "8f0fdd0163f044a082f8c2571205aaaa",
+            "provider": "b2rec"
+          }
+        },
+        "metadata": {
+          "resource_types": [
+            {
+              "id": "dataset",
+              "title": {
+                "cs": "Datová sada",
+                "de": "Datensatz",
+                "en": "Dataset",
+                "sv": "Dataset"
+              }
+            }
+          ],
+          "creators": [
+            {
+              "person_or_org": {
+                "type": "personal",
+                "name": "Nied, Sebastian",
+                "given_name": "Sebastian",
+                "family_name": "Nied"
+              }
+            }
+          ],
+          "title": "LTER Zöbelboden (Austria) - meteorological data 1996",
+          "publisher": "B2SHARE v2",
+          "publication_date": "2025-09-17",
+          "subjects": [
+            {
+              "id": "3.3.14",
+              "subject": "3.3.14 → Earth sciences → Meteorology",
+              "scheme": "Discipline"
+            },
+            {
+              "subject": "Zöbelboden, Zoebelboden, LTER CWN, eLTER reporting, meteorology"
+            }
+          ],
+          "languages": [
+            {
+              "id": "eng",
+              "title": {
+                "en": "English"
+              }
+            }
+          ],
+          "identifiers": [
+            {
+              "identifier": "8f0fdd0163f044a082f8c2571205aaaa",
+              "scheme": "b2rec"
+            }
+          ],
+          "rights": [
+            {
+              "id": "cc-by-4.0",
+              "title": {
+                "en": "Creative Commons Attribution 4.0 International"
+              },
+              "description": {
+                "en": "The Creative Commons Attribution license allows re-distribution and re-use of a licensed work on the condition that the creator is appropriately credited."
+              },
+              "icon": "cc-by-icon",
+              "props": {
+                "url": "https://creativecommons.org/licenses/by/4.0/",
+                "scheme": "spdx"
+              }
+            }
+          ],
+          "description": "Zöbelboden (Austria) - meteorological data 1996",
+          "community_extension_schema": "d2f5457f-6318-494a-b363-8098356035b7",
+          "community_extension": {
+            "lter:metadata_url": "https://deims.org/8eda49e9-1f4e-4f3e-b58e-e0bb25dc32a6"
+          }
+        },
+        "custom_fields": {
+
+        },
+        "access": {
+          "record": "public",
+          "files": "public",
+          "embargo": {
+            "active": false,
+            "reason": null
+          },
+          "status": "open"
+        },
+        "files": {
+          "enabled": true,
+          "order": [],
+          "count": 3,
+          "total_bytes": 15875232,
+          "entries": {
+            "DATA.txt": {
+              "id": "d58597ca-0174-4fdc-8c4e-95c62cac121c",
+              "checksum": "md5:eb588fd4c7d3b2469b3806750d450c64",
+              "ext": "txt",
+              "size": 15873888,
+              "mimetype": "text/plain",
+              "key": "DATA.txt",
+              "metadata": {
+
+              },
+              "access": {
+                "hidden": false
+              }
+            },
+            "METHOD.txt": {
+              "id": "1e1a6d31-6d2b-4552-9e18-436f2e322edb",
+              "checksum": "md5:93d1ef9c4a5aad3aff7039566d55bae1",
+              "ext": "txt",
+              "size": 1111,
+              "mimetype": "text/plain",
+              "key": "METHOD.txt",
+              "metadata": {
+
+              },
+              "access": {
+                "hidden": false
+              }
+            },
+            "STATION.txt": {
+              "id": "b887a525-d795-4fd9-b842-7c695d0eda1a",
+              "checksum": "md5:e467354d58b00d4cdaf4b0e7e2c476be",
+              "ext": "txt",
+              "size": 233,
+              "mimetype": "text/plain",
+              "key": "STATION.txt",
+              "metadata": {
+
+              },
+              "access": {
+                "hidden": false
+              }
+            }
+          }
+        },
+        "media_files": {
+          "enabled": false,
+          "order": [],
+          "count": 0,
+          "total_bytes": 0,
+          "entries": {
+
+          }
+        },
+        "status": "published",
+        "deletion_status": {
+          "is_deleted": false,
+          "status": "P"
+        },
+        "stats": {
+          "this_version": {
+            "views": 4,
+            "unique_views": 4,
+            "downloads": 6,
+            "unique_downloads": 6,
+            "data_volume": 31750464
+          },
+          "all_versions": {
+            "views": 5,
+            "unique_views": 5,
+            "downloads": 6,
+            "unique_downloads": 6,
+            "data_volume": 31750464
+          }
+        }
+      },
+      {
+        "id": "c8ygw-dja55",
+        "created": "2025-09-17T08:42:09.942871+00:00",
+        "updated": "2025-10-28T14:57:47.230859+00:00",
+        "links": {
+          "self": "https://b2share.eudat.eu/api/records/c8ygw-dja55",
+          "self_html": "https://b2share.eudat.eu/records/c8ygw-dja55",
+          "preview_html": "https://b2share.eudat.eu/records/c8ygw-dja55?preview=1",
+          "doi": "https://doi.org/10.23728/b2share.7d03f3d9aca64626a1c2c0576ccb0d31",
+          "self_doi": "https://doi.org/10.23728/b2share.7d03f3d9aca64626a1c2c0576ccb0d31",
+          "self_doi_html": "https://b2share.eudat.eu/doi/10.23728/b2share.7d03f3d9aca64626a1c2c0576ccb0d31",
+          "reserve_doi": "https://b2share.eudat.eu/api/records/c8ygw-dja55/draft/pids/doi",
+          "parent": "https://b2share.eudat.eu/api/records/m8b14-wrv02",
+          "parent_html": "https://b2share.eudat.eu/records/m8b14-wrv02",
+          "self_iiif_manifest": "https://b2share.eudat.eu/api/iiif/record:c8ygw-dja55/manifest",
+          "self_iiif_sequence": "https://b2share.eudat.eu/api/iiif/record:c8ygw-dja55/sequence/default",
+          "files": "https://b2share.eudat.eu/api/records/c8ygw-dja55/files",
+          "media_files": "https://b2share.eudat.eu/api/records/c8ygw-dja55/media-files",
+          "archive": "https://b2share.eudat.eu/api/records/c8ygw-dja55/files-archive",
+          "archive_media": "https://b2share.eudat.eu/api/records/c8ygw-dja55/media-files-archive",
+          "latest": "https://b2share.eudat.eu/api/records/c8ygw-dja55/versions/latest",
+          "latest_html": "https://b2share.eudat.eu/records/c8ygw-dja55/latest",
+          "versions": "https://b2share.eudat.eu/api/records/c8ygw-dja55/versions",
+          "draft": "https://b2share.eudat.eu/api/records/c8ygw-dja55/draft",
+          "access_links": "https://b2share.eudat.eu/api/records/c8ygw-dja55/access/links",
+          "access_grants": "https://b2share.eudat.eu/api/records/c8ygw-dja55/access/grants",
+          "access_users": "https://b2share.eudat.eu/api/records/c8ygw-dja55/access/users",
+          "access_request": "https://b2share.eudat.eu/api/records/c8ygw-dja55/access/request",
+          "access": "https://b2share.eudat.eu/api/records/c8ygw-dja55/access",
+          "communities": "https://b2share.eudat.eu/api/records/c8ygw-dja55/communities",
+          "communities-suggestions": "https://b2share.eudat.eu/api/records/c8ygw-dja55/communities-suggestions",
+          "requests": "https://b2share.eudat.eu/api/records/c8ygw-dja55/requests"
+        },
+        "revision_id": 7,
+        "parent": {
+          "id": "m8b14-wrv02",
+          "access": {
+            "owned_by": {
+              "user": "1912"
+            },
+            "settings": {
+              "allow_user_requests": false,
+              "allow_guest_requests": false,
+              "accept_conditions_text": null,
+              "secret_link_expiration": 0
+            }
+          },
+          "communities": {
+            "ids": [
+              "d952913c-451e-4b5c-817e-d578dc8a4469"
+            ],
+            "entries": [
+              {
+                "id": "d952913c-451e-4b5c-817e-d578dc8a4469",
+                "created": "2025-10-27T11:13:15.028471+00:00",
+                "updated": "2025-10-30T10:40:18.675340+00:00",
+                "links": {
+
+                },
+                "revision_id": 5,
+                "slug": "lter",
+                "metadata": {
+                  "title": "LTER"
+                },
+                "access": {
+                  "visibility": "public",
+                  "members_visibility": "public",
+                  "member_policy": "open",
+                  "record_submission_policy": "open",
+                  "review_policy": "closed",
+                  "record_restricted_policy": "restricted"
+                },
+                "deletion_status": {
+                  "is_deleted": false,
+                  "status": "P"
+                },
+                "children": {
+                  "allow": false
+                }
+              }
+            ]
+          },
+          "pids": {
+
+          }
+        },
+        "versions": {
+          "is_latest": false,
+          "index": 1
+        },
+        "is_published": true,
+        "is_draft": false,
+        "pids": {
+          "doi": {
+            "identifier": "10.23728/b2share.7d03f3d9aca64626a1c2c0576ccb0d31",
+            "provider": "datacite"
+          },
+          "oai": {
+            "identifier": "oai:b2share-:c8ygw-dja55",
+            "provider": "oai"
+          },
+          "epic": {
+            "identifier": "http://hdl.handle.net/11304/0a9964cd-0c86-4482-a5d0-27a36bfd24df",
+            "provider": "epic"
+          },
+          "b2rec": {
+            "identifier": "7d03f3d9aca64626a1c2c0576ccb0d31",
+            "provider": "b2rec"
+          }
+        },
+        "metadata": {
+          "resource_types": [
+            {
+              "id": "dataset",
+              "title": {
+                "cs": "Datová sada",
+                "de": "Datensatz",
+                "en": "Dataset",
+                "sv": "Dataset"
+              }
+            }
+          ],
+          "creators": [
+            {
+              "person_or_org": {
+                "type": "personal",
+                "name": "Nied, Sebastian",
+                "given_name": "Sebastian",
+                "family_name": "Nied"
+              }
+            }
+          ],
+          "title": "LTER Zöbelboden (Austria) - meteorological data 1996",
+          "publisher": "B2SHARE v2",
+          "publication_date": "2025-09-17",
+          "subjects": [
+            {
+              "id": "3.3.14",
+              "subject": "3.3.14 → Earth sciences → Meteorology",
+              "scheme": "Discipline"
+            },
+            {
+              "subject": "Zöbelboden, Zoebelboden, LTER CWN, eLTER reporting, meteorology"
+            }
+          ],
+          "languages": [
+            {
+              "id": "eng",
+              "title": {
+                "en": "English"
+              }
+            }
+          ],
+          "identifiers": [
+            {
+              "identifier": "7d03f3d9aca64626a1c2c0576ccb0d31",
+              "scheme": "b2rec"
+            }
+          ],
+          "rights": [
+            {
+              "id": "cc-by-4.0",
+              "title": {
+                "en": "Creative Commons Attribution 4.0 International"
+              },
+              "description": {
+                "en": "The Creative Commons Attribution license allows re-distribution and re-use of a licensed work on the condition that the creator is appropriately credited."
+              },
+              "icon": "cc-by-icon",
+              "props": {
+                "url": "https://creativecommons.org/licenses/by/4.0/",
+                "scheme": "spdx"
+              }
+            }
+          ],
+          "description": "Zöbelboden (Austria) - meteorological data 1996",
+          "community_extension_schema": "d2f5457f-6318-494a-b363-8098356035b7",
+          "community_extension": {
+            "lter:metadata_url": "https://deims.org/8eda49e9-1f4e-4f3e-b58e-e0bb25dc32a6"
+          }
+        },
+        "custom_fields": {
+
+        },
+        "access": {
+          "record": "public",
+          "files": "public",
+          "embargo": {
+            "active": false,
+            "reason": null
+          },
+          "status": "open"
+        },
+        "files": {
+          "enabled": true,
+          "order": [],
+          "count": 3,
+          "total_bytes": 15875232,
+          "entries": {
+            "DATA.txt": {
+              "id": "d58597ca-0174-4fdc-8c4e-95c62cac121c",
+              "checksum": "md5:eb588fd4c7d3b2469b3806750d450c64",
+              "ext": "txt",
+              "size": 15873888,
+              "mimetype": "text/plain",
+              "key": "DATA.txt",
+              "metadata": {
+
+              },
+              "access": {
+                "hidden": false
+              }
+            },
+            "METHOD.txt": {
+              "id": "1e1a6d31-6d2b-4552-9e18-436f2e322edb",
+              "checksum": "md5:93d1ef9c4a5aad3aff7039566d55bae1",
+              "ext": "txt",
+              "size": 1111,
+              "mimetype": "text/plain",
+              "key": "METHOD.txt",
+              "metadata": {
+
+              },
+              "access": {
+                "hidden": false
+              }
+            },
+            "STATION.txt": {
+              "id": "b887a525-d795-4fd9-b842-7c695d0eda1a",
+              "checksum": "md5:e467354d58b00d4cdaf4b0e7e2c476be",
+              "ext": "txt",
+              "size": 233,
+              "mimetype": "text/plain",
+              "key": "STATION.txt",
+              "metadata": {
+
+              },
+              "access": {
+                "hidden": false
+              }
+            }
+          }
+        },
+        "media_files": {
+          "enabled": false,
+          "order": [],
+          "count": 0,
+          "total_bytes": 0,
+          "entries": {
+
+          }
+        },
+        "status": "published",
+        "deletion_status": {
+          "is_deleted": false,
+          "status": "P"
+        },
+        "stats": {
+          "this_version": {
+            "views": 1,
+            "unique_views": 1,
+            "downloads": 0,
+            "unique_downloads": 0,
+            "data_volume": 0
+          },
+          "all_versions": {
+            "views": 5,
+            "unique_views": 5,
+            "downloads": 6,
+            "unique_downloads": 6,
+            "data_volume": 31750464
+          }
+        }
+      }
+    ],
+    "total": 2
+  },
+  "sortBy": "version",
+  "links": {
+    "self": "https://b2share.eudat.eu/api/records/6b6sm-d1k39/versions?page=1&size=25&sort=version"
+  }
 }

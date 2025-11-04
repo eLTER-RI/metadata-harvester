@@ -57,20 +57,25 @@ describe('B2Share Mapper', () => {
         sizeMeasureType: 'B',
       },
     ]);
-    expect(commonDataset.metadata.alternateIdentifiers).toHaveLength(1);
-    expect(commonDataset.metadata.alternateIdentifiers).toEqual([
-      {
-        alternateID: 'http://hdl.handle.net/11304/067cb4a5-5143-406d-84e8-018ecc39601a',
-        alternateIDType: 'Handle',
-      },
-    ]);
-    expect(commonDataset.metadata.relatedIdentifiers).toHaveLength(2);
+    expect(commonDataset.metadata.alternateIdentifiers).toBeDefined();
+    expect(commonDataset.metadata.alternateIdentifiers).toHaveLength(2);
+    expect(commonDataset.metadata.alternateIdentifiers).toEqual(
+      expect.arrayContaining([
+        {
+          alternateID: '10.23728/b2share.8f0fdd0163f044a082f8c2571205aaaa',
+          alternateIDType: 'DOI',
+        },
+        {
+          alternateID: 'http://hdl.handle.net/11304/067cb4a5-5143-406d-84e8-018ecc39601a',
+          alternateIDType: 'Handle',
+        },
+      ]),
+    );
+    const identifierTypes = commonDataset.metadata.alternateIdentifiers!.map((id) => id.alternateIDType);
+    expect(identifierTypes).toContain('DOI');
+    expect(identifierTypes).toContain('Handle');
+    expect(commonDataset.metadata.relatedIdentifiers).toHaveLength(1);
     expect(commonDataset.metadata.relatedIdentifiers).toEqual([
-      {
-        relatedID: '10.48550/arXiv.2211.01226',
-        relatedIDType: 'DOI',
-        relationType: 'IsDescribedBy',
-      },
       {
         relatedID: mockB2ShareOldData.links.self,
         relatedIDType: 'URL',
@@ -90,6 +95,9 @@ describe('B2Share Mapper', () => {
     expect(commonDataset.metadata.keywords).toBeDefined();
     expect(commonDataset.metadata.keywords).toEqual([
       {
+        keywordLabel: '3.3.14 → Earth sciences → Meteorology',
+      },
+      {
         keywordLabel: 'Zöbelboden',
       },
       {
@@ -108,7 +116,7 @@ describe('B2Share Mapper', () => {
     expect(commonDataset.metadata.licenses).toBeDefined();
     expect(commonDataset.metadata.licenses).toEqual([
       {
-        licenseCode: 'cc-by',
+        licenseCode: 'Creative Commons Attribution 4.0 International',
         licenseURI: 'https://creativecommons.org/licenses/by/4.0/',
       },
     ]);
@@ -117,46 +125,8 @@ describe('B2Share Mapper', () => {
     expect(commonDataset.metadata.titles![0].titleText).toBe('LTER Zöbelboden (Austria) - meteorological data 1996');
     expect(commonDataset.metadata.externalSourceInformation.externalSourceName).toBe('B2Share Eudat');
     expect(commonDataset.metadata.externalSourceInformation.externalSourceURI).toBe(
-      'http://hdl.handle.net/11304/067cb4a5-5143-406d-84e8-018ecc39601a',
+      'https://b2share.eudat.eu/api/records/6b6sm-d1k39',
     );
-    expect(commonDataset.metadata.externalSourceInformation.externalSourceURI).toBe(
-      'http://hdl.handle.net/11304/067cb4a5-5143-406d-84e8-018ecc39601a',
-    );
-    expect(commonDataset.metadata.temporalCoverages).toBeDefined();
-    expect(commonDataset.metadata.temporalCoverages).toHaveLength(1);
-    expect(commonDataset.metadata.temporalCoverages).toEqual([
-      {
-        startDate: '2023-05-31',
-        endDate: '2024-05-31',
-      },
-    ]);
-    expect(commonDataset.metadata.geoLocations).toBeDefined();
-    expect(commonDataset.metadata.geoLocations).toHaveLength(2);
-    expect(commonDataset.metadata.geoLocations).toEqual([
-      {
-        geographicDescription: 'Sion (Switzerland)',
-        point: {
-          latitude: 46.22748,
-          longitude: 7.36459,
-        },
-      },
-      {
-        geographicDescription: 'Sion (Switzerland)',
-        boundingBox: {
-          eastBoundLongitude: 7.94,
-          northBoundLatitude: 46.43,
-          southBoundLatitude: 46.04,
-          westBoundLongitude: 6.87,
-        },
-      },
-    ]);
-    expect(commonDataset.metadata.temporalCoverages).toEqual([
-      {
-        startDate: '2023-05-31',
-        endDate: '2024-05-31',
-      },
-    ]);
-
     // We check that the correct string was called to get versions
     expect(fetchJsonSpy).toHaveBeenCalledWith(mockB2ShareData.links.versions);
   });
@@ -178,18 +148,29 @@ describe('B2Share Mapper', () => {
 
     expect(commonDataset.metadata.externalSourceInformation.externalSourceName).toBe('B2Share Eudat');
     expect(commonDataset.metadata.externalSourceInformation.externalSourceURI).toBe(
-      'http://hdl.handle.net/11304/067cb4a5-5143-406d-84e8-018ecc39601a',
+      'https://b2share.eudat.eu/api/records/6b6sm-d1k39',
     );
 
+    expect(commonDataset.metadata.alternateIdentifiers).toBeDefined();
+    expect(commonDataset.metadata.alternateIdentifiers).toHaveLength(2);
+    expect(commonDataset.metadata.alternateIdentifiers).toEqual(
+      expect.arrayContaining([
+        {
+          alternateID: '10.23728/b2share.8f0fdd0163f044a082f8c2571205aaaa',
+          alternateIDType: 'DOI',
+        },
+        {
+          alternateID: 'http://hdl.handle.net/11304/067cb4a5-5143-406d-84e8-018ecc39601a',
+          alternateIDType: 'Handle',
+        },
+      ]),
+    );
+    const identifierTypes = commonDataset.metadata.alternateIdentifiers!.map((id) => id.alternateIDType);
+    expect(identifierTypes).toContain('DOI');
+    expect(identifierTypes).toContain('Handle');
     expect(commonDataset.metadata.relatedIdentifiers).toEqual([
       {
-        relatedID: '10.48550/arXiv.2211.01226',
-        relatedIDType: 'DOI',
-        relatedResourceType: undefined,
-        relationType: 'IsDescribedBy',
-      },
-      {
-        relatedID: 'https://b2share.eudat.eu/api/records/7d03f3d9aca64626a1c2c0576ccb0d31',
+        relatedID: 'https://b2share.eudat.eu/api/records/c8ygw-dja55',
         relatedIDType: 'URL',
         relatedResourceType: 'Dataset',
         relationType: 'IsNewVersionOf',
