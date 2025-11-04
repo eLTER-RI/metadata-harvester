@@ -113,5 +113,6 @@ const repositories: Record<RepositoryType, RepositoryConfig> = {
 export const CONFIG = {
   REPOSITORIES: repositories,
   DEIMS_API_URL: 'https://deims.org/api/sites',
+  CLEANUP_DAYS_THRESHOLD: parseInt(process.env.CLEANUP_DAYS_THRESHOLD || '30', 10),
   ...envConfig,
 };

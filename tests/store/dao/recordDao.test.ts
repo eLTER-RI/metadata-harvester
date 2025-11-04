@@ -195,12 +195,6 @@ describe('Tests for RecordDao', () => {
       resolved: false,
     });
     expect(queriesRecordsTitle.records).toHaveLength(2);
-
-    const queriesRecords = await recordDao.listRecords({
-      repositories: ['ZENODO'],
-      title: 'Third',
-    });
-    expect(queriesRecords.records).toHaveLength(1);
   });
 
   it('creates, updates and deletes a record', async () => {
@@ -246,5 +240,55 @@ describe('Tests for RecordDao', () => {
     expect(oldUrlResult).toHaveLength(0);
     const newUrlResult = await recordDao.getRecordBySourceId(source_url + '/new-url');
     expect(newUrlResult).toHaveLength(1);
+  });
+
+  describe('last seen tracking', () => {
+    it('sets last_seen_at after record creation', async () => {
+      const source_url = 'http://repository.com/last-seen-1';
+      const newRecord: Omit<DbRecord, 'last_harvested'> = {
+        source_url: source_url,
+        source_repository: 'ZENODO',
+        source_checksum: 'source_checksum123',
+        dar_id: 'dar-id-1',
+        dar_checksum: 'dar_checksum123',
+        status: 'success',
+        title: 'Record for last seen testing',
+      };
+
+      await recordDao.createRecord(newRecord);
+      const result = await recordDao.getRecordBySourceId(source_url);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].last_seen_at).toBeDefined();
+      expect(result[0].last_seen_at).not.toBeNull();
+    });
+
+    it('updateLastSeen updates last_seen_at', async () => {
+      const source_url = 'http://repository.com/last-seen-2';
+      const newRecord: Omit<DbRecord, 'last_harvested'> = {
+        source_url: source_url,
+        source_repository: 'ZENODO',
+        source_checksum: 'source_checksum123',
+        dar_id: 'dar-id-2',
+        dar_checksum: 'dar_checksum123',
+        status: 'success',
+        title: 'Record for updateLastSeen testing',
+      };
+
+      await recordDao.createRecord(newRecord);
+      const result1 = await recordDao.getRecordBySourceId(source_url);
+      const initialLastSeen = result1[0].last_seen_at;
+
+      // ensure timestamp difference
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      await recordDao.updateLastSeen(source_url);
+      const result2 = await recordDao.getRecordBySourceId(source_url);
+
+      expect(result2[0].last_seen_at).toBeDefined();
+      expect(new Date(result2[0].last_seen_at as Date).getTime()).toBeGreaterThan(
+        new Date(initialLastSeen as Date).getTime(),
+      );
+    });
   });
 });

@@ -20,7 +20,7 @@ import { mapZenodoToCommonDatasetMetadata } from '../../../store/mappers/zenodoM
 import { b2shareLimiter, fieldSitesLimiter, zenodoLimiter } from '../../rateLimiterConcurrency';
 import { dbValidationPhase } from './dbValidation';
 import { RuleDao } from '../../../store/dao/rulesDao';
-import { findDarRecordBySourceURL, postToDar, putToDar } from '../../clients/darApi';
+import { findDarRecordBySourceURL, postToDar, putToDar, deleteDarRecordsByIds } from '../../clients/darApi';
 import { dbRecordUpsert } from './dbRecordSync';
 import { ResolvedRecordDao } from '../../../store/dao/resolvedRecordsDao';
 import { getNestedValue } from '../../../../shared/utils';
@@ -82,7 +82,8 @@ export class HarvesterContext {
     const darChecksum = calculateChecksum(dataset);
     const darMatches = await findDarRecordBySourceURL(url);
     const dbMatches = await this.recordDao.getRecordBySourceId(url);
-    const datasetTitle = dataset.metadata.titles ? dataset.metadata.titles[0].titleText : null;
+    const datasetTitle =
+      dataset.metadata.titles && dataset.metadata.titles.length > 0 ? dataset.metadata.titles[0].titleText : null;
     if (dbMatches.length > 1) {
       throw new Error('More than one existing records of one dataset in the local database.');
     }
@@ -146,6 +147,7 @@ export class HarvesterContext {
     let dbRecord = await this.recordDao.getRecordBySourceId(sourceUrl);
     const hasRules = !dbRecord || !dbRecord[0] || this.ruleDao.getRulesForRecord(dbRecord[0].dar_id);
     if (!hasRules && dbRecord && dbRecord[0] && dbRecord[0].status === 'success') {
+      await this.recordDao.updateLastSeen(sourceUrl);
       return;
     }
 
@@ -153,7 +155,10 @@ export class HarvesterContext {
     if (!recordData) return;
     const newSourceChecksum = calculateChecksum(recordData);
     const isSourceChanged = dbRecord[0]?.source_checksum !== newSourceChecksum;
-    if (!hasRules && !this.checkHarvestChanges && !isSourceChanged) return;
+    if (!hasRules && !this.checkHarvestChanges && !isSourceChanged) {
+      await this.recordDao.updateLastSeen(sourceUrl);
+      return;
+    }
 
     const finalMappedDataset = await this.mapToCommonStructure(sourceUrl, recordData);
     const mappedSourceUrl = finalMappedDataset.metadata.externalSourceInformation.externalSourceURI || sourceUrl;
@@ -307,7 +312,7 @@ export class HarvesterContext {
         break;
       }
 
-      // // Process individual records using the parser
+      // // Process individual records using the mapper
       await this.processApiHits(hits);
 
       if (hits.length === 0) {
@@ -391,6 +396,17 @@ export const startRepositorySync = async (ctx: HarvesterContext) => {
       await ctx.syncApiRepositoryAll();
     }
     log('info', `Phase 2 completed for ${ctx.repositoryType}.`);
+
+    // Phase 3: Cleanup - Delete records that haven't been seen during this harvest
+    const cleanupThreshold = CONFIG.CLEANUP_DAYS_THRESHOLD;
+    const deletedDarIds = await ctx.recordDao.deleteUnseenRecords(ctx.repositoryType, cleanupThreshold);
+    if (deletedDarIds.length > 0) {
+      log(
+        'info',
+        `Cleaned up ${deletedDarIds.length} records that haven't been seen in ${cleanupThreshold}+ days for ${ctx.repositoryType}.`,
+      );
+      await deleteDarRecordsByIds(deletedDarIds);
+    }
 
     await client.query('COMMIT');
     log('info', `Harvesting for repository: ${ctx.repositoryType} finished successfully`);
