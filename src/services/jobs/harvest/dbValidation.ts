@@ -10,10 +10,6 @@ import { fieldSitesLimiter, zenodoLimiter } from './../../rateLimiterConcurrency
  */
 export async function dbValidationPhase(ctx: HarvesterContext) {
   const { recordDao, repositoryType } = ctx;
-  if (repositoryType === 'B2SHARE_EUDAT' || repositoryType === 'B2SHARE_JUELICH') {
-    // skip, B2SHARE returns HTML
-    return;
-  }
   const dbRecords = await recordDao.listRecordsByRepository(repositoryType);
   log('info', `Validation of database data for ${repositoryType}. Found ${dbRecords.length} records in the database.`);
   await Promise.all(

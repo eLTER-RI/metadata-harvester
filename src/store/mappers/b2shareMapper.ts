@@ -701,12 +701,7 @@ export async function mapB2ShareToCommonDatasetMetadata(
       externalSourceInformation: {
         externalSourceName: repositoryType == 'B2SHARE_EUDAT' ? 'B2Share Eudat' : 'B2Share Juelich',
         // CRITICAL: externalSourceURI is used as database primary key (source_url)
-        // DO NOT MODIFY THIS LOGIC
-        externalSourceURI:
-          b2share.pids?.epic?.identifier ||
-          (b2share.metadata.ePIC_PID && typeof b2share.metadata.ePIC_PID === 'string'
-            ? b2share.metadata.ePIC_PID
-            : latestUrl),
+        externalSourceURI: b2share.links?.self || latestUrl,
       },
       language:
         typeof b2share.metadata.language === 'string'
