@@ -397,7 +397,7 @@ export const startRepositorySync = async (ctx: HarvesterContext) => {
     }
     log('info', `Phase 2 completed for ${ctx.repositoryType}.`);
 
-    // Phase 3: Cleanup - Delete records that haven't been seen during this harvest
+    // Phase 3: Cleanup - Delete records that haven't been seen since some threshold
     const cleanupThreshold = CONFIG.CLEANUP_DAYS_THRESHOLD;
     const deletedDarIds = await ctx.recordDao.deleteUnseenRecords(ctx.repositoryType, cleanupThreshold);
     if (deletedDarIds.length > 0) {
