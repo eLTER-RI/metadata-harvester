@@ -218,7 +218,7 @@ export function extractB2ShareCreators(creators: any[] | undefined): any[] | und
       creatorGivenName: givenName,
       creatorEmail: '',
       creatorAffiliation:
-        c.affiliations?.length != undefined && c.affiliations?.length > 0
+        c.affiliations?.length != undefined && c.affiliations?.length > 0 && c.affiliations[0].affiliation_name
           ? {
               entityName: c.affiliations[0].affiliation_name,
               entityID: {
@@ -267,7 +267,7 @@ export function extractB2ShareContributors(contributors: any[] | undefined): {
         contributorFamilyName: familyName,
         contributorGivenName: givenName,
         contributorAffiliation:
-          c.affiliations?.length != undefined && c.affiliations?.length > 0
+          c.affiliations?.length != undefined && c.affiliations?.length > 0 && c.affiliations[0].affiliation_name
             ? {
                 entityName: c.affiliations[0].affiliation_name,
                 entityID: {
