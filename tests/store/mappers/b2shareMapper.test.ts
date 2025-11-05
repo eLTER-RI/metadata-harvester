@@ -129,6 +129,18 @@ describe('B2Share Mapper', () => {
     );
     // We check that the correct string was called to get versions
     expect(fetchJsonSpy).toHaveBeenCalledWith(mockB2ShareData.links.versions);
+
+    expect(commonDataset.metadata.geoLocations).toBeDefined();
+    expect(commonDataset.metadata.geoLocations).toHaveLength(6);
+    const pointLocations = commonDataset.metadata.geoLocations!.filter((loc) => loc.point);
+    expect(pointLocations).toHaveLength(3);
+    expect(pointLocations[0].point?.longitude).toBe(16.2824);
+    expect(pointLocations[0].point?.latitude).toBe(47.7037);
+    expect(pointLocations[0].observationLocation?.deimsLocationID).toBe('77c127c4-2ebe-453b-b5af-61858ff02e31');
+    const envelopeLocations = commonDataset.metadata.geoLocations!.filter((loc) => loc.boundingBox);
+    expect(envelopeLocations).toHaveLength(3);
+    expect(envelopeLocations[0].boundingBox?.westBoundLongitude).toBe(16.25129129);
+    expect(envelopeLocations[0].boundingBox?.eastBoundLongitude).toBe(16.30908535);
   });
 
   it('should fetch the latest version when starting with an old record', async () => {

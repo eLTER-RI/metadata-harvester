@@ -27,11 +27,69 @@ import {
   TemporalCoverage,
   Title,
   Description,
+  ObservationLocation,
 } from '../commonStructure';
 
 function extractB2ShareGeolocation(input: any): Geolocation[] {
   const coverages: Geolocation[] = [];
 
+  // new format
+  if (input.locations?.features && Array.isArray(input.locations.features)) {
+    input.locations.features.forEach((feature: any) => {
+      if (!feature?.geometry) {
+        return;
+      }
+
+      const geographicDescription = feature.place || '';
+
+      let observationLocation: ObservationLocation | undefined;
+      if (feature.place) {
+        const deimsIdMatch = feature.place.match(/deims\.org\/([a-f0-9-]+)/i);
+        if (deimsIdMatch) {
+          const deimsId = deimsIdMatch[1];
+          const nameMatch = feature.place.match(/^([^(]+)/);
+          const locationName = nameMatch ? nameMatch[1].trim() : '';
+          observationLocation = {
+            deimsLocationID: deimsId,
+            deimsLocationName: locationName,
+          };
+        }
+      }
+
+      if (feature.geometry.type === 'Point') {
+        const coords = feature.geometry.coordinates as number[];
+        if (coords && coords.length >= 2) {
+          coverages.push({
+            geographicDescription,
+            observationLocation,
+            point: {
+              longitude: coords[0],
+              latitude: coords[1],
+            },
+          });
+        }
+      } else if (feature.geometry.type === 'Envelope') {
+        const coords = feature.geometry.coordinates as number[][];
+        if (coords && coords.length === 2 && coords[0].length === 2 && coords[1].length === 2) {
+          const [west, north] = coords[0];
+          const [east, south] = coords[1];
+
+          coverages.push({
+            geographicDescription,
+            observationLocation,
+            boundingBox: {
+              westBoundLongitude: west,
+              eastBoundLongitude: east,
+              northBoundLatitude: north,
+              southBoundLatitude: south,
+            },
+          });
+        }
+      }
+    });
+  }
+
+  // old format
   input.spatial_coverages?.map((spatCoverage: any) => {
     if (spatCoverage.point) {
       coverages.push({

@@ -181,6 +181,61 @@
     "community_extension_schema": "d2f5457f-6318-494a-b363-8098356035b7",
     "community_extension": {
       "lter:metadata_url": "https://deims.org/8eda49e9-1f4e-4f3e-b58e-e0bb25dc32a6"
+    },
+    "locations": {
+      "features": [
+        {
+          "geometry": {
+            "coordinates": [16.2824, 47.7037],
+            "type": "Point"
+          },
+          "place": "Lehrforst Rosalia, LR (https://deims.org/77c127c4-2ebe-453b-b5af-61858ff02e31)"
+        },
+        {
+          "geometry": {
+            "coordinates": [
+              [16.25129129, 47.72841725],
+              [16.30908535, 47.67910467]
+            ],
+            "type": "Envelope"
+          },
+          "place": "Lehrforst Rosalia, LR (https://deims.org/77c127c4-2ebe-453b-b5af-61858ff02e31)"
+        },
+        {
+          "geometry": {
+            "coordinates": [8.63403, 45.9547],
+            "type": "Point"
+          },
+          "place": "Lago Maggiore, LM (https://deims.org/f30007c4-8a6e-4f11-ab87-569db54638fe)"
+        },
+        {
+          "geometry": {
+            "coordinates": [
+              [8.47802968, 46.18080777],
+              [8.86075464, 45.72555575]
+            ],
+            "type": "Envelope"
+          },
+          "place": "Lago Maggiore, LM (https://deims.org/f30007c4-8a6e-4f11-ab87-569db54638fe)"
+        },
+        {
+          "geometry": {
+            "coordinates": [9.269139, 50.267302],
+            "type": "Point"
+          },
+          "place": "Rhine-Main Observatory, RMO (https://deims.org/9f9ba137-342d-4813-ae58-a60911c3abc1)"
+        },
+        {
+          "geometry": {
+            "coordinates": [
+              [8.86314298, 50.48770305],
+              [9.6889805, 50.10103531]
+            ],
+            "type": "Envelope"
+          },
+          "place": "Rhine-Main Observatory, RMO (https://deims.org/9f9ba137-342d-4813-ae58-a60911c3abc1)"
+        }
+      ]
     }
   },
   "custom_fields": {
