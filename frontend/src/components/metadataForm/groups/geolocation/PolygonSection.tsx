@@ -2,6 +2,8 @@ import { useFormContext, useWatch } from 'react-hook-form';
 import { Button, Header, Segment } from 'semantic-ui-react';
 import { CommonDatasetMetadata } from '../../../../../../src/store/commonStructure';
 import { CoordinateGroup } from './CoordinateGroup';
+import { useState } from 'react';
+import { DeleteConfirmModal } from '../../../DeleteConfirmModal';
 
 interface PolygonSectionProps {
   index: number;
@@ -12,6 +14,8 @@ export const PolygonSection = ({ index }: PolygonSectionProps) => {
   const currentGeoLocation = useWatch({
     name: `geoLocations.${index}`,
   });
+  const [modalOpen, setModalOpen] = useState(false);
+  const [polygonIndexToDelete, setPolygonIndexToDelete] = useState<number | null>(null);
 
   const addPolygon = () => {
     const currentPolygons = watch(`geoLocations.${index}.boundingPolygon`) || [];
@@ -22,10 +26,24 @@ export const PolygonSection = ({ index }: PolygonSectionProps) => {
     setValue(`geoLocations.${index}.boundingPolygon`, [...currentPolygons, newPolygon]);
   };
 
-  const removePolygon = (polygonIndex: number) => {
-    const currentPolygons = watch(`geoLocations.${index}.boundingPolygon`) || [];
-    const newPolygons = currentPolygons.filter((_, index) => index !== polygonIndex);
-    setValue(`geoLocations.${index}.boundingPolygon`, newPolygons);
+  const handleDeletePolygonClick = (polygonIndex: number) => {
+    setPolygonIndexToDelete(polygonIndex);
+    setModalOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (polygonIndexToDelete !== null) {
+      const currentPolygons = watch(`geoLocations.${index}.boundingPolygon`) || [];
+      const newPolygons = currentPolygons.filter((_, idx) => idx !== polygonIndexToDelete);
+      setValue(`geoLocations.${index}.boundingPolygon`, newPolygons);
+      setModalOpen(false);
+      setPolygonIndexToDelete(null);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setModalOpen(false);
+    setPolygonIndexToDelete(null);
   };
 
   const addPolygonPoint = (polygonIndex: number) => {
@@ -62,7 +80,7 @@ export const PolygonSection = ({ index }: PolygonSectionProps) => {
               icon="trash"
               color="red"
               size="small"
-              onClick={() => removePolygon(polygonIndex)}
+              onClick={() => handleDeletePolygonClick(polygonIndex)}
               disabled={(currentGeoLocation.boundingPolygon?.length ?? 0) <= 1}
             />
           </div>
@@ -99,6 +117,13 @@ export const PolygonSection = ({ index }: PolygonSectionProps) => {
       ))}
 
       <Button type="button" icon="plus" content="Add Polygon" onClick={addPolygon} style={{ marginBottom: '1rem' }} />
+      <DeleteConfirmModal
+        open={modalOpen}
+        onClose={handleCloseModal}
+        onConfirm={handleConfirmDelete}
+        title="Delete Polygon"
+        itemName={polygonIndexToDelete !== null ? `Polygon ${polygonIndexToDelete + 1}` : undefined}
+      />
     </>
   );
 };
