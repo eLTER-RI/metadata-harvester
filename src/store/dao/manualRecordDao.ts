@@ -31,6 +31,19 @@ export class ManualRecordDao {
     return result.rows[0];
   }
 
+  async getRecordByDarId(darId: string): Promise<DbManualRecord | null> {
+    const result = await this.pool.query(`SELECT * FROM manual_records WHERE dar_id = $1 LIMIT 1`, [darId]);
+    return result.rows[0] ?? null;
+  }
+
+  async updateTitle(darId: string, title: string | null): Promise<DbManualRecord> {
+    const result = await this.pool.query(`UPDATE manual_records SET title = $1 WHERE dar_id = $2 RETURNING *`, [
+      title,
+      darId,
+    ]);
+    return result.rows[0];
+  }
+
   async listRecords(options?: {
     size?: number;
     offset?: number;

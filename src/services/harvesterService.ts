@@ -14,7 +14,7 @@ import { RecordDao } from '../store/dao/recordDao';
 import { ResolvedRecordDao } from '../store/dao/resolvedRecordsDao';
 import { RuleDao } from '../store/dao/rulesDao';
 import { ManualRecordDao } from '../store/dao/manualRecordDao';
-import { postToDarManual } from './clients/darApi';
+import { postToDarManual, putToDarManual } from './clients/darApi';
 
 const swaggerOptions = {
   definition: {
@@ -771,6 +771,72 @@ app.post('/api/manual-records', async (req, res) => {
     log('error', `Error creating manual record: ${error}`);
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
     res.status(500).json({ error: `Failed to create manual record: ${errorMessage}` });
+  }
+});
+
+/**
+ * @swagger
+ * /api/manual-records/{darId}:
+ *   put:
+ *     tags: [Manual Records]
+ *     summary: Update a manual record in DAR
+ *     parameters:
+ *       - in: path
+ *         name: darId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The dar id of the record to update
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             description: The full record data to send to DAR
+ *     responses:
+ *       200:
+ *         description: Record updated successfully.
+ *       400:
+ *         description: Invalid input.
+ *       500:
+ *         description: Failed to update record.
+ */
+app.put('/api/manual-records/:darId', async (req, res) => {
+  try {
+    const manualRecordDao = new ManualRecordDao(pool);
+    const { darId } = req.params;
+
+    const metadata = req.body.metadata || req.body;
+    const title = metadata?.titles && metadata.titles.length > 0 ? metadata.titles[0].titleText : null;
+
+    const success = await putToDarManual(darId, req.body);
+    if (!success) {
+      log('error', `Failed to manually update record ${darId} in DAR`);
+      return res.status(500).json({ error: 'Failed to update record in DAR.' });
+    }
+
+    let manualRecord = await manualRecordDao.getRecordByDarId(darId);
+    if (!manualRecord) {
+      manualRecord = await manualRecordDao.createRecord({
+        dar_id: darId,
+        title: title,
+      });
+      log('info', `Registered existing dar record ${darId} to local database`);
+    } else if (manualRecord.title !== title) {
+      manualRecord = await manualRecordDao.updateTitle(darId, title);
+      log('info', `Updated title for dar record ${darId} in local database`);
+    }
+
+    res.status(200).json({
+      id: manualRecord.id,
+      dar_id: darId,
+      message: 'Record updated successfully in DAR.',
+    });
+  } catch (error) {
+    log('error', `Error updating manual record: ${error}`);
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+    res.status(500).json({ error: `Failed to update manual record: ${errorMessage}` });
   }
 });
 
