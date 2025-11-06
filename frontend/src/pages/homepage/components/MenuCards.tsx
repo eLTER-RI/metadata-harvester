@@ -10,9 +10,12 @@ export const MenuCards = () => {
   const navigateToHarvesting = () => {
     navigate('/harvest');
   };
+  const navigateToCreate = () => {
+    navigate('/create');
+  };
 
   return (
-    <Grid columns={2} stackable>
+    <Grid columns={3} stackable>
       <Grid.Column>
         <Card fluid>
           <Card.Content style={{ padding: '2rem' }}>
@@ -39,6 +42,22 @@ export const MenuCards = () => {
               <Button secondary size="large" onClick={navigateToHarvesting} style={{ backgroundColor: 'dodgerBlue' }}>
                 <Icon name="download" />
                 Start Harvesting
+              </Button>
+            </div>
+          </Card.Content>
+        </Card>
+      </Grid.Column>
+
+      <Grid.Column>
+        <Card fluid>
+          <Card.Content style={{ padding: '2rem' }}>
+            <div>
+              <Icon name="plus circle" size="huge" style={{ color: 'orange', marginBottom: '1rem' }} />
+              <Header as="h2">Create New Record</Header>
+              <p style={{ marginBottom: '1.5rem' }}>Manually create a new record by pasting JSON.</p>
+              <Button size="large" onClick={navigateToCreate} style={{ backgroundColor: 'orange', color: 'white' }}>
+                <Icon name="plus" />
+                Create Record
               </Button>
             </div>
           </Card.Content>
