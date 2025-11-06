@@ -14,6 +14,7 @@ import { RecordDao } from '../store/dao/recordDao';
 import { ResolvedRecordDao } from '../store/dao/resolvedRecordsDao';
 import { RuleDao } from '../store/dao/rulesDao';
 import { ManualRecordDao } from '../store/dao/manualRecordDao';
+import { postToDarManual } from './clients/darApi';
 
 const swaggerOptions = {
   definition: {
@@ -702,6 +703,75 @@ const server = app.listen(PORT, () => {
     );
     console.error(e);
   });
+});
+
+/**
+ * @swagger
+ * /api/manual-records:
+ *   post:
+ *     tags: [Manual Records]
+ *     summary: Create a new manual record
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - metadata
+ *             properties:
+ *               metadata:
+ *                 type: object
+ *                 description: The metadata for the record
+ *     responses:
+ *       201:
+ *         description: Record created successfully.
+ *       400:
+ *         description: Invalid input.
+ *       500:
+ *         description: Failed to create record.
+ */
+app.post('/api/manual-records', async (req, res) => {
+  try {
+    const manualRecordDao = new ManualRecordDao(pool);
+    const { metadata } = req.body;
+
+    if (!metadata) {
+      return res.status(400).json({ error: "Missing requried field: 'metadata'." });
+    }
+
+    if (!metadata.assetType) {
+      return res.status(400).json({ error: "Missing requried field: 'assetType'." });
+    }
+
+    const title = metadata.titles && metadata.titles.length > 0 ? metadata.titles[0].titleText : null;
+
+    const darId = await postToDarManual(req.body);
+
+    if (darId) {
+      // Create record in database
+      const dbRecord = await manualRecordDao.createRecord({
+        dar_id: darId,
+        title: title,
+      });
+
+      log('info', `Successfully created manual record with DAR ID: ${darId}`);
+      res.status(201).json({
+        id: dbRecord.id,
+        dar_id: darId,
+        message: 'Record created successfully in DAR.',
+      });
+    } else {
+      log('error', `Failed to create manual record in DAR`);
+      res.status(500).json({
+        error: 'Failed to create record in DAR.',
+      });
+    }
+  } catch (error) {
+    log('error', `Error creating manual record: ${error}`);
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+    res.status(500).json({ error: `Failed to create manual record: ${errorMessage}` });
+  }
 });
 
 export { server };
