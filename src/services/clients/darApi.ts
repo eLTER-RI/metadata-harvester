@@ -106,6 +106,75 @@ export async function postToDar(
 }
 
 /**
+ * Sends a request to the DAR API (shared logic for POST/PUT).
+ * @param {string} url The full URL to request
+ * @param {string} method HTTP method (POST, PUT, etc.)
+ * @param {any} data The data to send (will be JSON stringified)
+ * @param {string} logContext Context for logging (e.g., "manual record", "record abc123")
+ * @returns The response object, or null if the request failed
+ */
+async function sendDarRequest(
+  url: string,
+  method: 'POST' | 'PUT',
+  data: any,
+  logContext: string,
+): Promise<Response | null> {
+  log('info', `${method} ${logContext} to Dar.`);
+  const apiResponse = await darLimiter.schedule(() =>
+    fetch(url, {
+      method: method,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: CONFIG.AUTH_TOKEN,
+      },
+      body: JSON.stringify(data, null, 2),
+    }),
+  );
+
+  if (!apiResponse) {
+    log('error', `${method} request ${logContext} into dar failed`);
+    return null;
+  }
+
+  if (!apiResponse.ok) {
+    const responseText = await apiResponse.text().catch(() => 'Could not read error response.');
+    log('error', `${method} request ${logContext} into dar failed with : ${apiResponse.status}: ${responseText}`);
+    return null;
+  }
+
+  return apiResponse;
+}
+
+/**
+ * Sends a POST request to the DAR API for manually created records.
+ * @param {any} data The data to send (will be JSON stringified)
+ * @returns The ID of the newly created record in DAR, or null if the request fails.
+ */
+export async function postToDarManual(data: any): Promise<string | null> {
+  const response = await sendDarRequest(CONFIG.API_URL!, 'POST', data, 'manual record');
+  if (!response) {
+    return null;
+  }
+  const resp = await response.json();
+  return resp.id;
+}
+
+/**
+ * Sends a PUT request to the DAR API for manually created records.
+ * @param {string} darId The ID of the record in DAR.
+ * @param {any} data The data to send (will be JSON stringified)
+ * @returns true if successful, false otherwise.
+ */
+export async function putToDarManual(darId: string, data: any): Promise<boolean> {
+  const response = await sendDarRequest(`${CONFIG.API_URL}/${darId}`, 'PUT', data, `manual record ${darId}`);
+  if (!response) {
+    return false;
+  }
+  log('info', `Successfully updated manual record ${darId} in DAR`);
+  return true;
+}
+
+/**
  * This function deletes records from DAR based on the list of ids.
  * It uses a rate limiter in order to respect rate limits of DAR.
  *
