@@ -13,6 +13,7 @@ import { syncWithDar } from './jobs/syncDbWithRemote/localDarSync';
 import { RecordDao } from '../store/dao/recordDao';
 import { ResolvedRecordDao } from '../store/dao/resolvedRecordsDao';
 import { RuleDao } from '../store/dao/rulesDao';
+import { ManualRecordDao } from '../store/dao/manualRecordDao';
 
 const swaggerOptions = {
   definition: {
@@ -642,6 +643,52 @@ app.get('/api/external-record/:darId', async (req, res) => {
   } catch (error) {
     log('error', `Error while fetching external record: ${error}`);
     res.status(500).json({ error: 'Error while fetching external record.' });
+  }
+});
+
+/**
+ * @swagger
+ * /api/manual-records:
+ *   get:
+ *     tags: [Manual Records]
+ *     summary: Retrieve a paginated list of manual records
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema: { type: integer, default: 1 }
+ *         description: The page number to retrieve.
+ *       - in: query
+ *         name: size
+ *         schema: { type: integer, default: 10 }
+ *         description: The number of records per page.
+ *     responses:
+ *       200:
+ *         description: A paginated list of manual records.
+ *       500:
+ *         description: Failed to retrieve records.
+ */
+app.get('/api/manual-records', async (req, res) => {
+  try {
+    const manualRecordDao = new ManualRecordDao(pool);
+    const page = parseInt(req.query.page as string) || 1;
+    const size = parseInt(req.query.size as string) || 10;
+
+    const options = {
+      size: size,
+      offset: (page - 1) * size,
+    };
+
+    const { records, totalCount } = await manualRecordDao.listRecords(options);
+    res.status(200).json({
+      records: records,
+      totalCount: totalCount,
+      currentPage: page,
+      totalPages: Math.ceil(totalCount / size),
+    });
+  } catch (error) {
+    log('error', `Failed to retrieve manual records: ${error}`);
+    res.status(500).json({ error: 'Failed to retrieve manual records.' });
   }
 });
 
