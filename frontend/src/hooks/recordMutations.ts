@@ -86,3 +86,39 @@ export const useHarvestRepository = () => {
     },
   });
 };
+
+export const useCreateManualRecord = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ metadata }: { metadata: any }) => {
+      const response = await api.post('/manual-records', { metadata });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['records'] });
+      queryClient.invalidateQueries({ queryKey: ['filters'] });
+    },
+    onError: () => {
+      // TODO: add toast notification
+    },
+  });
+};
+
+export const useUpdateManualRecord = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ darId, metadata }: { darId: string; metadata: any }) => {
+      const response = await api.put(`/manual-records/${darId}`, metadata);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['records'] });
+      queryClient.invalidateQueries({ queryKey: ['filters'] });
+    },
+    onError: () => {
+      // TODO: add toast notification
+    },
+  });
+};
