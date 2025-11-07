@@ -3,7 +3,7 @@ import { Container, Header, Form, Button, Message, Segment, TextArea, Input } fr
 import { useNavigate } from 'react-router-dom';
 import { useCreateManualRecord } from '../../hooks/recordMutations';
 
-export const CreateRecordPage = () => {
+export const ManualRecordJsonForm = () => {
   const navigate = useNavigate();
   const { mutate: createRecord, error: createError, isPending: isCreating } = useCreateManualRecord();
   const [jsonInput, setJsonInput] = useState('');

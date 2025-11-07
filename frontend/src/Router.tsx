@@ -2,7 +2,7 @@ import { createBrowserRouter, createRoutesFromElements, Route, RouterProvider } 
 import { LandingPage } from './pages/landingPage/LandingPage';
 import { HomePage } from './pages/homepage';
 import { HarvestPage } from './pages/harvest';
-import { RecordForm } from './pages/recordForm/RecordForm';
+import { RecordPage } from './pages/createRecord';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -10,7 +10,8 @@ const router = createBrowserRouter(
       <Route path={'/'} element={<HomePage />} />
       <Route path={'/harvested_records'} element={<LandingPage />} />
       <Route path={'/harvest'} element={<HarvestPage />} />
-      <Route path={'/:darId/edit'} element={<RecordForm />} />
+      <Route path={'/create'} element={<RecordPage />} />
+      <Route path={'/:darId/edit'} element={<RecordPage />} />
     </>,
   ),
 );
