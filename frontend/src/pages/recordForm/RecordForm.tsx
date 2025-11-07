@@ -8,7 +8,7 @@ import { MetadataForm } from '../../components/MetadataForm';
 import { generateRules } from '../../utils/generateRules';
 import { ZodError } from 'zod';
 
-export const EditRecordPage = () => {
+export const RecordForm = () => {
   const { darId } = useParams();
   const navigate = useNavigate();
   const { data: originalRecord, isLoading, error: fetchError } = useFetchRecord(darId);
