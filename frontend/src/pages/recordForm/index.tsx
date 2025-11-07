@@ -3,7 +3,7 @@ import { RecordForm } from './RecordForm';
 import { ManualRecordJsonForm } from './ManualRecordJsonForm';
 
 export const RecordPage = () => {
-  const { id: darId } = useParams<{ id?: string }>();
+  const { darId } = useParams();
 
   if (darId) {
     return <RecordForm />;
