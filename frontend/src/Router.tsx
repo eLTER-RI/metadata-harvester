@@ -2,7 +2,7 @@ import { createBrowserRouter, createRoutesFromElements, Route, RouterProvider } 
 import { LandingPage } from './pages/landingPage/LandingPage';
 import { HomePage } from './pages/homepage';
 import { HarvestPage } from './pages/harvest';
-import { RecordPage } from './pages/createRecord';
+import { RecordPage } from './pages/recordForm';
 
 const router = createBrowserRouter(
   createRoutesFromElements(

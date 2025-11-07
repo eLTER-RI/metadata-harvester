@@ -16,13 +16,7 @@ export const ActionButton = ({ record }: ActionButtonProps) => {
   return (
     <Dropdown text="Actions" icon="list" floating labeled button className="icon">
       <Dropdown.Menu>
-        <Dropdown.Item
-          as={Link}
-          to={`/harvested_records/${record.dar_id}/edit`}
-          key={'edit'}
-          icon={'edit'}
-          text="Edit"
-        />
+        <Dropdown.Item as={Link} to={`/${record.dar_id}/edit`} key={'edit'} icon={'edit'} text="Edit" />
         <Dropdown.Item
           key={'resolve'}
           icon={record.is_resolved ? 'x' : 'check'}

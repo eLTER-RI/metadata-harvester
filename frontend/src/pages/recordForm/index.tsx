@@ -1,5 +1,5 @@
 import { useParams } from 'react-router-dom';
-import { RecordForm } from '../recordForm/RecordForm';
+import { RecordForm } from './RecordForm';
 import { ManualRecordJsonForm } from './ManualRecordJsonForm';
 
 export const RecordPage = () => {

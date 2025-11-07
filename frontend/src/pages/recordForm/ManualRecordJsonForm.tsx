@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Container, Header, Form, Button, Message, Segment, TextArea, Input } from 'semantic-ui-react';
+import { Container, Header, Form, Button, Message, Segment, TextArea } from 'semantic-ui-react';
 import { useNavigate } from 'react-router-dom';
 import { useCreateManualRecord } from '../../hooks/recordMutations';
 
