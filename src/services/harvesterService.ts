@@ -630,7 +630,7 @@ app.post('/api/sync/records', async (req, res) => {
 app.get('/api/external-record/:darId', async (req, res) => {
   try {
     const { darId } = req.params;
-    const externalApiUrl = `https://dar.elter-ri.eu/api/external-datasets/${darId}`;
+    const externalApiUrl = `${CONFIG.API_URL}/${darId}`;
     const apiResponse = await fetch(externalApiUrl);
 
     if (!apiResponse.ok) {
