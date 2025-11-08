@@ -1,4 +1,4 @@
-import { Container, Dimmer, Header, Item, Loader, Segment, Icon } from 'semantic-ui-react';
+import { Dimmer, Header, Item, Loader, Segment, Icon } from 'semantic-ui-react';
 import RecordCard from './RecordCard';
 import RecordsPagination from '../pagination/Pagination';
 import { useRecords } from '../../store/RecordsProvider';
@@ -54,14 +54,14 @@ export const RecordsList = () => {
   }
 
   return (
-    <Container>
-      <Item.Group divided>
+    <>
+      <Item.Group relaxed divided>
         {records.map((record, index) => (
           <RecordCard key={index} record={record} />
         ))}
       </Item.Group>
       <RecordsPagination />
-    </Container>
+    </>
   );
 };
 
