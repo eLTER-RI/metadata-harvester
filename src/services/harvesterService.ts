@@ -206,6 +206,44 @@ app.get('/api/resolved', async (req, res) => {
 
 /**
  * @swagger
+ * /api/records/{darId}:
+ *   get:
+ *     tags: [Records]
+ *     summary: Get a harvested record by DAR ID
+ *     parameters:
+ *       - in: path
+ *         name: darId
+ *         required: true
+ *         schema: { type: string }
+ *         description: The DAR ID of the record
+ *     responses:
+ *       200:
+ *         description: The harvested record (has source_url)
+ *       404:
+ *         description: Record not found in harvested_records
+ *       500:
+ *         description: Failed to fetch record
+ */
+app.get('/api/records/:darId', async (req, res) => {
+  try {
+    const { darId } = req.params;
+    const recordDao = new RecordDao(pool);
+    const record = await recordDao.getRecordByDarId(darId);
+
+    if (!record) {
+      return res.status(404).json({ error: 'Record not found in harvested_records' });
+    }
+
+    res.status(200).json(record);
+  } catch (error) {
+    log('error', `Failed to fetch harvested record: ${error}`);
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+    res.status(500).json({ error: `Failed to fetch harvested record: ${errorMessage}` });
+  }
+});
+
+/**
+ * @swagger
  * /api/records/{darId}/status:
  *   patch:
  *     tags: [Records]
