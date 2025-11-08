@@ -113,9 +113,11 @@ export const useUpdateManualRecord = () => {
       const response = await api.put(`/manual-records/${darId}`, { metadata });
       return response.data;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['records'] });
       queryClient.invalidateQueries({ queryKey: ['filters'] });
+      queryClient.invalidateQueries({ queryKey: ['record', variables.darId] });
+      queryClient.invalidateQueries({ queryKey: ['manualRecords'] });
     },
     onError: () => {
       // TODO: add toast notification
