@@ -25,9 +25,10 @@ export const RecordForm = () => {
 
   useEffect(() => {
     if (saveSuccess) {
-      navigate('/harvested_records', { replace: true });
+      const redirectPath = isManualRecord ? '/manual_records' : '/harvested_records';
+      navigate(redirectPath, { replace: true });
     }
-  }, [saveSuccess, navigate]);
+  }, [saveSuccess, navigate, isManualRecord]);
 
   useEffect(() => {
     if (originalRecord) {
@@ -109,7 +110,7 @@ export const RecordForm = () => {
             onSuccess: () => {
               setSaveSuccess(true);
               setIsSaving(false);
-              navigate('/harvested_records', { replace: true });
+              navigate('/manual_records', { replace: true });
             },
             onError: () => {
               setIsSaving(false);
