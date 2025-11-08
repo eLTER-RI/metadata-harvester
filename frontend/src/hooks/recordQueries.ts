@@ -1,10 +1,17 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { api } from '../api';
-import { FilterValues, Record } from '../store/RecordsProvider';
+import { FilterValues, Record, ManualRecord } from '../store/RecordsProvider';
 
 interface RecordsResponse {
   records: Record[];
   totalCount: number;
+  totalPages: number;
+}
+
+export interface ManualRecordsResponse {
+  records: ManualRecord[];
+  totalCount: number;
+  currentPage: number;
   totalPages: number;
 }
 
@@ -97,5 +104,21 @@ export const useFetchHarvestedRecord = (darId: string | undefined) => {
     },
     enabled: !!darId,
     retry: false,
+  });
+};
+
+export const useFetchManualRecords = (currentPage: number, pageSize: number, searchQuery: string) => {
+  return useQuery<ManualRecordsResponse>({
+    queryKey: ['manualRecords', { currentPage, pageSize, searchQuery }],
+    queryFn: async () => {
+      const params = {
+        page: currentPage,
+        size: pageSize,
+        title: searchQuery || '',
+      };
+      const response = await api.get<ManualRecordsResponse>('/manual-records', { params });
+      return response.data || { records: [], totalCount: 0, currentPage: 1, totalPages: 0 };
+    },
+    placeholderData: keepPreviousData,
   });
 };
