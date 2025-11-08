@@ -54,11 +54,11 @@ export const LandingPage = () => {
       </Segment>
 
       <Grid columns={2}>
-        <Grid.Column computer={12}>
-          <RecordsList />
-        </Grid.Column>
         <Grid.Column computer={4} as="aside">
           <FilterSidebar />
+        </Grid.Column>
+        <Grid.Column computer={12}>
+          <RecordsList />
         </Grid.Column>
       </Grid>
     </Container>
