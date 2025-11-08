@@ -1,9 +1,11 @@
 import { Dimmer, Header, Item, Loader, Segment, Icon } from 'semantic-ui-react';
 import ManualRecordCard from './ManualRecordCard';
+import RecordsPagination from '../pagination/Pagination';
 import { useManualRecords } from '../../store/RecordsProvider';
 
 export const ManualRecordsList = () => {
-  const { records, isLoading, error, searchQuery } = useManualRecords();
+  const { records, isLoading, error, searchQuery, currentPage, totalRecords, totalPages, pageSize, setCurrentPage } =
+    useManualRecords();
 
   if (isLoading) {
     return (
@@ -61,6 +63,13 @@ export const ManualRecordsList = () => {
           <ManualRecordCard key={index} record={record} />
         ))}
       </Item.Group>
+      <RecordsPagination
+        currentPage={currentPage}
+        totalRecords={totalRecords}
+        totalPages={totalPages}
+        pageSize={pageSize}
+        setCurrentPage={setCurrentPage}
+      />
     </>
   );
 };

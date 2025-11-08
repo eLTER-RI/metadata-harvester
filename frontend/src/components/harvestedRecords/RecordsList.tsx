@@ -4,7 +4,8 @@ import RecordsPagination from '../pagination/Pagination';
 import { useRecords } from '../../store/RecordsProvider';
 
 export const RecordsList = () => {
-  const { records, isLoading, error, searchQuery } = useRecords();
+  const { records, isLoading, error, searchQuery, currentPage, totalRecords, totalPages, pageSize, setCurrentPage } =
+    useRecords();
 
   if (isLoading) {
     return (
@@ -60,7 +61,13 @@ export const RecordsList = () => {
           <RecordCard key={index} record={record} />
         ))}
       </Item.Group>
-      <RecordsPagination />
+      <RecordsPagination
+        currentPage={currentPage}
+        totalRecords={totalRecords}
+        totalPages={totalPages}
+        pageSize={pageSize}
+        setCurrentPage={setCurrentPage}
+      />
     </>
   );
 };
