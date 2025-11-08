@@ -1,7 +1,7 @@
 import { Container, Header, Dimmer, Loader, Segment, Message } from 'semantic-ui-react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useFetchRecord, useFetchRules } from '../../hooks/recordQueries';
-import { useCreateRules } from '../../hooks/recordMutations';
+import { useFetchRecord, useFetchRules, useFetchHarvestedRecord } from '../../hooks/recordQueries';
+import { useCreateRules, useUpdateManualRecord } from '../../hooks/recordMutations';
 import { useEffect, useState } from 'react';
 import { CommonDatasetMetadata } from '../../../../src/store/commonStructure';
 import { MetadataForm } from '../../components/MetadataForm';
@@ -13,11 +13,15 @@ export const RecordForm = () => {
   const navigate = useNavigate();
   const { data: originalRecord, isLoading, error: fetchError } = useFetchRecord(darId);
   const { data: rules, isLoading: rulesLoading } = useFetchRules(darId);
+  const { data: harvestedRecord, isLoading: harvestedLoading } = useFetchHarvestedRecord(darId);
   const { mutate: createRules, error: saveError } = useCreateRules();
+  const { mutate: updateManualRecord, error: updateManualError } = useUpdateManualRecord();
   const [formData, setFormData] = useState<CommonDatasetMetadata | undefined>();
   const [validationErrors, setValidationErrors] = useState<string[] | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  const isManualRecord = harvestedRecord === null && !harvestedLoading;
 
   useEffect(() => {
     if (saveSuccess) {
@@ -69,29 +73,51 @@ export const RecordForm = () => {
     setSaveSuccess(false);
 
     try {
-      const originalMetadata = originalRecord?.metadata || {};
-      const rulesToCreate = generateRules(originalMetadata, data, rules || [], darId!);
-
-      if (rulesToCreate.length === 0) {
-        setSaveSuccess(true);
+      if (harvestedLoading || harvestedRecord === undefined) {
         setIsSaving(false);
         return;
       }
 
-      createRules(
-        { darId: darId!, rules: rulesToCreate },
-        {
-          onSuccess: () => {
-            setSaveSuccess(true);
-            setIsSaving(false);
-            navigate('/harvested_records', { replace: true });
+      if (harvestedRecord !== null) {
+        const originalMetadata = originalRecord?.metadata || {};
+        const rulesToCreate = generateRules(originalMetadata, data, rules || [], darId!);
+
+        if (rulesToCreate.length === 0) {
+          setSaveSuccess(true);
+          setIsSaving(false);
+          return;
+        }
+
+        createRules(
+          { darId: darId!, rules: rulesToCreate },
+          {
+            onSuccess: () => {
+              setSaveSuccess(true);
+              setIsSaving(false);
+              navigate('/harvested_records', { replace: true });
+            },
+            onError: () => {
+              setIsSaving(false);
+              // TODO: add notification
+            },
           },
-          onError: () => {
-            setIsSaving(false);
-            // TODO: add notification
+        );
+      } else {
+        updateManualRecord(
+          { darId: darId!, metadata: data },
+          {
+            onSuccess: () => {
+              setSaveSuccess(true);
+              setIsSaving(false);
+              navigate('/harvested_records', { replace: true });
+            },
+            onError: () => {
+              setIsSaving(false);
+              // TODO: add notification
+            },
           },
-        },
-      );
+        );
+      }
     } catch (error) {
       setIsSaving(false);
       if (error instanceof ZodError) {
@@ -104,7 +130,7 @@ export const RecordForm = () => {
     }
   };
 
-  if (isLoading || rulesLoading) {
+  if (isLoading || rulesLoading || harvestedLoading) {
     return (
       <Segment style={{ height: '50vh' }}>
         <Dimmer active inverted>
@@ -128,17 +154,24 @@ export const RecordForm = () => {
   return (
     <Container>
       <Header as="h1">Edit Record {darId}</Header>
-      <Message info>
-        <Message.Header>Rule Generation and Re-Harvest</Message.Header>
-        <p>
-          Modification to this record will stay as long as the previous value will stay the same on the source
-          repository.
-        </p>
-      </Message>
-      {saveError && (
+      {isManualRecord ? (
+        <Message info>
+          <Message.Header>Updating Manual Record</Message.Header>
+          <p>Changes will be saved to the manual records database and updated in DAR.</p>
+        </Message>
+      ) : (
+        <Message info>
+          <Message.Header>Rule Generation and Re-Harvest</Message.Header>
+          <p>
+            Modification to this record will stay as long as the previous value will stay the same on the source
+            repository.
+          </p>
+        </Message>
+      )}
+      {(saveError || updateManualError) && (
         <Message negative>
-          <Message.Header>Error Saving Rules</Message.Header>
-          <p>{saveError.message}</p>
+          <Message.Header>Error {isManualRecord ? 'Updating Manual Record' : 'Saving Rules'}</Message.Header>
+          <p>{(saveError || updateManualError)?.message || 'An error occurred'}</p>
         </Message>
       )}
 
