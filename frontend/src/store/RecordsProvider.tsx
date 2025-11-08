@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState } from 'react';
-import { useFetchFilterValues, useFetchRecords } from '../hooks/recordQueries';
+import { useFetchFilterValues, useFetchRecords, useFetchManualRecords } from '../hooks/recordQueries';
 
 export interface Record {
   dar_id: string;
@@ -18,6 +18,14 @@ export interface FilterValues {
   }[];
 }
 
+export interface ManualRecord {
+  id: number;
+  dar_id: string;
+  created_at: string;
+  created_by: string | null;
+  title: string | null;
+}
+
 interface RecordsContextType {
   pageSize: number;
   currentPage: number;
@@ -29,6 +37,12 @@ interface RecordsContextType {
   setResolvedFilter: (resolved: boolean | undefined) => void;
   setRepositoryFilter: (repository: string[]) => void;
   setSearchQuery: (title: string) => void;
+  manualRecordsPageSize: number;
+  manualRecordsCurrentPage: number;
+  manualRecordsSearchQuery: string;
+  setManualRecordsCurrentPage: (page: number) => void;
+  setManualRecordsPageSize: (page: number) => void;
+  setManualRecordsSearchQuery: (query: string) => void;
 }
 
 const RecordsContext = createContext<RecordsContextType | undefined>(undefined);
@@ -39,6 +53,9 @@ export const RecordsProvider = ({ children }: { children: React.ReactNode }) => 
   const [resolvedFilter, setResolvedFilter] = useState<boolean | undefined>(undefined);
   const [repositoryFilter, setRepositoryFilter] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [manualRecordsPageSize, setManualRecordsPageSize] = useState(10);
+  const [manualRecordsCurrentPage, setManualRecordsCurrentPage] = useState(1);
+  const [manualRecordsSearchQuery, setManualRecordsSearchQuery] = useState('');
 
   const value = {
     pageSize,
@@ -51,6 +68,12 @@ export const RecordsProvider = ({ children }: { children: React.ReactNode }) => 
     setResolvedFilter,
     setRepositoryFilter,
     setSearchQuery,
+    manualRecordsPageSize,
+    manualRecordsCurrentPage,
+    manualRecordsSearchQuery,
+    setManualRecordsCurrentPage,
+    setManualRecordsPageSize,
+    setManualRecordsSearchQuery,
   };
 
   return <RecordsContext.Provider value={value}>{children}</RecordsContext.Provider>;
@@ -87,5 +110,34 @@ export const useRecords = () => {
     filterValues: filterValuesData || { repositories: [], resolved: [] },
     isFilterLoading,
     filterError,
+  };
+};
+
+export const useManualRecords = () => {
+  const context = useContext(RecordsContext);
+  if (context === undefined) {
+    throw new Error('Context cannot be undefined.');
+  }
+
+  const { manualRecordsCurrentPage, manualRecordsPageSize, manualRecordsSearchQuery } = context;
+
+  const {
+    data: manualRecordsData,
+    isLoading: isManualRecordsLoading,
+    error: manualRecordsError,
+  } = useFetchManualRecords(manualRecordsCurrentPage, manualRecordsPageSize, manualRecordsSearchQuery);
+
+  return {
+    pageSize: manualRecordsPageSize,
+    currentPage: manualRecordsCurrentPage,
+    searchQuery: manualRecordsSearchQuery,
+    setCurrentPage: context.setManualRecordsCurrentPage,
+    setPageSize: context.setManualRecordsPageSize,
+    setSearchQuery: context.setManualRecordsSearchQuery,
+    records: manualRecordsData?.records || [],
+    totalRecords: manualRecordsData?.totalCount || 0,
+    totalPages: manualRecordsData?.totalPages || 0,
+    isLoading: isManualRecordsLoading,
+    error: manualRecordsError,
   };
 };
