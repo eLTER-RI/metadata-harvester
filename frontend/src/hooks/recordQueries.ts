@@ -80,3 +80,22 @@ export const useFetchRules = (darId: string | undefined) => {
     enabled: !!darId,
   });
 };
+
+export const useFetchHarvestedRecord = (darId: string | undefined) => {
+  return useQuery({
+    queryKey: ['harvestedRecord', darId],
+    queryFn: async () => {
+      try {
+        const response = await api.get(`/records/${darId}`);
+        return response.data;
+      } catch (error: any) {
+        if (error?.response?.status === 404) {
+          return null;
+        }
+        throw error;
+      }
+    },
+    enabled: !!darId,
+    retry: false,
+  });
+};

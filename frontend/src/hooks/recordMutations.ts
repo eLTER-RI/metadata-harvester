@@ -110,7 +110,37 @@ export const useUpdateManualRecord = () => {
 
   return useMutation({
     mutationFn: async ({ darId, metadata }: { darId: string; metadata: any }) => {
-      const response = await api.put(`/manual-records/${darId}`, metadata);
+      const response = await api.put(`/manual-records/${darId}`, { metadata });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['records'] });
+      queryClient.invalidateQueries({ queryKey: ['filters'] });
+    },
+    onError: () => {
+      // TODO: add toast notification
+    },
+  });
+};
+
+export const useReHarvestRecord = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      sourceUrl,
+      repository,
+      checkHarvestChanges = false,
+    }: {
+      sourceUrl: string;
+      repository: string;
+      checkHarvestChanges?: boolean;
+    }) => {
+      const response = await api.post('/harvest/single', {
+        sourceUrl,
+        repository,
+        checkHarvestChanges,
+      });
       return response.data;
     },
     onSuccess: () => {
