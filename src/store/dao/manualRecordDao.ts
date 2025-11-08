@@ -47,18 +47,42 @@ export class ManualRecordDao {
   async listRecords(options?: {
     size?: number;
     offset?: number;
+    title?: string;
   }): Promise<{ records: DbManualRecord[]; totalCount: number }> {
-    const [countResult, recordsResult] = await Promise.all([
-      this.pool.query(`SELECT COUNT(*) FROM manual_records`),
-      this.pool.query(`SELECT * FROM manual_records ORDER BY created_at DESC LIMIT $1 OFFSET $2`, [
-        options?.size ?? null,
-        options?.offset ?? 0,
-      ]),
-    ]);
+    const values: any[] = [];
+    const conditions: string[] = [];
+    let paramCount = 1;
+
+    if (options?.title) {
+      conditions.push(`title ILIKE $${paramCount}`);
+      values.push(`%${options.title}%`);
+      paramCount++;
+    }
+
+    const where = conditions.length > 0 ? ` WHERE ${conditions.join(' AND ')}` : '';
+    let query = `SELECT * FROM manual_records ${where} ORDER BY created_at DESC`;
+
+    const countQuery = `SELECT COUNT(*) FROM manual_records ${where}`;
+
+    if (options?.size !== undefined) {
+      query += ` LIMIT $${paramCount}`;
+      values.push(options.size);
+      paramCount++;
+    }
+
+    if (options?.offset !== undefined) {
+      query += ` OFFSET $${paramCount}`;
+      values.push(options.offset);
+      paramCount++;
+    }
+
+    const countResult = await this.pool.query(countQuery, values.slice(0, conditions.length));
+    const recordsResult = await this.pool.query(query, values);
+    const totalCount = parseInt(countResult.rows[0].count, 10);
 
     return {
       records: recordsResult.rows,
-      totalCount: parseInt(countResult.rows[0].count, 10),
+      totalCount: totalCount,
     };
   }
 

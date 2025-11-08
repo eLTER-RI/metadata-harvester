@@ -712,10 +712,16 @@ app.get('/api/manual-records', async (req, res) => {
     const manualRecordDao = new ManualRecordDao(pool);
     const page = parseInt(req.query.page as string) || 1;
     const size = parseInt(req.query.size as string) || 10;
+    const titleParam = req.query.title as string;
 
-    const options = {
+    const options: {
+      size: number;
+      offset: number;
+      title?: string;
+    } = {
       size: size,
       offset: (page - 1) * size,
+      title: titleParam,
     };
 
     const { records, totalCount } = await manualRecordDao.listRecords(options);
