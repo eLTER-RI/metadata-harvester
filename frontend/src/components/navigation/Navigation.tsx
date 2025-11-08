@@ -18,9 +18,14 @@ export const Navigation: React.FC = () => {
       label: 'Harvest',
     },
     {
-      name: 'list',
+      name: 'harvested_records',
       path: '/harvested_records',
-      label: 'List',
+      label: 'Harvested Records',
+    },
+    {
+      name: 'manual_records',
+      path: '/manual_records',
+      label: 'Manual Records',
     },
   ];
 
@@ -34,6 +39,9 @@ export const Navigation: React.FC = () => {
     }
     if (path === '/harvested_records') {
       return location.pathname === '/harvested_records' || location.pathname.startsWith('/harvested_records');
+    }
+    if (path === '/manual_records') {
+      return location.pathname === '/manual_records' || location.pathname.startsWith('/manual_records');
     }
     return location.pathname === path || location.pathname.startsWith(path + '/');
   };
