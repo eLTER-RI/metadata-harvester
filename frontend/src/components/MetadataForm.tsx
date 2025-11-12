@@ -48,6 +48,17 @@ export const MetadataForm = ({ data, onSubmit, isLoading = false }: MetadataForm
     }
   };
 
+  const handleFormSubmit = (e: React.FormEvent) => {
+    // prevent submitting if modal is open
+    const openModal = document.querySelector('.ui.modal.visible, .ui.modal.active');
+    if (openModal) {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    }
+    return handleSubmit(onFormSubmit)(e);
+  };
+
   const metadataGroups = [
     { id: 'titles', label: 'Titles', required: true },
     { id: 'creators', label: 'Creators', required: true },
@@ -70,7 +81,7 @@ export const MetadataForm = ({ data, onSubmit, isLoading = false }: MetadataForm
 
   return (
     <FormProvider {...form}>
-      <Form onSubmit={handleSubmit(onFormSubmit)}>
+      <Form onSubmit={handleFormSubmit}>
         <div style={{ display: 'flex', gap: '1rem' }}>
           <div style={{ width: '18rem', flexShrink: 0 }}>
             <Segment>

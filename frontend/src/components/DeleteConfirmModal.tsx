@@ -27,10 +27,10 @@ export const DeleteConfirmModal = ({
       <Header icon="trash" content={title} />
       <Modal.Content>{defaultContent}</Modal.Content>
       <Modal.Actions>
-        <Button onClick={onClose} disabled={isLoading}>
+        <Button type="button" onClick={onClose} disabled={isLoading}>
           Cancel
         </Button>
-        <Button color="red" onClick={onConfirm} loading={isLoading} disabled={isLoading}>
+        <Button type="button" color="red" onClick={onConfirm} loading={isLoading} disabled={isLoading}>
           <Icon name="trash" />
           Delete
         </Button>
