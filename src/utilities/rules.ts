@@ -1,4 +1,4 @@
-import { getNestedValue, setNestedValue } from '../../shared/utils';
+import { cleanEmptyStructures, getNestedValue, setNestedValue } from '../../shared/utils';
 import { log } from '../services/serviceLogging';
 import { CommonDataset } from '../store/commonStructure';
 import { commonDatasetSchema } from '../store/commonStructure.zod.gen';
@@ -19,16 +19,9 @@ export function applyRuleToRecord(record: CommonDataset, rule: RuleDbRecord): bo
   const targetValue = getNestedValue(record, rule.target_path);
 
   // null, and empty arrays/objects considered equivalent
-  const normalizeValue = (value: any) => {
-    if (value === null || (Array.isArray(value) && value.length === 0)) {
-      return undefined;
-    }
-    return value;
-  };
 
-  const normalizedTargetValue = normalizeValue(targetValue);
-  const normalizedBeforeValue = normalizeValue(rule.before_value);
-
+  const normalizedTargetValue = cleanEmptyStructures(targetValue);
+  const normalizedBeforeValue = cleanEmptyStructures(rule.before_value);
   if (!isEqual(normalizedTargetValue, normalizedBeforeValue)) {
     log('info', `Rule for path '${rule.target_path}' not applied: current value doesn't match expected before value`);
     return false;
