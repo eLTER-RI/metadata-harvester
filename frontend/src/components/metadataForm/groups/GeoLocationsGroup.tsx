@@ -69,7 +69,7 @@ export const GeoLocationsGroup: React.FC = () => {
         <Header.Subheader>Geographic coverage and location information</Header.Subheader>
       </Header>
 
-      <GroupDiffAccordion basePath="metadata.contactPoints" />
+      <GroupDiffAccordion basePath="metadata.geoLocations" />
 
       {fields.map((field, index) => {
         const currentGeoLocation = watch(`geoLocations.${index}`);
