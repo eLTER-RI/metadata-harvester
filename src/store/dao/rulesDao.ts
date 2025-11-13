@@ -109,7 +109,7 @@ export class RuleDao {
       WHERE dar_id = $1 AND target_path = $2;
     `;
     const result = await this.pool.query(query, [darId, targetPath]);
-    return result.rows[0] || null;
+    return result.rows.length > 0 ? result.rows[0] : null;
   }
 
   async deleteRuleForRecord(darId: string): Promise<RuleDbRecord[]> {
