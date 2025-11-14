@@ -101,17 +101,19 @@ export class HarvesterContext {
         const oldVersionsInDb = await this.recordDao.getRecordBySourceId(oldUrl);
         if (oldVersionsInDb.length > 0) {
           log('warn', 'New version for record on url: ' + url + 'found: ' + oldVersionsInDb[0].dar_id);
-          putToDar(oldVersionsInDb[0].dar_id, this.recordDao, url, dataset);
-          dbRecordUpsert(
-            oldVersionsInDb[0].dar_id,
-            this.recordDao,
-            url,
-            this.repositoryType,
-            sourceChecksum,
-            darChecksum,
-            datasetTitle,
-            oldUrl,
-          );
+          const success = await putToDar(oldVersionsInDb[0].dar_id, this.recordDao, url, dataset);
+          if (success) {
+            await dbRecordUpsert(
+              oldVersionsInDb[0].dar_id,
+              this.recordDao,
+              url,
+              this.repositoryType,
+              sourceChecksum,
+              darChecksum,
+              datasetTitle,
+              oldUrl,
+            );
+          }
           return;
         }
       }
@@ -259,16 +261,18 @@ export class HarvesterContext {
       log('info', `Implementation of mappers might have changed for ${sourceUrl}.`);
     }
 
-    await putToDar(darId, this.recordDao, sourceUrl, dataset);
-    await dbRecordUpsert(
-      darId,
-      this.recordDao,
-      sourceUrl,
-      this.repositoryType,
-      sourceChecksum,
-      darChecksum,
-      datasetTitle,
-    );
+    const success = await putToDar(darId, this.recordDao, sourceUrl, dataset);
+    if (success) {
+      await dbRecordUpsert(
+        darId,
+        this.recordDao,
+        sourceUrl,
+        this.repositoryType,
+        sourceChecksum,
+        darChecksum,
+        datasetTitle,
+      );
+    }
   }
 
   /**

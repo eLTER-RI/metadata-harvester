@@ -43,7 +43,7 @@ export async function putToDar(darId: string, recordDao: RecordDao, sourceUrl: s
     await recordDao.updateStatus(sourceUrl, {
       status: 'failed',
     });
-    return;
+    return false;
   }
 
   if (!apiResponse.ok) {
@@ -52,13 +52,13 @@ export async function putToDar(darId: string, recordDao: RecordDao, sourceUrl: s
     await recordDao.updateStatus(sourceUrl, {
       status: 'failed',
     });
-    return;
+    return false;
   }
 
   await recordDao.updateStatus(sourceUrl, {
     status: 'success',
   });
-  return;
+  return true;
 }
 
 /**
