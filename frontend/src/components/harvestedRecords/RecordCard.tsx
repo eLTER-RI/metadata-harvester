@@ -1,5 +1,6 @@
-import { Item, Grid, Icon, ItemExtra } from 'semantic-ui-react';
+import { Item, Grid, Icon, ItemExtra, Button } from 'semantic-ui-react';
 import { ActionButton } from './RecordButton';
+import { useResolveRecord } from '../../hooks/recordMutations';
 
 interface RecordCardProps {
   record: any;
@@ -7,6 +8,11 @@ interface RecordCardProps {
 
 const RecordCard = ({ record }: RecordCardProps) => {
   const statusColor = record.is_resolved ? 'green' : 'red';
+  const { mutate: resolveRecord, isPending: isResolving } = useResolveRecord();
+
+  const handleResolve = () => {
+    resolveRecord(record);
+  };
 
   return (
     <Item className="search-listing-item">
@@ -27,7 +33,18 @@ const RecordCard = ({ record }: RecordCardProps) => {
             )}
           </Grid.Column>
           <Grid.Column width={4} textAlign="right">
-            <ActionButton record={record} />
+            <Button.Group>
+              <Button
+                color={record.is_resolved ? 'grey' : 'green'}
+                onClick={handleResolve}
+                disabled={isResolving}
+                loading={isResolving}
+              >
+                <Icon name={record.is_resolved ? 'x' : 'check'} />
+                {record.is_resolved ? 'Unresolve' : 'Resolve'}
+              </Button>
+              <ActionButton record={record} />
+            </Button.Group>
           </Grid.Column>
         </Grid>
       </Item.Content>

@@ -1,18 +1,13 @@
 import { Dropdown } from 'semantic-ui-react';
 import { Link } from 'react-router-dom';
-import { useResolveRecord, useReHarvestRecord } from '../../hooks/recordMutations';
+import { useReHarvestRecord } from '../../hooks/recordMutations';
 
 interface ActionButtonProps {
   record: any;
 }
 
 export const ActionButton = ({ record }: ActionButtonProps) => {
-  const { mutate: resolveRecord, isPending: isResolving } = useResolveRecord();
   const { mutate: reHarvestRecord, isPending: isReHarvesting } = useReHarvestRecord();
-
-  const handleResolve = async () => {
-    resolveRecord(record);
-  };
 
   const handleReHarvest = async () => {
     if (record.source_url && record.source_repository) {
@@ -27,13 +22,6 @@ export const ActionButton = ({ record }: ActionButtonProps) => {
     <Dropdown text="Actions" icon="list" floating labeled button className="icon">
       <Dropdown.Menu>
         <Dropdown.Item as={Link} to={`/${record.dar_id}/edit`} key={'edit'} icon={'edit'} text="Edit" />
-        <Dropdown.Item
-          key={'resolve'}
-          icon={record.is_resolved ? 'x' : 'check'}
-          text={record.is_resolved ? 'Unresolve' : 'Resolve'}
-          disabled={isResolving}
-          onClick={() => handleResolve()}
-        />
         <Dropdown.Item
           key={'reharvest'}
           icon={'refresh'}
