@@ -1,5 +1,5 @@
 import { Pool } from 'pg';
-import { RepositoryType } from '../commonStructure';
+import { RepositoryType, SiteReference, HabitatReference, DatasetType, Keywords } from '../commonStructure';
 
 export interface DbRecord {
   source_url: string;
@@ -11,6 +11,10 @@ export interface DbRecord {
   last_harvested: Date;
   title: string | null;
   last_seen_at?: Date;
+  site_references: SiteReference[];
+  habitat_references: HabitatReference[];
+  dataset_type: DatasetType | null;
+  keywords: Keywords[];
 }
 
 export class RecordDao {
@@ -23,9 +27,10 @@ export class RecordDao {
   async createRecord(record: Omit<DbRecord, 'last_harvested'>): Promise<void> {
     const query = `
       INSERT INTO harvested_records (
-        source_url, source_repository, source_checksum, dar_id, dar_checksum, status, last_harvested, title, last_seen_at
+        source_url, source_repository, source_checksum, dar_id, dar_checksum, status, last_harvested, title, last_seen_at,
+        site_references, habitat_references, dataset_type, keywords
       )
-      VALUES ($1, $2, $3, $4, $5, $6, NOW(), $7, NOW())
+      VALUES ($1, $2, $3, $4, $5, $6, NOW(), $7, NOW(), $8, $9, $10, $11)
     `;
     const values = [
       record.source_url,
@@ -35,25 +40,69 @@ export class RecordDao {
       record.dar_checksum,
       record.status,
       record.title,
+      record.site_references || null,
+      record.habitat_references || null,
+      record.dataset_type || null,
+      record.keywords || null,
     ];
     await this.pool.query(query, values);
   }
 
   async updateRecord(source_url: string, record: Partial<DbRecord>): Promise<void> {
+    const setParts: string[] = [];
+    const values: any[] = [];
+    let paramCount = 1;
+
+    if (record.source_repository !== undefined) {
+      setParts.push(`source_repository = $${paramCount++}`);
+      values.push(record.source_repository);
+    }
+    if (record.source_checksum !== undefined) {
+      setParts.push(`source_checksum = $${paramCount++}`);
+      values.push(record.source_checksum);
+    }
+    if (record.dar_id !== undefined) {
+      setParts.push(`dar_id = $${paramCount++}`);
+      values.push(record.dar_id);
+    }
+    if (record.dar_checksum !== undefined) {
+      setParts.push(`dar_checksum = $${paramCount++}`);
+      values.push(record.dar_checksum);
+    }
+    if (record.status !== undefined) {
+      setParts.push(`status = $${paramCount++}`);
+      values.push(record.status);
+    }
+    if (record.title !== undefined) {
+      setParts.push(`title = $${paramCount++}`);
+      values.push(record.title);
+    }
+    if (record.site_references !== undefined) {
+      setParts.push(`site_references = $${paramCount++}`);
+      values.push(record.site_references || null);
+    }
+    if (record.habitat_references !== undefined) {
+      setParts.push(`habitat_references = $${paramCount++}`);
+      values.push(record.habitat_references || null);
+    }
+    if (record.dataset_type !== undefined) {
+      setParts.push(`dataset_type = $${paramCount++}`);
+      values.push(record.dataset_type || null);
+    }
+    if (record.keywords !== undefined) {
+      setParts.push(`keywords = $${paramCount++}`);
+      values.push(record.keywords || null);
+    }
+
+    setParts.push(`last_harvested = NOW()`);
+    setParts.push(`last_seen_at = NOW()`);
+
+    values.push(source_url);
     const query = `
       UPDATE harvested_records
-      SET source_repository = $1, source_checksum = $2, dar_id = $3, dar_checksum = $4, status = $5, last_harvested = NOW(), title = $6, last_seen_at = NOW()
-      WHERE source_url = $7
+      SET ${setParts.join(', ')}
+      WHERE source_url = $${paramCount}
     `;
-    const values = [
-      record.source_repository,
-      record.source_checksum,
-      record.dar_id,
-      record.dar_checksum,
-      record.status,
-      record.title,
-      source_url,
-    ];
     await this.pool.query(query, values);
   }
 
@@ -132,6 +181,7 @@ export class RecordDao {
     let query = `
       SELECT
         h.source_url, h.source_repository, h.dar_id, h.last_harvested, h.title, h.status,
+        h.site_references, h.habitat_references, h.dataset_type, h.keywords,
         CASE WHEN r.dar_id IS NOT NULL THEN true ELSE false END AS is_resolved
       FROM harvested_records h
       LEFT JOIN resolved_records r ON h.dar_id = r.dar_id
@@ -227,19 +277,56 @@ export class RecordDao {
   // This is an edge case, but sometimes repository owners have versioning, and therefore the souce url changes.
   // First source_url is the one that we are looking for, and we are replacing the value with source_url from the record structure.
   async updateRecordWithPrimaryKey(source_url: string, record: Partial<DbRecord>): Promise<void> {
+    const setParts: string[] = [];
+    const values: any[] = [];
+    let paramCount = 1;
+
+    if (record.source_url !== undefined) {
+      setParts.push(`source_url = $${paramCount++}`);
+      values.push(record.source_url);
+    }
+    if (record.source_checksum !== undefined) {
+      setParts.push(`source_checksum = $${paramCount++}`);
+      values.push(record.source_checksum);
+    }
+    if (record.dar_checksum !== undefined) {
+      setParts.push(`dar_checksum = $${paramCount++}`);
+      values.push(record.dar_checksum);
+    }
+    if (record.status !== undefined) {
+      setParts.push(`status = $${paramCount++}`);
+      values.push(record.status);
+    }
+    if (record.title !== undefined) {
+      setParts.push(`title = $${paramCount++}`);
+      values.push(record.title);
+    }
+    if (record.site_references !== undefined) {
+      setParts.push(`site_references = $${paramCount++}`);
+      values.push(record.site_references || null);
+    }
+    if (record.habitat_references !== undefined) {
+      setParts.push(`habitat_references = $${paramCount++}`);
+      values.push(record.habitat_references || null);
+    }
+    if (record.dataset_type !== undefined) {
+      setParts.push(`dataset_type = $${paramCount++}`);
+      values.push(record.dataset_type || null);
+    }
+    if (record.keywords !== undefined) {
+      setParts.push(`keywords = $${paramCount++}`);
+      values.push(record.keywords || null);
+    }
+
+    setParts.push(`last_harvested = NOW()`);
+    setParts.push(`last_seen_at = NOW()`);
+
+    values.push(source_url);
     const query = `
       UPDATE harvested_records
-      SET source_url = $1, source_checksum = $2, dar_checksum = $3, status = $4, last_harvested = NOW(), title = $5, last_seen_at = NOW()
-      WHERE source_url = $6
+      SET ${setParts.join(', ')}
+      WHERE source_url = $${paramCount}
     `;
-    const values = [
-      record.source_url,
-      record.source_checksum,
-      record.dar_checksum,
-      record.status,
-      record.title,
-      source_url,
-    ];
     await this.pool.query(query, values);
   }
 

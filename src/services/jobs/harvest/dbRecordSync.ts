@@ -1,4 +1,4 @@
-import { RepositoryType } from '../../../store/commonStructure';
+import { RepositoryType, CommonDataset } from '../../../store/commonStructure';
 import { RecordDao } from '../../../store/dao/recordDao';
 import { log } from '../../serviceLogging';
 
@@ -6,12 +6,12 @@ import { log } from '../../serviceLogging';
  * CREATE or UPDATE of a record in the local database based on its existence and status of the synchronization.
  * It handles creating a new record, updating an old version of a record, or simply updating an existing record's status.
  * @param {string | null} darId The ID of the record in DAR. If set to null, it assumes record POST/PUT to dar was unsuccessful.
- * @param {boolean} missingInDb.
  * @param {RecordDao} recordDao
  * @param {string} sourceUrl The source URL of the record on the remote repository.
  * @param {RepositoryType} repositoryType The type of the repository (e.g., 'ZENODO', 'B2SHARE_EUDAT'...).
  * @param {string} sourceChecksum The checksum of the current source data.
  * @param {string} darChecksum Source data checksum.
+ * @param {CommonDataset} dataset The dataset metadata to extract fields from.
  * @param {string} oldUrl (Optional) The old URL of the record if there is a new version but we have an older version with different sourceUrl.
  */
 export async function dbRecordUpsert(
@@ -21,7 +21,7 @@ export async function dbRecordUpsert(
   repositoryType: RepositoryType,
   sourceChecksum: string,
   darChecksum: string,
-  title: string | null,
+  dataset?: CommonDataset,
   oldUrl?: string,
 ) {
   if (!darId) {
@@ -32,6 +32,13 @@ export async function dbRecordUpsert(
   }
 
   try {
+    const title =
+      dataset?.metadata?.titles && dataset.metadata.titles.length > 0 ? dataset.metadata.titles[0].titleText : null;
+    const siteReferences = dataset?.metadata?.siteReferences || [];
+    const habitatReferences = dataset?.metadata?.habitatReferences || [];
+    const datasetType = dataset?.metadata?.datasetType || null;
+    const keywords = dataset?.metadata?.keywords || [];
+
     const recordPayload = {
       source_url: sourceUrl,
       source_repository: repositoryType,
@@ -40,6 +47,10 @@ export async function dbRecordUpsert(
       dar_checksum: darChecksum,
       status: 'success',
       title: title,
+      site_references: siteReferences,
+      habitat_references: habitatReferences,
+      dataset_type: datasetType,
+      keywords: keywords,
     };
 
     if (oldUrl) {
