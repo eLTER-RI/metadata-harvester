@@ -12,7 +12,7 @@ export type CommonDataset = {
 
 export type CommonDatasetMetadata = {
   assetType: IdentifierType;
-  datasetType?: string;
+  datasetType?: DatasetType;
   alternateIdentifiers?: AlternateIdentifier[];
   titles?: Title[];
   creators?: Creator[];
@@ -32,7 +32,7 @@ export type CommonDatasetMetadata = {
   projects?: Project[];
   siteReferences?: SiteReference[];
   additionalMetadata?: AdditionalMetadata[];
-  habitatReferences?: string[];
+  habitatReferences?: HabitatReference[];
   relatedIdentifiers?: RelatedIdentifier[];
   dataLevel?: DataLevel;
   externalSourceInformation: ExternalSource;
@@ -394,6 +394,16 @@ export type Steps = {
 export type SiteReference = {
   siteID?: string;
   siteName?: string;
+};
+
+export type HabitatReference = {
+  soHabitatCode: 'A' | 'B' | 'C1' | 'C2' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I';
+  soHabitatURI?: string;
+};
+
+export type DatasetType = {
+  datasetTypeCode: string;
+  datasetTypeURI?: string;
 };
 
 export type AdditionalMetadata = {
