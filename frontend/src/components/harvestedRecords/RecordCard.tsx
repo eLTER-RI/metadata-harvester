@@ -1,4 +1,4 @@
-import { Item, Grid, Icon, ItemExtra, Button } from 'semantic-ui-react';
+import { Item, Icon, ItemExtra, Button, Grid } from 'semantic-ui-react';
 import { ActionButton } from './RecordButton';
 import { useResolveRecord } from '../../hooks/recordMutations';
 
@@ -16,16 +16,14 @@ const RecordCard = ({ record }: RecordCardProps) => {
 
   return (
     <Item className="search-listing-item">
-      <Item.Content className="content">
+      <Item.Content>
         <Grid columns={2} verticalAlign="middle">
           <Grid.Column>
             <Item.Header>{record.title || 'No Title'}</Item.Header>
-            <Item.Content>
-              <strong>Source URL:</strong>{' '}
-              <a href={record.source_url} target="_blank" rel="noopener noreferrer">
-                {record.source_url}
-              </a>
-            </Item.Content>
+            <Item.Meta>
+              <Icon name="linkify" size="small" />
+              <a href={record.source_url}>{record.source_url}</a>
+            </Item.Meta>
             {record.is_resolved && (
               <ItemExtra>
                 <Icon name="check" color={statusColor} />
