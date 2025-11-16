@@ -15,6 +15,7 @@ import { ResolvedRecordDao } from '../store/dao/resolvedRecordsDao';
 import { RuleDao } from '../store/dao/rulesDao';
 import { ManualRecordDao } from '../store/dao/manualRecordDao';
 import { postToDarManual, putToDarManual } from './clients/darApi';
+import pool from '../db';
 
 const swaggerOptions = {
   definition: {
@@ -32,14 +33,6 @@ const swaggerOptions = {
   },
   apis: ['./src/services/harvesterService.ts'],
 };
-
-const pool = new Pool({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: process.env.DB_NAME,
-  password: process.env.DB_PASSWORD,
-  port: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : 5432,
-});
 
 const app = express();
 app.use(express.json());
@@ -295,7 +288,7 @@ app.patch('/api/records/:darId/status', async (req, res) => {
 /**
  * @swagger
  * /api/records/{darId}/rules:
- *   patch:
+ *   get:
  *     tags: [Rules]
  *     summary: Get all rules for transformation of a record.
  *     parameters:
