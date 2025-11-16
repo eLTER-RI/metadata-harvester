@@ -24,14 +24,8 @@ const repositories: RepositoryInfo[] = [
   {
     name: 'ZENODO',
     displayName: 'Zenodo',
-    description: 'Zenodo eLTER community',
+    description: 'Zenodo eLTER community and LTER-Italy community',
     color: 'violet',
-  },
-  {
-    name: 'ZENODO_IT',
-    displayName: 'Zenodo Italy',
-    description: 'Zenodo LTER-Italy community',
-    color: 'purple',
   },
   {
     name: 'DATAREGISTRY',
@@ -51,18 +45,40 @@ export const HarvestPage = () => {
   const harvestMutation = useHarvestRepository();
 
   const handleHarvest = (repositoryName: string) => {
-    harvestMutation.mutate({
-      repository: repositoryName,
-      checkHarvestChanges: false,
-    });
+    if (repositoryName === 'ZENODO') {
+      harvestMutation.mutate({
+        repository: 'ZENODO',
+        checkHarvestChanges: false,
+      });
+      harvestMutation.mutate({
+        repository: 'ZENODO_IT',
+        checkHarvestChanges: false,
+      });
+    } else {
+      harvestMutation.mutate({
+        repository: repositoryName,
+        checkHarvestChanges: false,
+      });
+    }
   };
 
   const handleHarvestAll = () => {
     repositories.forEach((repo) => {
-      harvestMutation.mutate({
-        repository: repo.name,
-        checkHarvestChanges: false,
-      });
+      if (repo.name === 'ZENODO') {
+        harvestMutation.mutate({
+          repository: 'ZENODO',
+          checkHarvestChanges: false,
+        });
+        harvestMutation.mutate({
+          repository: 'ZENODO_IT',
+          checkHarvestChanges: false,
+        });
+      } else {
+        harvestMutation.mutate({
+          repository: repo.name,
+          checkHarvestChanges: false,
+        });
+      }
     });
   };
 
