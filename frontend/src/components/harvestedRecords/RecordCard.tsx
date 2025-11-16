@@ -31,7 +31,8 @@ const RecordCard = ({ record }: RecordCardProps) => {
             )}
           </Grid.Column>
           <Grid.Column width={4} textAlign="right">
-            <Button.Group>
+            <Button.Group vertical>
+              <ActionButton record={record} />
               <Button
                 color={record.is_resolved ? 'grey' : 'green'}
                 onClick={handleResolve}
@@ -41,7 +42,6 @@ const RecordCard = ({ record }: RecordCardProps) => {
                 <Icon name={record.is_resolved ? 'x' : 'check'} />
                 {record.is_resolved ? 'Unresolve' : 'Resolve'}
               </Button>
-              <ActionButton record={record} />
             </Button.Group>
           </Grid.Column>
         </Grid>
