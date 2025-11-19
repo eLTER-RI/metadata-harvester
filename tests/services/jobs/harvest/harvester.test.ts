@@ -107,7 +107,9 @@ describe('Test harvester file', () => {
     );
 
     // Mock DAO method returns
-    mockRecordDao.getRecordBySourceId.mockResolvedValue([]);
+    mockRecordDao.getRecordBySourceUrl.mockResolvedValue([]);
+    mockRecordDao.listRecordsByRepository.mockResolvedValue([]);
+    mockRuleDao.getRulesForRecord.mockResolvedValue([]);
     mockRecordDao.updateStatus.mockResolvedValue(undefined);
     mockResolvedRecordsDao.delete.mockResolvedValue(undefined);
 
@@ -194,6 +196,10 @@ describe('Test harvester file', () => {
         status: 'in_progress',
         last_harvested: new Date('2025-12-31'),
         title: 'A title of a record',
+        site_references: [],
+        habitat_references: [],
+        dataset_type: null,
+        keywords: [],
       };
       const newDataset: CommonDataset = {
         metadata: {
@@ -207,7 +213,7 @@ describe('Test harvester file', () => {
       };
 
       mockedCalculateChecksum.mockReturnValue('mocked-dar-checksum');
-      mockRecordDao.getRecordBySourceId.mockImplementation((url) => {
+      mockRecordDao.getRecordBySourceUrl.mockImplementation((url) => {
         if (url === oldUrl) return Promise.resolve([oldDbRecord]);
         return Promise.resolve([]);
       });
@@ -216,7 +222,7 @@ describe('Test harvester file', () => {
 
       await (context as any).synchronizeRecord(newUrl, 'new-checksum', newDataset);
 
-      expect(mockRecordDao.getRecordBySourceId).toHaveBeenCalledWith(oldUrl);
+      expect(mockRecordDao.getRecordBySourceUrl).toHaveBeenCalledWith(oldUrl);
       expect(mockedPutToDar).toHaveBeenCalledWith('dar-id-old', mockRecordDao, newUrl, newDataset);
       expect(mockedDbRecordUpsert).toHaveBeenCalledWith(
         'dar-id-old',
@@ -271,7 +277,7 @@ describe('Test harvester file', () => {
 
       // faking a different checksum in the DB to execute 'rewriteRecord'
       mockedFindDar.mockResolvedValue('existing-dar-id');
-      mockRecordDao.getRecordBySourceId.mockResolvedValue([{ dar_checksum: 'old-dar-checksum' }] as any);
+      mockRecordDao.getRecordBySourceUrl.mockResolvedValue([{ dar_checksum: 'old-dar-checksum' }] as any);
 
       const handleChangedSpy = jest.spyOn(context as any, 'handleChangedRecord');
 
@@ -286,8 +292,16 @@ describe('Test harvester file', () => {
       const upToDateDataset = { metadata: { titles: [{ titleText: 'Up To Date' }], externalSourceInformation: {} } };
 
       mockedFindDar.mockResolvedValue('existing-dar-id');
-      mockRecordDao.getRecordBySourceId.mockResolvedValue([
-        { dar_checksum: 'mocked-dar-checksum', source_checksum: 'source-checksum' },
+      mockRecordDao.getRecordBySourceUrl.mockResolvedValue([
+        {
+          dar_checksum: 'mocked-dar-checksum',
+          source_checksum: 'source-checksum',
+          dar_id: null,
+          site_references: [],
+          habitat_references: [],
+          dataset_type: null,
+          keywords: [],
+        },
       ] as any);
 
       await (context as any).synchronizeRecord(sourceUrl, 'source-checksum', upToDateDataset);
@@ -311,7 +325,7 @@ describe('Test harvester file', () => {
     });
 
     it('should process a record that is not in the database', async () => {
-      mockRecordDao.getRecordBySourceId.mockResolvedValue([]);
+      mockRecordDao.getRecordBySourceUrl.mockResolvedValue([]);
       await context.processOneRecordTask(sourceUrl);
       expect(mockedFetchJson).toHaveBeenCalledWith(sourceUrl);
       expect(context.mapToCommonStructure).toHaveBeenCalledWith(sourceUrl, apiData);
@@ -338,11 +352,16 @@ describe('Test harvester file', () => {
         status: 'in_progress',
         last_harvested: new Date('2025-12-31'),
         title: 'A title of a record',
+        site_references: [],
+        habitat_references: [],
+        dataset_type: null,
+        keywords: [],
       };
       const mapSpy = jest.spyOn(context, 'mapToCommonStructure');
       const syncSpy = jest.spyOn(context as any, 'synchronizeRecord');
 
-      mockRecordDao.getRecordBySourceId.mockResolvedValue([existingDbRecord]);
+      mockRecordDao.getRecordBySourceUrl.mockResolvedValue([existingDbRecord]);
+      mockRuleDao.getRulesForRecord.mockResolvedValue([]);
       mockedCalculateChecksum.mockReturnValue('matching-checksum');
 
       await context.processOneRecordTask(sourceUrl);
@@ -369,8 +388,13 @@ describe('Test harvester file', () => {
         status: 'in_progress',
         last_harvested: new Date('2025-12-31'),
         title: 'A title of a record',
+        site_references: [],
+        habitat_references: [],
+        dataset_type: null,
+        keywords: [],
       };
-      mockRecordDao.getRecordBySourceId.mockResolvedValue([existingDbRecord]);
+      mockRecordDao.getRecordBySourceUrl.mockResolvedValue([existingDbRecord]);
+      mockRuleDao.getRulesForRecord.mockResolvedValue([{ id: '1', dar_id: 'bbb', target_path: 'test', before_value: null, after_value: null }]);
       (context.mapToCommonStructure as jest.Mock).mockResolvedValue(mockMappedData);
       context.applyRulesToRecord = jest.fn();
 
@@ -380,7 +404,16 @@ describe('Test harvester file', () => {
     });
 
     it('should stop processing if status success', async () => {
-      mockRecordDao.getRecordBySourceId.mockResolvedValue([{ status: 'success' }] as any);
+      mockRecordDao.getRecordBySourceUrl.mockResolvedValue([
+        {
+          status: 'success',
+          dar_id: null,
+          site_references: [],
+          habitat_references: [],
+          dataset_type: null,
+          keywords: [],
+        },
+      ] as any);
 
       await context.processOneRecordTask(sourceUrl);
 
@@ -539,7 +572,8 @@ describe('Test harvester file', () => {
     });
 
     it('should log "No database record" when the local record is missing', async () => {
-      mockRecordDao.getRecordBySourceId.mockResolvedValue([]); // No DB matches
+      mockRecordDao.getRecordBySourceUrl.mockResolvedValue([]); // No DB matches
+      mockRuleDao.getRulesForRecord.mockResolvedValue([]);
       mockedCalculateChecksum.mockReturnValue('new-checksum');
 
       (context.mapToCommonStructure as jest.Mock) = jest.fn().mockResolvedValue({
@@ -566,9 +600,14 @@ describe('Test harvester file', () => {
         status: 'in_progress',
         last_harvested: new Date('2025-12-31'),
         title: 'A title of a record',
+        site_references: [],
+        habitat_references: [],
+        dataset_type: null,
+        keywords: [],
       };
 
-      mockRecordDao.getRecordBySourceId.mockResolvedValue([dbRecord]);
+      mockRecordDao.getRecordBySourceUrl.mockResolvedValue([dbRecord]);
+      mockRuleDao.getRulesForRecord.mockResolvedValue([]);
       // DAR checksum same
       mockedCalculateChecksum.mockReturnValue('dar-checksum');
 
@@ -591,9 +630,14 @@ describe('Test harvester file', () => {
         status: 'in_progress',
         last_harvested: new Date('2025-12-31'),
         title: 'A title of a record',
+        site_references: [],
+        habitat_references: [],
+        dataset_type: null,
+        keywords: [],
       };
 
-      mockRecordDao.getRecordBySourceId.mockResolvedValue([dbRecord]);
+      mockRecordDao.getRecordBySourceUrl.mockResolvedValue([dbRecord]);
+      mockRuleDao.getRulesForRecord.mockResolvedValue([]);
       mockedCalculateChecksum.mockReturnValue('new-dar-checksum');
 
       // source checksum same

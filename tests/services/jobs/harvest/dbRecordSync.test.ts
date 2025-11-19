@@ -21,13 +21,17 @@ describe('dbRecordUpsert', () => {
     status: 'in_progress',
     last_harvested: new Date('2025-12-31'),
     title: 'Test Record Title',
+    site_references: [],
+    habitat_references: [],
+    dataset_type: null,
+    keywords: [],
   };
 
   beforeEach(() => {
     mockLog.mockClear();
     mockRecordDao = new (RecordDao as any)();
     mockRecordDao.updateDarIdStatus = jest.fn().mockResolvedValue(undefined);
-    mockRecordDao.getRecordBySourceId = jest.fn().mockResolvedValue([]);
+    mockRecordDao.getRecordBySourceUrl = jest.fn().mockResolvedValue([]);
     mockRecordDao.createRecord = jest.fn().mockResolvedValue(undefined);
     mockRecordDao.updateRecord = jest.fn().mockResolvedValue(undefined);
     mockRecordDao.updateRecordWithPrimaryKey = jest.fn().mockResolvedValue(undefined);
@@ -41,12 +45,12 @@ describe('dbRecordUpsert', () => {
       dbRecord.source_repository as RepositoryType,
       dbRecord.source_checksum,
       dbRecord.dar_checksum,
-      dbRecord.title,
+      undefined,
     );
 
     expect(mockRecordDao.updateDarIdStatus).toHaveBeenCalledWith(dbRecord.source_url, { status: 'failed' });
     expect(mockRecordDao.updateRecordWithPrimaryKey).not.toHaveBeenCalled();
-    expect(mockRecordDao.getRecordBySourceId).not.toHaveBeenCalled();
+    expect(mockRecordDao.getRecordBySourceUrl).not.toHaveBeenCalled();
     expect(mockRecordDao.createRecord).not.toHaveBeenCalled();
     expect(mockRecordDao.updateRecord).not.toHaveBeenCalled();
   });
@@ -61,7 +65,7 @@ describe('dbRecordUpsert', () => {
       dbRecord.source_repository as RepositoryType,
       dbRecord.source_checksum,
       dbRecord.dar_checksum,
-      dbRecord.title,
+      undefined,
       oldUrl,
     );
 
@@ -79,13 +83,13 @@ describe('dbRecordUpsert', () => {
       `Record ${dbRecord.source_url} has an old version of ${oldUrl} in DAR with ${dbRecord.dar_id}`,
     );
     // Should not perform checks for the new URL
-    expect(mockRecordDao.getRecordBySourceId).not.toHaveBeenCalled();
+    expect(mockRecordDao.getRecordBySourceUrl).not.toHaveBeenCalled();
     expect(mockRecordDao.createRecord).not.toHaveBeenCalled();
     expect(mockRecordDao.updateRecord).not.toHaveBeenCalled();
   });
 
   it('should create a new record if no matching record found in db', async () => {
-    mockRecordDao.getRecordBySourceId.mockResolvedValue([]);
+    mockRecordDao.getRecordBySourceUrl.mockResolvedValue([]);
 
     await dbRecordUpsert(
       dbRecord.dar_id,
@@ -97,7 +101,7 @@ describe('dbRecordUpsert', () => {
       dbRecord.title,
     );
 
-    expect(mockRecordDao.getRecordBySourceId).toHaveBeenCalledWith(dbRecord.source_url);
+    expect(mockRecordDao.getRecordBySourceUrl).toHaveBeenCalledWith(dbRecord.source_url);
     expect(mockRecordDao.createRecord).toHaveBeenCalledWith({
       source_url: dbRecord.source_url,
       source_repository: dbRecord.source_repository,
@@ -111,7 +115,7 @@ describe('dbRecordUpsert', () => {
   });
 
   it('should update an existing record if matching record found in db', async () => {
-    mockRecordDao.getRecordBySourceId.mockResolvedValue([{} as any]);
+    mockRecordDao.getRecordBySourceUrl.mockResolvedValue([{} as any]);
 
     await dbRecordUpsert(
       dbRecord.dar_id,
@@ -123,7 +127,7 @@ describe('dbRecordUpsert', () => {
       dbRecord.title,
     );
 
-    expect(mockRecordDao.getRecordBySourceId).toHaveBeenCalledWith(dbRecord.source_url);
+    expect(mockRecordDao.getRecordBySourceUrl).toHaveBeenCalledWith(dbRecord.source_url);
     expect(mockRecordDao.updateRecord).toHaveBeenCalledWith(dbRecord.source_url, {
       source_url: dbRecord.source_url,
       source_repository: dbRecord.source_repository,
@@ -138,7 +142,7 @@ describe('dbRecordUpsert', () => {
 
   it('should handle errors of database and update status to "failed"', async () => {
     const dbError = new Error('Database connection lost');
-    mockRecordDao.getRecordBySourceId.mockRejectedValue(dbError);
+    mockRecordDao.getRecordBySourceUrl.mockRejectedValue(dbError);
 
     await dbRecordUpsert(
       dbRecord.dar_id,

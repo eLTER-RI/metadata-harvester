@@ -40,10 +40,10 @@ export class RecordDao {
       record.dar_checksum,
       record.status,
       record.title,
-      record.site_references || null,
-      record.habitat_references || null,
-      record.dataset_type || null,
-      record.keywords || null,
+      record.site_references ? JSON.stringify(record.site_references) : null,
+      record.habitat_references ? JSON.stringify(record.habitat_references) : null,
+      record.dataset_type ? JSON.stringify(record.dataset_type) : null,
+      record.keywords ? JSON.stringify(record.keywords) : null,
     ];
     await this.pool.query(query, values);
   }
@@ -79,19 +79,19 @@ export class RecordDao {
     }
     if (record.site_references !== undefined) {
       setParts.push(`site_references = $${paramCount++}`);
-      values.push(record.site_references || null);
+      values.push(record.site_references ? JSON.stringify(record.site_references) : null);
     }
     if (record.habitat_references !== undefined) {
       setParts.push(`habitat_references = $${paramCount++}`);
-      values.push(record.habitat_references || null);
+      values.push(record.habitat_references ? JSON.stringify(record.habitat_references) : null);
     }
     if (record.dataset_type !== undefined) {
       setParts.push(`dataset_type = $${paramCount++}`);
-      values.push(record.dataset_type || null);
+      values.push(record.dataset_type ? JSON.stringify(record.dataset_type) : null);
     }
     if (record.keywords !== undefined) {
       setParts.push(`keywords = $${paramCount++}`);
-      values.push(record.keywords || null);
+      values.push(record.keywords ? JSON.stringify(record.keywords) : null);
     }
 
     setParts.push(`last_harvested = NOW()`);
@@ -303,19 +303,19 @@ export class RecordDao {
     }
     if (record.site_references !== undefined) {
       setParts.push(`site_references = $${paramCount++}`);
-      values.push(record.site_references || null);
+      values.push(record.site_references ? JSON.stringify(record.site_references) : null);
     }
     if (record.habitat_references !== undefined) {
       setParts.push(`habitat_references = $${paramCount++}`);
-      values.push(record.habitat_references || null);
+      values.push(record.habitat_references ? JSON.stringify(record.habitat_references) : null);
     }
     if (record.dataset_type !== undefined) {
       setParts.push(`dataset_type = $${paramCount++}`);
-      values.push(record.dataset_type || null);
+      values.push(record.dataset_type ? JSON.stringify(record.dataset_type) : null);
     }
     if (record.keywords !== undefined) {
       setParts.push(`keywords = $${paramCount++}`);
-      values.push(record.keywords || null);
+      values.push(record.keywords ? JSON.stringify(record.keywords) : null);
     }
 
     setParts.push(`last_harvested = NOW()`);
@@ -362,7 +362,7 @@ export class RecordDao {
     return result.rows.length > 0 ? result.rows[0] : null;
   }
 
-  async getRecordBySourceId(sourceId: string): Promise<DbRecord[]> {
+  async getRecordBySourceUrl(sourceId: string): Promise<DbRecord[]> {
     const query = `SELECT * FROM harvested_records WHERE source_url = $1`;
     const result = await this.pool.query(query, [sourceId]);
     return result.rows;

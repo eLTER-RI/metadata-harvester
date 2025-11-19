@@ -59,7 +59,7 @@ export async function dbRecordUpsert(
       return;
     }
 
-    const dbMatches = await recordDao.getRecordBySourceId(sourceUrl);
+    const dbMatches = await recordDao.getRecordBySourceUrl(sourceUrl);
     if (dbMatches.length === 0) {
       log('info', `Creating database record for ${sourceUrl}`);
       await recordDao.createRecord(recordPayload);

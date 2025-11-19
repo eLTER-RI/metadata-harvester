@@ -29,10 +29,14 @@ describe('Tests for RecordDao', () => {
       dar_checksum: 'dar_checksum123',
       status: 'success',
       title: 'Record for Testing',
+      site_references: [],
+      habitat_references: [],
+      dataset_type: null,
+      keywords: [],
     };
 
     await recordDao.createRecord(newRecord);
-    const result = await recordDao.getRecordBySourceId(source_url);
+    const result = await recordDao.getRecordBySourceUrl(source_url);
 
     expect(result).toHaveLength(1);
     expect(result[0].source_repository).toBe('GITHUB');
@@ -43,7 +47,7 @@ describe('Tests for RecordDao', () => {
     expect(result[0].title).toBe('Record for Testing');
 
     await recordDao.deleteRecord(source_url);
-    const getAfterDelete = await recordDao.getRecordBySourceId(source_url);
+    const getAfterDelete = await recordDao.getRecordBySourceUrl(source_url);
     expect(getAfterDelete).toHaveLength(0);
   });
 
@@ -57,10 +61,14 @@ describe('Tests for RecordDao', () => {
       dar_checksum: 'dar_checksum123',
       status: 'success',
       title: 'Record for Testing',
+      site_references: [],
+      habitat_references: [],
+      dataset_type: null,
+      keywords: [],
     };
 
     await recordDao.createRecord(newRecord);
-    const result = await recordDao.getRecordBySourceId(source_url);
+    const result = await recordDao.getRecordBySourceUrl(source_url);
 
     expect(result).toHaveLength(1);
     expect(result[0].title).toBe('Record for Testing');
@@ -68,7 +76,7 @@ describe('Tests for RecordDao', () => {
     newRecord.dar_checksum = 'dar_checksum456';
     newRecord.source_checksum = 'source_checksum456';
     await recordDao.updateRecord(source_url, newRecord);
-    const updated = await recordDao.getRecordBySourceId(source_url);
+    const updated = await recordDao.getRecordBySourceUrl(source_url);
     expect(updated[0].dar_checksum).toBe('dar_checksum456');
     expect(updated[0].source_checksum).toBe('source_checksum456');
     expect(updated[0].status).toBe('success');
@@ -84,10 +92,14 @@ describe('Tests for RecordDao', () => {
       dar_checksum: 'dar_checksum123',
       status: 'success',
       title: 'Record for status testing',
+      site_references: [],
+      habitat_references: [],
+      dataset_type: null,
+      keywords: [],
     };
 
     await recordDao.createRecord(newRecord);
-    const result = await recordDao.getRecordBySourceId(source_url);
+    const result = await recordDao.getRecordBySourceUrl(source_url);
 
     expect(result).toHaveLength(1);
     expect(result[0].title).toBe('Record for status testing');
@@ -95,7 +107,7 @@ describe('Tests for RecordDao', () => {
     await recordDao.updateStatus(source_url, {
       status: 'in_progress',
     });
-    const updated = await recordDao.getRecordBySourceId(source_url);
+    const updated = await recordDao.getRecordBySourceUrl(source_url);
     expect(result).toHaveLength(1);
     expect(updated[0].status).toBe('in_progress');
     expect(updated[0].dar_id).toBe('uuid-uuid');
@@ -104,7 +116,7 @@ describe('Tests for RecordDao', () => {
       dar_id: 'new-darid',
       status: 'deprecated',
     });
-    const updated2 = await recordDao.getRecordBySourceId(source_url);
+    const updated2 = await recordDao.getRecordBySourceUrl(source_url);
     expect(result).toHaveLength(1);
     expect(updated2[0].status).toBe('deprecated');
     expect(updated2[0].dar_id).toBe('new-darid');
@@ -119,6 +131,10 @@ describe('Tests for RecordDao', () => {
       dar_checksum: 'dar_checksum123',
       status: 'success',
       title: 'First Record for Repositories Testing',
+      site_references: [],
+      habitat_references: [],
+      dataset_type: null,
+      keywords: [],
     };
     await recordDao.createRecord(record1);
     const record2: Omit<DbRecord, 'last_harvested'> = {
@@ -129,6 +145,10 @@ describe('Tests for RecordDao', () => {
       dar_checksum: 'dar_checksum456',
       status: 'success',
       title: 'Second Record for Repositories Testing',
+      site_references: [],
+      habitat_references: [],
+      dataset_type: null,
+      keywords: [],
     };
     await recordDao.createRecord(record2);
     const record3: Omit<DbRecord, 'last_harvested'> = {
@@ -139,6 +159,10 @@ describe('Tests for RecordDao', () => {
       dar_checksum: 'dar_checksum789',
       status: 'success',
       title: 'Third Record for Repositories Testing',
+      site_references: [],
+      habitat_references: [],
+      dataset_type: null,
+      keywords: [],
     };
     await recordDao.createRecord(record3);
     const record4: Omit<DbRecord, 'last_harvested'> = {
@@ -149,6 +173,10 @@ describe('Tests for RecordDao', () => {
       dar_checksum: 'dar_checksum123',
       status: 'success',
       title: 'First B2SHARE Record for Repositories Testing',
+      site_references: [],
+      habitat_references: [],
+      dataset_type: null,
+      keywords: [],
     };
     await recordDao.createRecord(record4);
 
@@ -207,10 +235,14 @@ describe('Tests for RecordDao', () => {
       dar_checksum: 'dar_checksum123',
       status: 'success',
       title: 'Record for CRUD testing',
+      site_references: [],
+      habitat_references: [],
+      dataset_type: null,
+      keywords: [],
     };
 
     await recordDao.createRecord(newRecord);
-    const result1 = await recordDao.getRecordBySourceId(source_url);
+    const result1 = await recordDao.getRecordBySourceUrl(source_url);
     expect(result1).toHaveLength(1);
     expect(result1[0].title).toBe('Record for CRUD testing');
 
@@ -236,9 +268,9 @@ describe('Tests for RecordDao', () => {
       status: 'success',
       title: 'Record for CRUD testing updated with primary key',
     });
-    const oldUrlResult = await recordDao.getRecordBySourceId(source_url);
+    const oldUrlResult = await recordDao.getRecordBySourceUrl(source_url);
     expect(oldUrlResult).toHaveLength(0);
-    const newUrlResult = await recordDao.getRecordBySourceId(source_url + '/new-url');
+    const newUrlResult = await recordDao.getRecordBySourceUrl(source_url + '/new-url');
     expect(newUrlResult).toHaveLength(1);
   });
 
@@ -253,10 +285,14 @@ describe('Tests for RecordDao', () => {
         dar_checksum: 'dar_checksum123',
         status: 'success',
         title: 'Record for last seen testing',
+        site_references: [],
+        habitat_references: [],
+        dataset_type: null,
+        keywords: [],
       };
 
       await recordDao.createRecord(newRecord);
-      const result = await recordDao.getRecordBySourceId(source_url);
+      const result = await recordDao.getRecordBySourceUrl(source_url);
 
       expect(result).toHaveLength(1);
       expect(result[0].last_seen_at).toBeDefined();
@@ -273,17 +309,21 @@ describe('Tests for RecordDao', () => {
         dar_checksum: 'dar_checksum123',
         status: 'success',
         title: 'Record for updateLastSeen testing',
+        site_references: [],
+        habitat_references: [],
+        dataset_type: null,
+        keywords: [],
       };
 
       await recordDao.createRecord(newRecord);
-      const result1 = await recordDao.getRecordBySourceId(source_url);
+      const result1 = await recordDao.getRecordBySourceUrl(source_url);
       const initialLastSeen = result1[0].last_seen_at;
 
       // ensure timestamp difference
       await new Promise((resolve) => setTimeout(resolve, 10));
 
       await recordDao.updateLastSeen(source_url);
-      const result2 = await recordDao.getRecordBySourceId(source_url);
+      const result2 = await recordDao.getRecordBySourceUrl(source_url);
 
       expect(result2[0].last_seen_at).toBeDefined();
       expect(new Date(result2[0].last_seen_at as Date).getTime()).toBeGreaterThan(

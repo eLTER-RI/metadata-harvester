@@ -89,7 +89,7 @@ export class HarvesterContext {
     const darMatches = await findDarRecordBySourceURL(url);
     // Use existing matches if provided (even if empty array), otherwise fetch from DB
     const dbMatches =
-      existingDbMatches !== undefined ? existingDbMatches : await this.recordDao.getRecordBySourceId(url);
+      existingDbMatches !== undefined ? existingDbMatches : await this.recordDao.getRecordBySourceUrl(url);
     if (dbMatches.length > 1) {
       throw new Error('More than one existing records of one dataset in the local database.');
     }
@@ -104,7 +104,7 @@ export class HarvesterContext {
     // Scenario 1: Handle records that are new versions of existing ones.
     if (oldVersions && oldVersions.length > 0) {
       for (const oldUrl of oldVersions) {
-        const oldVersionsInDb = await this.recordDao.getRecordBySourceId(oldUrl);
+        const oldVersionsInDb = await this.recordDao.getRecordBySourceUrl(oldUrl);
         if (oldVersionsInDb.length > 0) {
           log('warn', 'New version for record on url: ' + url + 'found: ' + oldVersionsInDb[0].dar_id);
           const success = await putToDar(oldVersionsInDb[0].dar_id, this.recordDao, url, dataset);
@@ -183,7 +183,7 @@ export class HarvesterContext {
     let dbRecord =
       existingDbRecord && existingDbRecord.length > 0
         ? existingDbRecord
-        : await this.recordDao.getRecordBySourceId(sourceUrl);
+        : await this.recordDao.getRecordBySourceUrl(sourceUrl);
     if (await this.canSkipProcessing(dbRecord)) {
       await this.recordDao.updateLastSeen(sourceUrl);
       return;
@@ -206,7 +206,7 @@ export class HarvesterContext {
       mappedSourceUrl !== sourceUrl &&
       (!existingDbRecord || existingDbRecord.length === 0 || existingDbRecord[0]?.source_url !== mappedSourceUrl)
     ) {
-      dbRecord = await this.recordDao.getRecordBySourceId(mappedSourceUrl);
+      dbRecord = await this.recordDao.getRecordBySourceUrl(mappedSourceUrl);
       if (await this.canSkipProcessing(dbRecord, newSourceChecksum)) {
         await this.recordDao.updateLastSeen(mappedSourceUrl);
         return;
