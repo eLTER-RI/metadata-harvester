@@ -11,9 +11,8 @@ import { syncDeimsSites } from './jobs/deimsSync/syncDeimsSites';
 import { syncWithDar } from './jobs/syncDbWithRemote/localDarSync';
 import { RecordDao } from '../store/dao/recordDao';
 import { ResolvedRecordDao } from '../store/dao/resolvedRecordsDao';
-import { ManualRecordDao } from '../store/dao/manualRecordDao';
-import { postToDarManual, putToDarManual } from './clients/darApi';
 import { createRulesForRecord, deleteRuleForRecord, getRulesForRecord } from './rulesService';
+import { listManualRecords, createManualRecord, updateManualRecord } from './manualRecordsService';
 import pool from '../db';
 
 const swaggerOptions = {
@@ -649,27 +648,28 @@ app.get('/api/external-record/:darId', async (req, res) => {
  */
 app.get('/api/manual-records', async (req, res) => {
   try {
-    const manualRecordDao = new ManualRecordDao(pool);
     const page = parseInt(req.query.page as string) || 1;
     const size = parseInt(req.query.size as string) || 10;
     const titleParam = req.query.title as string;
 
-    const options: {
-      size: number;
-      offset: number;
-      title?: string;
-    } = {
+    const options = {
       size: size,
       offset: (page - 1) * size,
       title: titleParam,
     };
 
-    const { records, totalCount } = await manualRecordDao.listRecords(options);
+    const result = await listManualRecords(pool, options);
+
+    if (!result.success) {
+      log('error', `Failed to retrieve manual records: ${result.error}`);
+      return res.status(result.statusCode || 500).json({ error: result.error });
+    }
+
     res.status(200).json({
-      records: records,
-      totalCount: totalCount,
-      currentPage: page,
-      totalPages: Math.ceil(totalCount / size),
+      records: result.records,
+      totalCount: result.totalCount,
+      currentPage: result.currentPage,
+      totalPages: result.totalPages,
     });
   } catch (error) {
     log('error', `Failed to retrieve manual records: ${error}`);
@@ -717,40 +717,18 @@ const server = app.listen(PORT, () => {
  */
 app.post('/api/manual-records', async (req, res) => {
   try {
-    const manualRecordDao = new ManualRecordDao(pool);
-    const { metadata } = req.body;
+    const result = await createManualRecord(pool, req.body);
 
-    if (!metadata) {
-      return res.status(400).json({ error: "Missing requried field: 'metadata'." });
+    if (!result.success) {
+      log('error', `Failed to create manual record: ${result.error}`);
+      return res.status(result.statusCode || 500).json({ error: result.error });
     }
 
-    if (!metadata.assetType) {
-      return res.status(400).json({ error: "Missing requried field: 'assetType'." });
-    }
-
-    const title = metadata.titles && metadata.titles.length > 0 ? metadata.titles[0].titleText : null;
-
-    const darId = await postToDarManual(req.body);
-
-    if (darId) {
-      // Create record in database
-      const dbRecord = await manualRecordDao.createRecord({
-        dar_id: darId,
-        title: title,
-      });
-
-      log('info', `Successfully created manual record with DAR ID: ${darId}`);
-      res.status(201).json({
-        id: dbRecord.id,
-        dar_id: darId,
-        message: 'Record created successfully in DAR.',
-      });
-    } else {
-      log('error', `Failed to create manual record in DAR`);
-      res.status(500).json({
-        error: 'Failed to create record in DAR.',
-      });
-    }
+    res.status(201).json({
+      id: result.id,
+      dar_id: result.dar_id,
+      message: result.message,
+    });
   } catch (error) {
     log('error', `Error creating manual record: ${error}`);
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
@@ -788,34 +766,19 @@ app.post('/api/manual-records', async (req, res) => {
  */
 app.put('/api/manual-records/:darId', async (req, res) => {
   try {
-    const manualRecordDao = new ManualRecordDao(pool);
     const { darId } = req.params;
 
-    const metadata = req.body.metadata || req.body;
-    const title = metadata?.titles && metadata.titles.length > 0 ? metadata.titles[0].titleText : null;
+    const result = await updateManualRecord(pool, darId, req.body);
 
-    const success = await putToDarManual(darId, req.body);
-    if (!success) {
-      log('error', `Failed to manually update record ${darId} in DAR`);
-      return res.status(500).json({ error: 'Failed to update record in DAR.' });
-    }
-
-    let manualRecord = await manualRecordDao.getRecordByDarId(darId);
-    if (!manualRecord) {
-      manualRecord = await manualRecordDao.createRecord({
-        dar_id: darId,
-        title: title,
-      });
-      log('info', `Registered existing dar record ${darId} to local database`);
-    } else if (manualRecord.title !== title) {
-      manualRecord = await manualRecordDao.updateTitle(darId, title);
-      log('info', `Updated title for dar record ${darId} in local database`);
+    if (!result.success) {
+      log('error', `Failed to update manual record: ${result.error}`);
+      return res.status(result.statusCode || 500).json({ error: result.error });
     }
 
     res.status(200).json({
-      id: manualRecord.id,
-      dar_id: darId,
-      message: 'Record updated successfully in DAR.',
+      id: result.id,
+      dar_id: result.dar_id,
+      message: result.message,
     });
   } catch (error) {
     log('error', `Error updating manual record: ${error}`);
