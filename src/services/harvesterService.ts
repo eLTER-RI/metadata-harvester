@@ -9,10 +9,15 @@ import { CONFIG } from '../../config';
 import { HarvesterContext, startRecordSync, startRepositorySync } from './jobs/harvest/harvester';
 import { syncDeimsSites } from './jobs/deimsSync/syncDeimsSites';
 import { syncWithDar } from './jobs/syncDbWithRemote/localDarSync';
-import { RecordDao } from '../store/dao/recordDao';
-import { ResolvedRecordDao } from '../store/dao/resolvedRecordsDao';
 import { createRulesForRecord, deleteRuleForRecord, getRulesForRecord } from './rulesService';
 import { listManualRecords, createManualRecord, updateManualRecord } from './manualRecordsService';
+import {
+  listRecords,
+  getRecordByDarId,
+  updateRecordStatus,
+  listRepositories,
+  listResolvedCounts,
+} from './recordsService';
 import pool from '../db';
 
 const swaggerOptions = {
@@ -76,7 +81,6 @@ const PORT = process.env.PORT || 3000;
  */
 app.get('/api/records', async (req, res) => {
   try {
-    const recordDao = new RecordDao(pool);
     const page = parseInt(req.query.page as string) || 1;
     const size = parseInt(req.query.size as string) || 10;
     const resolvedParam = req.query.resolved as string;
@@ -94,12 +98,18 @@ app.get('/api/records', async (req, res) => {
       offset: (page - 1) * size,
     };
 
-    const { records, totalCount } = await recordDao.listRecords(options);
+    const result = await listRecords(pool, options);
+
+    if (!result.success) {
+      log('error', `Failed to retrieve records: ${result.error}`);
+      return res.status(result.statusCode || 500).json({ error: result.error });
+    }
+
     res.status(200).json({
-      records: records,
-      totalCount: totalCount,
-      currentPage: page,
-      totalPages: Math.ceil(totalCount / size),
+      records: result.records,
+      totalCount: result.totalCount,
+      currentPage: result.currentPage,
+      totalPages: result.totalPages,
     });
   } catch (error) {
     log('error', `Failed to retrieve records: ${error}`);
@@ -137,10 +147,15 @@ app.get('/api/repositories', async (req, res) => {
       resolved: resolvedParam ? resolvedParam === 'true' : undefined,
       title: titleParam,
     };
-    const recordDao = new RecordDao(pool);
-    const repositoriesWithCount = await recordDao.listRepositoriesWithCount(options);
 
-    res.status(200).json(repositoriesWithCount);
+    const result = await listRepositories(pool, options);
+
+    if (!result.success) {
+      log('error', `Failed to retrieve repositories: ${result.error}`);
+      return res.status(result.statusCode || 500).json({ error: result.error });
+    }
+
+    res.status(200).json(result.repositories);
   } catch (error) {
     log('error', `Failed to retrieve repositories: ${error}`);
     res.status(500).json({ error: 'Failed to retrieve repositories.' });
@@ -186,9 +201,15 @@ app.get('/api/resolved', async (req, res) => {
       repositories: repositories,
       title: titleParam,
     };
-    const resolvedDao = new ResolvedRecordDao(pool);
-    const resolvedsWithCount = await resolvedDao.listResolvedUnresolvedCount(options);
-    res.status(200).json(resolvedsWithCount);
+
+    const result = await listResolvedCounts(pool, options);
+
+    if (!result.success) {
+      log('error', `Failed to retrieve resolved/unresolved counts: ${result.error}`);
+      return res.status(result.statusCode || 500).json({ error: result.error });
+    }
+
+    res.status(200).json(result.counts);
   } catch (error) {
     log('error', `Failed to retrieve resolved/unresolved counts: ${error}`);
     res.status(500).json({ error: 'Failed to retrieve resolved/unresolved counts.' });
@@ -218,14 +239,15 @@ app.get('/api/resolved', async (req, res) => {
 app.get('/api/records/:darId', async (req, res) => {
   try {
     const { darId } = req.params;
-    const recordDao = new RecordDao(pool);
-    const record = await recordDao.getRecordByDarId(darId);
 
-    if (!record) {
-      return res.status(404).json({ error: 'Record not found in harvested_records' });
+    const result = await getRecordByDarId(pool, darId);
+
+    if (!result.success) {
+      log('error', `Failed to fetch harvested record: ${result.error}`);
+      return res.status(result.statusCode || 500).json({ error: result.error });
     }
 
-    res.status(200).json(record);
+    res.status(200).json(result.record);
   } catch (error) {
     log('error', `Failed to fetch harvested record: ${error}`);
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
@@ -264,22 +286,22 @@ app.get('/api/records/:darId', async (req, res) => {
  *         description: Invalid input or missing fields.
  */
 app.patch('/api/records/:darId/status', async (req, res) => {
-  const darId = req.params.darId as string;
-  const { status, resolvedBy } = req.body;
+  try {
+    const { darId } = req.params;
+    const { status, resolvedBy } = req.body;
 
-  if (!darId || !status) {
-    return res.status(400).json({ error: 'Missing required fields.' });
-  }
+    const result = await updateRecordStatus(pool, darId, status, resolvedBy);
 
-  const resolvedRecordDao = new ResolvedRecordDao(pool);
-  if (status === 'resolved') {
-    await resolvedRecordDao.create(darId, resolvedBy);
-    res.status(200).json({ message: 'Status updated successfully.' });
-  } else if (status === 'unresolved') {
-    await resolvedRecordDao.delete(darId);
-    res.status(200).json({ message: 'Status updated successfully.' });
-  } else {
-    return res.status(400).json({ error: "Invalid status value. Status must be 'resolved' or 'unresolved'." });
+    if (!result.success) {
+      log('error', `Failed to update record status: ${result.error}`);
+      return res.status(result.statusCode || 500).json({ error: result.error });
+    }
+
+    res.status(200).json({ message: result.message });
+  } catch (error) {
+    log('error', `Failed to update record status: ${error}`);
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+    res.status(500).json({ error: `Failed to update record status: ${errorMessage}` });
   }
 });
 
