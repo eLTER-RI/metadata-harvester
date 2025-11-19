@@ -369,6 +369,17 @@ export function extractB2ShareRelatedIdentifiers(input: Metadata): RelatedIdenti
 function extractB2ShareKeywords(input: any): Keywords[] {
   const keywords: Keywords[] = [];
 
+  if (input.keywords && Array.isArray(input.keywords)) {
+    input.keywords.forEach((kw: any) => {
+      if (kw && typeof kw === 'string' && kw.trim().length > 0) {
+        keywords.push({
+          keywordLabel: kw.trim(),
+          keywordURI: kw && typeof kw === 'string' ? kw.trim() : undefined,
+        });
+      }
+    });
+  }
+
   input.subjects?.forEach((subject: any) => {
     if (subject?.subject) {
       if (subject.id || subject.scheme) {
