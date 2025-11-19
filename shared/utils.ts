@@ -1,7 +1,4 @@
-import isEqual from 'lodash/isEqual';
-import isObject from 'lodash/isObject';
-import isArray from 'lodash/isArray';
-import keys from 'lodash/keys';
+import { isEqual, isObject, isArray, keys } from 'lodash';
 
 // Rule generation types and functions
 export type Rule = {
