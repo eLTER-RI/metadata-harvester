@@ -31,6 +31,10 @@ describe('Tests for RulesDao', () => {
       dar_checksum: 'dar_checksum123',
       status: 'success',
       title: 'First Record for Repositories Testing',
+      site_references: [],
+      habitat_references: [],
+      dataset_type: null,
+      keywords: [],
     };
     await recordDao.createRecord(record1);
     const record2: Omit<DbRecord, 'last_harvested'> = {
@@ -41,6 +45,10 @@ describe('Tests for RulesDao', () => {
       dar_checksum: 'dar_checksum456',
       status: 'success',
       title: 'Second Record for Repositories Testing',
+      site_references: [],
+      habitat_references: [],
+      dataset_type: null,
+      keywords: [],
     };
     await recordDao.createRecord(record2);
     const record3: Omit<DbRecord, 'last_harvested'> = {
@@ -51,6 +59,10 @@ describe('Tests for RulesDao', () => {
       dar_checksum: 'dar_checksum123',
       status: 'success',
       title: 'First B2SHARE Record for Repositories Testing',
+      site_references: [],
+      habitat_references: [],
+      dataset_type: null,
+      keywords: [],
     };
     await recordDao.createRecord(record3);
     const record4: Omit<DbRecord, 'last_harvested'> = {
@@ -61,6 +73,10 @@ describe('Tests for RulesDao', () => {
       dar_checksum: 'dar_checksum456',
       status: 'success',
       title: 'Second B2SHARE Record for Repositories Testing',
+      site_references: [],
+      habitat_references: [],
+      dataset_type: null,
+      keywords: [],
     };
     await recordDao.createRecord(record4);
     const record5: Omit<DbRecord, 'last_harvested'> = {
@@ -71,6 +87,10 @@ describe('Tests for RulesDao', () => {
       dar_checksum: 'dar_checksum123',
       status: 'success',
       title: 'First SITES Record for Repositories Testing',
+      site_references: [],
+      habitat_references: [],
+      dataset_type: null,
+      keywords: [],
     };
     await recordDao.createRecord(record5);
     const record6: Omit<DbRecord, 'last_harvested'> = {
@@ -81,6 +101,10 @@ describe('Tests for RulesDao', () => {
       dar_checksum: 'dar_checksum456',
       status: 'success',
       title: 'Second SITES Record for Repositories Testing',
+      site_references: [],
+      habitat_references: [],
+      dataset_type: null,
+      keywords: [],
     };
     await recordDao.createRecord(record6);
 

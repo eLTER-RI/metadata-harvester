@@ -46,9 +46,10 @@ export class ResolvedRecordDao {
       paramCount++;
     }
     if (options?.repositories && options.repositories.length > 0) {
-      conditions.push(`h.source_repository = ANY($${paramCount})`);
-      values.push(options.repositories);
-      paramCount++;
+      const placeholders = options.repositories.map((_, i) => `$${paramCount + i}`).join(', '); // for pg-mem needs "IN"
+      conditions.push(`h.source_repository IN (${placeholders})`);
+      values.push(...options.repositories);
+      paramCount += options.repositories.length;
     }
     if (options?.title) {
       conditions.push(`h.title ILIKE $${paramCount}`);
