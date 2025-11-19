@@ -3,7 +3,6 @@ import express from 'express';
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 import cors from 'cors';
-import { Pool } from 'pg';
 import { log } from './serviceLogging';
 import { RepositoryType } from '../store/commonStructure';
 import { CONFIG } from '../../config';
@@ -15,6 +14,7 @@ import { ResolvedRecordDao } from '../store/dao/resolvedRecordsDao';
 import { RuleDao } from '../store/dao/rulesDao';
 import { ManualRecordDao } from '../store/dao/manualRecordDao';
 import { postToDarManual, putToDarManual } from './clients/darApi';
+import { createRulesForRecord } from './rulesService';
 import pool from '../db';
 
 const swaggerOptions = {
@@ -350,67 +350,18 @@ app.post('/api/records/:darId/rules', async (req, res) => {
     const { darId } = req.params;
     const rulesData = req.body;
 
-    if (!Array.isArray(rulesData) || rulesData.length === 0) {
-      return res.status(400).json({ error: 'Invalid rules data. Expected non-empty array.' });
+    const result = await createRulesForRecord(pool, darId, rulesData);
+
+    if (!result.success) {
+      log('error', `Failed to create rules: ${result.error}`);
+      return res.status(result.statusCode || 500).json({ error: result.error });
     }
 
-    for (const rule of rulesData) {
-      if (
-        !rule.target_path ||
-        !Object.prototype.hasOwnProperty.call(rule, 'before_value') ||
-        !Object.prototype.hasOwnProperty.call(rule, 'after_value')
-      ) {
-        return res.status(400).json({
-          error: 'Invalid rule data. All rules must have target_path, before_value, and after_value.',
-        });
-      }
-
-      // Allow null before_value (for new fields) or null after_value (for removed fields)
-      if (rule.before_value === null && rule.after_value === null) {
-        return res.status(400).json({
-          error: 'Invalid rule data. Either before_value or after_value must not be null.',
-        });
-      }
+    if (result.processedCount === 0) {
+      return res.status(200).json({ message: result.message });
     }
 
-    const recordDao = new RecordDao(pool);
-    const record = await recordDao.getRecordByDarId(darId);
-    if (!record || !record?.source_url || !record?.source_repository) {
-      return res.status(404).json({ error: `Record with dar id ${darId}. not found` });
-    }
-
-    const ruleDao = new RuleDao(pool);
-    const processedRules = [];
-
-    for (const rule of rulesData) {
-      const wasProcessed = await ruleDao.createOrUpdateRule(
-        darId,
-        rule.target_path,
-        rule.before_value,
-        rule.after_value,
-      );
-
-      if (wasProcessed) {
-        processedRules.push(rule.target_path);
-      }
-    }
-
-    if (processedRules.length === 0) {
-      return res.status(200).json({ message: 'No rules needed - all values are unchanged.' });
-    }
-
-    log('info', `Processed ${processedRules.length} rules for ${darId}: ${processedRules.join(', ')}`);
-
-    // Trigger re-harvest
-    const repositoryType = record.source_repository.toUpperCase() as RepositoryType;
-    const context = await HarvesterContext.create(pool, repositoryType, false);
-    try {
-      await startRecordSync(context, record.source_url);
-      log('info', `Re-harvest job for ${record.source_url} completed successfully.`);
-    } catch (e) {
-      log('error', `Re-harvest job for ${record.source_url} failed with error: ${e}`);
-    }
-    res.status(201).json({ message: `${processedRules.length} rules processed successfully.` });
+    res.status(201).json({ message: result.message });
   } catch (error) {
     log('error', `Failed to create rules: ${error}`);
     res.status(500).json({ error: 'Failed to create rules.' });
