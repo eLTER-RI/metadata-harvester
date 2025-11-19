@@ -31,6 +31,10 @@ describe('Tests for RulesDao', () => {
       dar_checksum: 'dar_checksum123',
       status: 'success',
       title: 'Record for Testing',
+      site_references: [],
+      habitat_references: [],
+      dataset_type: null,
+      keywords: [],
     };
     await recordDao.createRecord(newRecord);
 
@@ -59,7 +63,7 @@ describe('Tests for RulesDao', () => {
     await ruleDao.deleteRule(rulesForRecord[0].id);
     const rulesForRecord2 = await ruleDao.getRulesForRecord('uuid-uuid');
     expect(rulesForRecord2).toHaveLength(2);
-    await ruleDao.deleteRuleForRecord(rulesForRecord[0].dar_id);
+    await ruleDao.deleteRuleForRecord('uuid-uuid');
     const rulesForRecord3 = await ruleDao.getRulesForRecord('uuid-uuid');
     expect(rulesForRecord3).toHaveLength(0);
   });

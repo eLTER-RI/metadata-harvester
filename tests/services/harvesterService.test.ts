@@ -4,6 +4,7 @@ import { HarvesterContext, startRecordSync, startRepositorySync } from '../../sr
 import { syncDeimsSites } from '../../src/services/jobs/deimsSync/syncDeimsSites';
 import { syncWithDar } from '../../src/services/jobs/syncDbWithRemote/localDarSync';
 import { log } from '../../src/services/serviceLogging';
+import { createRulesForRecord, deleteRuleForRecord, getRulesForRecord } from '../../src/services/rulesService';
 
 // dao
 const mockListRecords = jest.fn();
@@ -38,7 +39,6 @@ jest.mock('../../src/store/dao/rulesDao', () => ({
     deleteRule: mockDeleteRule,
   })),
 }));
-
 // jobs
 jest.mock('../../src/services/jobs/harvest/harvester');
 jest.mock('../../src/services/jobs/deimsSync/syncDeimsSites');
@@ -52,6 +52,14 @@ const mockHarvesterContextCreate = HarvesterContext.create as jest.Mock;
 // services
 jest.mock('../../src/services/serviceLogging', () => ({
   log: jest.fn(),
+}));
+const mockCreateRulesForRecord = createRulesForRecord as jest.Mock;
+const mockDeleteRuleForRecord = deleteRuleForRecord as jest.Mock;
+const mockGetRulesForRecord = getRulesForRecord as jest.Mock;
+jest.mock('../../src/services/rulesService', () => ({
+  createRulesForRecord: jest.fn(),
+  deleteRuleForRecord: jest.fn(),
+  getRulesForRecord: jest.fn(),
 }));
 
 jest.mock('pg', () => ({
@@ -201,11 +209,14 @@ describe('Harvester Service API', () => {
   describe('GET /api/records/:darId/rules', () => {
     it('should return rules for a record', async () => {
       const mockData = [{ id: 'firstRule', field: 'metadata.name' }];
-      mockGetRules.mockResolvedValue(mockData);
+      mockGetRulesForRecord.mockResolvedValue({
+        success: true,
+        rules: mockData,
+      });
       const response = await request(app).get('/api/records/123/rules');
       expect(response.status).toBe(200);
       expect(response.body).toEqual(mockData);
-      expect(mockGetRules).toHaveBeenCalledWith('123');
+      expect(mockGetRulesForRecord).toHaveBeenCalledWith(expect.anything(), '123');
     });
   });
 
@@ -218,29 +229,35 @@ describe('Harvester Service API', () => {
           after_value: 'New Title',
         },
       ];
-      mockGetRecordByDarId.mockResolvedValue({ source_url: 'http://example.com', source_repository: 'ZENODO' });
-      mockCreateOrUpdateRule.mockResolvedValue(true);
-      mockHarvesterContextCreate.mockResolvedValue({});
-      mockStartRecordSync.mockResolvedValue(undefined);
+      mockCreateRulesForRecord.mockResolvedValue({
+        success: true,
+        processedCount: 1,
+        processedPaths: ['metadata.titles[0].titleText'],
+        message: '1 rules processed successfully.',
+      });
       const response = await request(app).post('/api/records/123/rules').send(mockRules);
       expect(response.status).toBe(201);
-      expect(mockGetRecordByDarId).toHaveBeenCalledWith('123');
-      expect(mockCreateOrUpdateRule).toHaveBeenCalledWith(
-        '123',
-        'metadata.titles[0].titleText',
-        'Old Title',
-        'New Title',
-      );
-      expect(mockStartRecordSync).toHaveBeenCalledWith({}, 'http://example.com');
+      expect(mockCreateRulesForRecord).toHaveBeenCalledWith(expect.anything(), '123', mockRules);
+      expect(response.body.message).toBe('1 rules processed successfully.');
     });
 
     it('should return 400 if rules are not an array', async () => {
+      mockCreateRulesForRecord.mockResolvedValue({
+        success: false,
+        error: 'Invalid rules data. Expected non-empty array.',
+        statusCode: 400,
+      });
       const response = await request(app).post('/api/records/123/rules').send({ not: 'an array' });
       expect(response.status).toBe(400);
       expect(response.body.error).toBe('Invalid rules data. Expected non-empty array.');
     });
 
     it('should return 400 if rules array is empty', async () => {
+      mockCreateRulesForRecord.mockResolvedValue({
+        success: false,
+        error: 'Invalid rules data. Expected non-empty array.',
+        statusCode: 400,
+      });
       const response = await request(app).post('/api/records/123/rules').send([]);
       expect(response.status).toBe(400);
       expect(response.body.error).toBe('Invalid rules data. Expected non-empty array.');
@@ -254,19 +271,44 @@ describe('Harvester Service API', () => {
           after_value: 'New Title',
         },
       ];
-      mockGetRecordByDarId.mockResolvedValue(null);
+      mockCreateRulesForRecord.mockResolvedValue({
+        success: false,
+        error: 'Record with dar id 123 not found',
+        statusCode: 404,
+      });
       const response = await request(app).post('/api/records/123/rules').send(mockRules);
       expect(response.status).toBe(404);
-      expect(response.body.error).toBe('Record with dar id 123. not found');
+      expect(response.body.error).toBe('Record with dar id 123 not found');
+    });
+
+    it('should return 200 if no rules needed', async () => {
+      const mockRules = [
+        {
+          target_path: 'metadata.titles[0].titleText',
+          before_value: 'Old Title',
+          after_value: 'Old Title',
+        },
+      ];
+      mockCreateRulesForRecord.mockResolvedValue({
+        success: true,
+        processedCount: 0,
+        processedPaths: [],
+        message: 'No rules needed - all values are unchanged.',
+      });
+      const response = await request(app).post('/api/records/123/rules').send(mockRules);
+      expect(response.status).toBe(200);
+      expect(response.body.message).toBe('No rules needed - all values are unchanged.');
     });
   });
 
   describe('DELETE /api/records/:darId/rules/:ruleId', () => {
     it('should delete a rule', async () => {
-      mockDeleteRule.mockResolvedValue(undefined);
+      mockDeleteRuleForRecord.mockResolvedValue({
+        success: true,
+      });
       const response = await request(app).delete('/api/records/123/rules/abc');
       expect(response.status).toBe(204);
-      expect(mockDeleteRule).toHaveBeenCalledWith('abc');
+      expect(mockDeleteRuleForRecord).toHaveBeenCalledWith(expect.anything(), '123', 'abc');
     });
   });
 
