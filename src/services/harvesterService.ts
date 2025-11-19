@@ -11,10 +11,9 @@ import { syncDeimsSites } from './jobs/deimsSync/syncDeimsSites';
 import { syncWithDar } from './jobs/syncDbWithRemote/localDarSync';
 import { RecordDao } from '../store/dao/recordDao';
 import { ResolvedRecordDao } from '../store/dao/resolvedRecordsDao';
-import { RuleDao } from '../store/dao/rulesDao';
 import { ManualRecordDao } from '../store/dao/manualRecordDao';
 import { postToDarManual, putToDarManual } from './clients/darApi';
-import { createRulesForRecord, deleteRuleForRecord } from './rulesService';
+import { createRulesForRecord, deleteRuleForRecord, getRulesForRecord } from './rulesService';
 import pool from '../db';
 
 const swaggerOptions = {
@@ -306,9 +305,15 @@ app.patch('/api/records/:darId/status', async (req, res) => {
 app.get('/api/records/:darId/rules', async (req, res) => {
   try {
     const { darId } = req.params;
-    const ruleDao = new RuleDao(pool);
-    const rules = await ruleDao.getRulesForRecord(darId);
-    res.status(200).json(rules);
+
+    const result = await getRulesForRecord(pool, darId);
+
+    if (!result.success) {
+      log('error', `Failed to retrieve rules: ${result.error}`);
+      return res.status(result.statusCode || 500).json({ error: result.error });
+    }
+
+    res.status(200).json(result.rules);
   } catch (error) {
     log('error', `Failed to retrieve rules: ${error}`);
     res.status(500).json({ error: 'Failed to retrieve rules.' });

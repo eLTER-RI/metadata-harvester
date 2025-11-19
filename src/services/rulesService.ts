@@ -156,3 +156,26 @@ export async function deleteRuleForRecord(pool: Pool, darId: string, ruleId: str
     success: true,
   };
 }
+
+export interface GetRulesResult {
+  success: boolean;
+  rules?: RuleDbRecord[];
+  error?: string;
+  statusCode?: number;
+}
+
+/**
+ * Retrieves all rules for a record.
+ * @param {Pool} pool Database connection pool.
+ * @param {string} darId The DAR ID of the record.
+ * @returns {Promise<GetRulesResult>} Result object.
+ */
+export async function getRulesForRecord(pool: Pool, darId: string): Promise<GetRulesResult> {
+  const ruleDao = new RuleDao(pool);
+  const rules = await ruleDao.getRulesForRecord(darId);
+
+  return {
+    success: true,
+    rules,
+  };
+}
