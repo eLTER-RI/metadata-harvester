@@ -116,6 +116,13 @@ export async function createManualRecord(pool: Pool, recordData: any): Promise<C
     title: title,
   });
 
+  if (!dbRecord) {
+    return {
+      success: false,
+      message: 'Failed to create manual record in database.',
+    };
+  }
+
   log('info', `Successfully created manual record with DAR ID: ${darId}`);
 
   return {
@@ -159,9 +166,21 @@ export async function updateManualRecord(
       dar_id: darId,
       title: title,
     });
+    if (!manualRecord) {
+      return {
+        success: false,
+        message: 'Failed to create manual record in database.',
+      };
+    }
     log('info', `Registered existing dar record ${darId} to local database`);
   } else if (manualRecord.title !== title) {
     manualRecord = await manualRecordDao.updateTitle(darId, title);
+    if (!manualRecord) {
+      return {
+        success: false,
+        message: 'Failed to update manual record in database.',
+      };
+    }
     log('info', `Updated title for dar record ${darId} in local database`);
   }
 
