@@ -2,7 +2,7 @@ import { Pool } from 'pg';
 import { log } from './serviceLogging';
 import { RepositoryType } from '../store/commonStructure';
 import { RecordDao } from '../store/dao/recordDao';
-import { RuleDao } from '../store/dao/rulesDao';
+import { RuleDao, RuleDbRecord } from '../store/dao/rulesDao';
 import { HarvesterContext, startRecordSync } from './jobs/harvest/harvester';
 
 export interface CreateRuleRequest {
@@ -118,5 +118,41 @@ export async function createRulesForRecord(
     processedCount: processedRules.length,
     processedPaths: processedRules,
     message: `${processedRules.length} rules processed successfully.`,
+  };
+}
+
+export interface DeleteRuleResult {
+  success: boolean;
+  error?: string;
+  statusCode?: number;
+}
+
+/**
+ * Deletes a rule by its ID and triggers a re-harvest if the record exists.
+ * @param {Pool} pool Database connection pool.
+ * @param {string} darId The DAR ID of the record.
+ * @param {string} ruleId The ID of the rule to delete.
+ * @returns {Promise<DeleteRuleResult>} Result object.
+ */
+export async function deleteRuleForRecord(pool: Pool, darId: string, ruleId: string): Promise<DeleteRuleResult> {
+  const ruleDao = new RuleDao(pool);
+  await ruleDao.deleteRule(ruleId);
+
+  const recordDao = new RecordDao(pool);
+  const record = await recordDao.getRecordByDarId(darId);
+  if (record) {
+    log('info', `Rule ${ruleId} deleted for ${darId}. Triggering single record re-harvest.`);
+    const repositoryType = record.source_repository.toUpperCase() as RepositoryType;
+    const context = await HarvesterContext.create(pool, repositoryType, false);
+    try {
+      await startRecordSync(context, record.source_url);
+      log('info', `Re-harvest job for ${record.source_url} completed successfully.`);
+    } catch (e) {
+      log('error', `Re-harvest job for ${record.source_url} failed with error: ${e}`);
+    }
+  }
+
+  return {
+    success: true,
   };
 }

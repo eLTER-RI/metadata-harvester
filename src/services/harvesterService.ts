@@ -14,7 +14,7 @@ import { ResolvedRecordDao } from '../store/dao/resolvedRecordsDao';
 import { RuleDao } from '../store/dao/rulesDao';
 import { ManualRecordDao } from '../store/dao/manualRecordDao';
 import { postToDarManual, putToDarManual } from './clients/darApi';
-import { createRulesForRecord } from './rulesService';
+import { createRulesForRecord, deleteRuleForRecord } from './rulesService';
 import pool from '../db';
 
 const swaggerOptions = {
@@ -389,21 +389,12 @@ app.post('/api/records/:darId/rules', async (req, res) => {
 app.delete('/api/records/:darId/rules/:ruleId', async (req, res) => {
   try {
     const { darId, ruleId } = req.params;
-    const ruleDao = new RuleDao(pool);
-    await ruleDao.deleteRule(ruleId);
 
-    const recordDao = new RecordDao(pool);
-    const record = await recordDao.getRecordByDarId(darId);
-    if (record) {
-      log('info', `Rule ${ruleId} deleted for ${darId}. Triggering single record re-harvest.`);
-      const repositoryType = record.source_repository.toUpperCase() as RepositoryType;
-      const context = await HarvesterContext.create(pool, repositoryType, false);
-      try {
-        await startRecordSync(context, record.source_url);
-        log('info', `Re-harvest job for ${record.source_url} completed successfully.`);
-      } catch (e) {
-        log('error', `Re-harvest job for ${record.source_url} failed with error: ${e}`);
-      }
+    const result = await deleteRuleForRecord(pool, darId, ruleId);
+
+    if (!result.success) {
+      log('error', `Failed to delete rule: ${result.error}`);
+      return res.status(result.statusCode || 500).json({ error: result.error });
     }
 
     res.status(204).send();
