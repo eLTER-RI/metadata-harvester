@@ -65,7 +65,15 @@ describe('dbRecordUpsert', () => {
       dbRecord.source_repository as RepositoryType,
       dbRecord.source_checksum,
       dbRecord.dar_checksum,
-      undefined,
+      dbRecord.title
+        ? {
+            metadata: {
+              assetType: 'Dataset',
+              titles: [{ titleText: dbRecord.title }],
+              externalSourceInformation: { externalSourceURI: dbRecord.source_url },
+            },
+          }
+        : undefined,
       oldUrl,
     );
 
@@ -77,6 +85,10 @@ describe('dbRecordUpsert', () => {
       dar_checksum: dbRecord.dar_checksum,
       status: 'success',
       title: dbRecord.title,
+      site_references: [],
+      habitat_references: [],
+      dataset_type: null,
+      keywords: [],
     });
     expect(mockLog).toHaveBeenCalledWith(
       'info',
@@ -98,7 +110,15 @@ describe('dbRecordUpsert', () => {
       dbRecord.source_repository as RepositoryType,
       dbRecord.source_checksum,
       dbRecord.dar_checksum,
-      dbRecord.title,
+      dbRecord.title
+        ? {
+            metadata: {
+              assetType: 'Dataset',
+              titles: [{ titleText: dbRecord.title }],
+              externalSourceInformation: { externalSourceURI: dbRecord.source_url },
+            },
+          }
+        : undefined,
     );
 
     expect(mockRecordDao.getRecordBySourceUrl).toHaveBeenCalledWith(dbRecord.source_url);
@@ -110,6 +130,10 @@ describe('dbRecordUpsert', () => {
       dar_checksum: dbRecord.dar_checksum,
       status: 'success',
       title: dbRecord.title,
+      site_references: [],
+      habitat_references: [],
+      dataset_type: null,
+      keywords: [],
     });
     expect(mockRecordDao.updateRecord).not.toHaveBeenCalled();
   });
@@ -124,7 +148,15 @@ describe('dbRecordUpsert', () => {
       dbRecord.source_repository as RepositoryType,
       dbRecord.source_checksum,
       dbRecord.dar_checksum,
-      dbRecord.title,
+      dbRecord.title
+        ? {
+            metadata: {
+              assetType: 'Dataset',
+              titles: [{ titleText: dbRecord.title }],
+              externalSourceInformation: { externalSourceURI: dbRecord.source_url },
+            },
+          }
+        : undefined,
     );
 
     expect(mockRecordDao.getRecordBySourceUrl).toHaveBeenCalledWith(dbRecord.source_url);
@@ -136,6 +168,10 @@ describe('dbRecordUpsert', () => {
       dar_checksum: dbRecord.dar_checksum,
       status: 'success',
       title: dbRecord.title,
+      site_references: [],
+      habitat_references: [],
+      dataset_type: null,
+      keywords: [],
     });
     expect(mockRecordDao.createRecord).not.toHaveBeenCalled();
   });
@@ -151,7 +187,15 @@ describe('dbRecordUpsert', () => {
       dbRecord.source_repository as RepositoryType,
       dbRecord.source_checksum,
       dbRecord.dar_checksum,
-      dbRecord.title,
+      dbRecord.title
+        ? {
+            metadata: {
+              assetType: 'Dataset',
+              titles: [{ titleText: dbRecord.title }],
+              externalSourceInformation: { externalSourceURI: dbRecord.source_url },
+            },
+          }
+        : undefined,
     );
 
     expect(mockLog).toHaveBeenCalledWith(
