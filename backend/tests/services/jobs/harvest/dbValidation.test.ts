@@ -40,6 +40,10 @@ describe('dbValidationPhase', () => {
         status: 'in_progress',
         last_harvested: new Date('2025-12-31'),
         title: 'A title of a record',
+        site_references: [],
+        habitat_references: [],
+        dataset_type: null,
+        keywords: [],
       },
       {
         source_url: 'http://zenodo.ord/record/2',
@@ -50,6 +54,10 @@ describe('dbValidationPhase', () => {
         status: 'in_progress',
         last_harvested: new Date('2025-12-31'),
         title: 'A title of a record',
+        site_references: [],
+        habitat_references: [],
+        dataset_type: null,
+        keywords: [],
       },
     ];
     mockRecordDao.listRecordsByRepository.mockResolvedValue(dbRecords);
@@ -78,6 +86,10 @@ describe('dbValidationPhase', () => {
         status: 'in_progress',
         last_harvested: new Date('2025-12-31'),
         title: 'A title of a record',
+        site_references: [],
+        habitat_references: [],
+        dataset_type: null,
+        keywords: [],
       },
       {
         source_url: 'http://sites.se/record/2',
@@ -88,6 +100,10 @@ describe('dbValidationPhase', () => {
         status: 'in_progress',
         last_harvested: new Date('2025-12-31'),
         title: 'A title of a record',
+        site_references: [],
+        habitat_references: [],
+        dataset_type: null,
+        keywords: [],
       },
     ];
     mockRecordDao.listRecordsByRepository.mockResolvedValue(dbRecords);
