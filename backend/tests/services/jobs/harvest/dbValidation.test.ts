@@ -126,10 +126,11 @@ describe('dbValidationPhase', () => {
       ...baseMockContext,
       repositoryType: 'B2SHARE_EUDAT',
     } as HarvesterContext;
+    mockRecordDao.listRecordsByRepository.mockResolvedValue([]);
 
     await dbValidationPhase(b2shareContext);
 
-    expect(mockRecordDao.listRecordsByRepository).not.toHaveBeenCalled();
+    expect(mockRecordDao.listRecordsByRepository).toHaveBeenCalledWith('B2SHARE_EUDAT');
     expect(b2shareContext.processOneRecordTask).not.toHaveBeenCalled();
   });
 });
