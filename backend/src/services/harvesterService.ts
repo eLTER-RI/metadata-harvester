@@ -34,7 +34,7 @@ const swaggerOptions = {
       },
     ],
   },
-  apis: ['./src/services/harvesterService.ts'],
+  apis: ['./backend/src/services/harvesterService.ts'],
 };
 
 const app = express();

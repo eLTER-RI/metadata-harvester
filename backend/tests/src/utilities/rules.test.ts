@@ -2,7 +2,7 @@ import { CommonDataset } from '../../../src/store/commonStructure';
 import { commonDatasetSchema } from '../../../src/store/commonStructure.zod.gen';
 import { RuleDbRecord } from '../../../src/store/dao/rulesDao';
 import { applyRuleToRecord } from '../../../src/utilities/rules';
-import { appendValue, getNestedValue, setNestedValue } from '../../../shared/utils';
+import { appendValue, getNestedValue, setNestedValue } from '../../../../shared/utils';
 
 jest.mock('../../../src/store/commonStructure.zod.gen', () => ({
   commonDatasetSchema: {
@@ -42,7 +42,7 @@ describe('Rules Utility Functions', () => {
           dataLevelCode: '1',
           dataLevelURI: 'someuri',
         },
-        datasetType: 'Dataset',
+        datasetType: { datasetTypeCode: 'NotSpecified' },
         taxonomicCoverages: ['first', 'second', 'third'],
         externalSourceInformation: {},
       },
@@ -51,7 +51,7 @@ describe('Rules Utility Functions', () => {
 
   describe('getNestedValue', () => {
     it('should find nested simple type value', () => {
-      expect(getNestedValue(sampleRecord, 'metadata.datasetType')).toBe('Dataset');
+      expect(getNestedValue(sampleRecord, 'metadata.datasetType')).toEqual({ datasetTypeCode: 'NotSpecified' });
     });
 
     it('should find nested array and single value in it', () => {
@@ -332,7 +332,7 @@ describe('Rules Utility Functions', () => {
         id: '1',
         dar_id: 'abc-def',
         target_path: 'metadata.datasetType',
-        before_value: 'Dataset',
+        before_value: { datasetTypeCode: 'NotSpecified' },
         after_value: { keywordLabel: 'First Keyword' },
       };
 

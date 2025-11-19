@@ -23,7 +23,7 @@ import { RuleDao } from '../../../store/dao/rulesDao';
 import { findDarRecordBySourceURL, postToDar, putToDar, deleteDarRecordsByIds } from '../../clients/darApi';
 import { dbRecordUpsert } from './dbRecordSync';
 import { ResolvedRecordDao } from '../../../store/dao/resolvedRecordsDao';
-import { getNestedValue } from '../../../../shared/utils';
+import { getNestedValue } from '../../../../../shared/utils';
 
 export class HarvesterContext {
   constructor(

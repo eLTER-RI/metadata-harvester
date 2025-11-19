@@ -394,7 +394,9 @@ describe('Test harvester file', () => {
         keywords: [],
       };
       mockRecordDao.getRecordBySourceUrl.mockResolvedValue([existingDbRecord]);
-      mockRuleDao.getRulesForRecord.mockResolvedValue([{ id: '1', dar_id: 'bbb', target_path: 'test', before_value: null, after_value: null }]);
+      mockRuleDao.getRulesForRecord.mockResolvedValue([
+        { id: '1', dar_id: 'bbb', target_path: 'test', before_value: null, after_value: null },
+      ]);
       (context.mapToCommonStructure as jest.Mock).mockResolvedValue(mockMappedData);
       context.applyRulesToRecord = jest.fn();
 

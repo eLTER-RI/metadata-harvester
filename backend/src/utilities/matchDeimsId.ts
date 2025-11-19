@@ -9,6 +9,7 @@ import { deimsLimiter } from '../services/rateLimiterConcurrency';
  * @returns {string} Response from the Deims API listing endpoint.
  */
 export async function fetchSites(): Promise<any> {
+  // add some kind of retry logic
   const response = await fetch(CONFIG.DEIMS_API_URL);
   if (!response.ok) {
     throw new Error(`Failed to fetch sites: ${response.status}`);
@@ -32,6 +33,7 @@ export function findMatchingUuid(text: string, sites: { id?: { suffix?: string }
 
   const pattern = uuids.map((u) => u.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
   const regex = new RegExp(`\\b(${pattern})\\b`, 'ig');
+  // this can be extracetd
 
   const matches = Array.from(text.matchAll(regex), (m) => m[0]);
   return matches.length > 0 ? matches : null;
