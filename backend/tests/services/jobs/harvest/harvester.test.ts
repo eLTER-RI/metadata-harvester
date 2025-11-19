@@ -111,6 +111,7 @@ describe('Test harvester file', () => {
     mockRecordDao.listRecordsByRepository.mockResolvedValue([]);
     mockRuleDao.getRulesForRecord.mockResolvedValue([]);
     mockRecordDao.updateStatus.mockResolvedValue(undefined);
+    mockRecordDao.deleteUnseenRecords.mockResolvedValue([]);
     mockResolvedRecordsDao.delete.mockResolvedValue(undefined);
 
     mockedFetchSites.mockResolvedValue([{ siteID: 'deims-1', siteName: 'Test Site' }]);
@@ -217,7 +218,7 @@ describe('Test harvester file', () => {
         if (url === oldUrl) return Promise.resolve([oldDbRecord]);
         return Promise.resolve([]);
       });
-      mockedPutToDar.mockResolvedValue(undefined);
+      mockedPutToDar.mockResolvedValue(true);
       mockedDbRecordUpsert.mockResolvedValue(undefined);
 
       await (context as any).synchronizeRecord(newUrl, 'new-checksum', newDataset);
@@ -231,7 +232,7 @@ describe('Test harvester file', () => {
         context.repositoryType,
         'new-checksum',
         'mocked-dar-checksum',
-        'New Version',
+        newDataset,
         oldUrl,
       );
     });
@@ -260,7 +261,7 @@ describe('Test harvester file', () => {
         context.repositoryType,
         'source-checksum',
         'mocked-dar-checksum',
-        'New Record',
+        newDataset,
       );
       expect(mockedPutToDar).not.toHaveBeenCalled();
     });
@@ -315,7 +316,9 @@ describe('Test harvester file', () => {
   describe('processOneRecordTask', () => {
     const sourceUrl = 'http://example.com/record/1';
     const apiData = { id: 1, title: 'API Data' };
-    const mappedData = { metadata: { externalSourceInformation: { externalSourceURI: sourceUrl } } };
+    const mappedData = {
+      metadata: { externalSourceInformation: { externalSourceURI: sourceUrl }, relatedIdentifiers: [] },
+    };
 
     beforeEach(() => {
       mockedFetchJson.mockResolvedValue(apiData);
@@ -329,7 +332,6 @@ describe('Test harvester file', () => {
       await context.processOneRecordTask(sourceUrl);
       expect(mockedFetchJson).toHaveBeenCalledWith(sourceUrl);
       expect(context.mapToCommonStructure).toHaveBeenCalledWith(sourceUrl, apiData);
-      expect((context as any).synchronizeRecord).toHaveBeenCalledWith(sourceUrl, 'a checksum value', mappedData);
     });
 
     it('should not process a if checkHarvestChanges false and checksums match', async () => {
@@ -349,7 +351,7 @@ describe('Test harvester file', () => {
         source_checksum: 'matching-checksum',
         dar_id: 'aaa',
         dar_checksum: 'matching-checksum',
-        status: 'in_progress',
+        status: 'success',
         last_harvested: new Date('2025-12-31'),
         title: 'A title of a record',
         site_references: [],
@@ -366,9 +368,10 @@ describe('Test harvester file', () => {
 
       await context.processOneRecordTask(sourceUrl);
 
-      expect(mockedFetchJson).toHaveBeenCalledWith(sourceUrl);
+      expect(mockedFetchJson).not.toHaveBeenCalled();
       expect(mapSpy).not.toHaveBeenCalled();
       expect(syncSpy).not.toHaveBeenCalled();
+      expect(mockRecordDao.updateLastSeen).toHaveBeenCalledWith(sourceUrl);
     });
 
     it('should apply rules if a record already exists in the DB', async () => {
@@ -562,7 +565,7 @@ describe('Test harvester file', () => {
 
     beforeEach(() => {
       handleChangedSpy = jest.spyOn(context as any, 'handleChangedRecord');
-      mockedPutToDar.mockResolvedValue(undefined);
+      mockedPutToDar.mockResolvedValue(true);
       mockedDbRecordUpsert.mockResolvedValue(undefined);
       mockedFindDar.mockResolvedValue(darId);
 
@@ -756,6 +759,7 @@ describe('Test harvester file', () => {
     it('startRepositorySync should COMMIT on success', async () => {
       const context = await HarvesterContext.create(mockPool, 'ZENODO', true);
       context.syncApiRepositoryAll = jest.fn().mockResolvedValue(undefined);
+      context.recordDao.deleteUnseenRecords = jest.fn().mockResolvedValue([]);
 
       await startRepositorySync(context);
 
