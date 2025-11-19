@@ -19,7 +19,7 @@ export class ManualRecordDao {
     dar_id: string;
     created_by?: string | null;
     title?: string | null;
-  }): Promise<DbManualRecord> {
+  }): Promise<DbManualRecord | null> {
     const result = await this.pool.query(
       `
       INSERT INTO manual_records (dar_id, created_by, title, created_at)
@@ -28,7 +28,7 @@ export class ManualRecordDao {
     `,
       [record.dar_id, record.created_by || null, record.title || null],
     );
-    return result.rows.length > 0 ? result.rows[0] : null;
+    return result.rows.length > 0 ? (result.rows[0] as DbManualRecord) : null;
   }
 
   async getRecordByDarId(darId: string): Promise<DbManualRecord | null> {
@@ -36,12 +36,12 @@ export class ManualRecordDao {
     return result.rows.length > 0 ? result.rows[0] : null;
   }
 
-  async updateTitle(darId: string, title: string | null): Promise<DbManualRecord> {
+  async updateTitle(darId: string, title: string | null): Promise<DbManualRecord | null> {
     const result = await this.pool.query(`UPDATE manual_records SET title = $1 WHERE dar_id = $2 RETURNING *`, [
       title,
       darId,
     ]);
-    return result.rows.length > 0 ? result.rows[0] : null;
+    return result.rows.length > 0 ? (result.rows[0] as DbManualRecord) : null;
   }
 
   async listRecords(options?: {
