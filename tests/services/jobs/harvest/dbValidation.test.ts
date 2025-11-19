@@ -63,8 +63,8 @@ describe('dbValidationPhase', () => {
 
     expect(mockRecordDao.listRecordsByRepository).toHaveBeenCalledWith('ZENODO');
     expect(zenodoContext.processOneRecordTask).toHaveBeenCalledTimes(2);
-    expect(zenodoContext.processOneRecordTask).toHaveBeenCalledWith('http://zenodo.org/record/1');
-    expect(zenodoContext.processOneRecordTask).toHaveBeenCalledWith('http://zenodo.ord/record/2');
+    expect(zenodoContext.processOneRecordTask).toHaveBeenCalledWith('http://zenodo.org/record/1', [dbRecords[0]]);
+    expect(zenodoContext.processOneRecordTask).toHaveBeenCalledWith('http://zenodo.ord/record/2', [dbRecords[1]]);
   });
 
   it('should call processOneSitesRecord for each SITES record', async () => {
@@ -101,8 +101,8 @@ describe('dbValidationPhase', () => {
 
     expect(mockRecordDao.listRecordsByRepository).toHaveBeenCalledWith('SITES');
     expect(sitesContext.processOneRecordTask).toHaveBeenCalledTimes(2);
-    expect(sitesContext.processOneRecordTask).toHaveBeenCalledWith('http://sites.se/record/1');
-    expect(sitesContext.processOneRecordTask).toHaveBeenCalledWith('http://sites.se/record/2');
+    expect(sitesContext.processOneRecordTask).toHaveBeenCalledWith('http://sites.se/record/1', [dbRecords[0]]);
+    expect(sitesContext.processOneRecordTask).toHaveBeenCalledWith('http://sites.se/record/2', [dbRecords[1]]);
   });
 
   it('early return for B2SHARE dbValidation phase', async () => {

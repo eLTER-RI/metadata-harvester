@@ -77,11 +77,19 @@ export class HarvesterContext {
    * @param {string} url The source URL of the record.
    * @param {string} sourceChecksum The checksum of the data from the external source.
    * @param {CommonDataset} dataset The common dataset object to be processed.
+   * @param {DbRecord[]} [existingDbMatches] Pre-fetched database records to avoid redundant queries.
    */
-  private async synchronizeRecord(url: string, sourceChecksum: string, dataset: CommonDataset) {
+  private async synchronizeRecord(
+    url: string,
+    sourceChecksum: string,
+    dataset: CommonDataset,
+    existingDbMatches?: DbRecord[],
+  ) {
     const darChecksum = calculateChecksum(dataset);
     const darMatches = await findDarRecordBySourceURL(url);
-    const dbMatches = await this.recordDao.getRecordBySourceId(url);
+    // Use existing matches if provided (even if empty array), otherwise fetch from DB
+    const dbMatches =
+      existingDbMatches !== undefined ? existingDbMatches : await this.recordDao.getRecordBySourceId(url);
     if (dbMatches.length > 1) {
       throw new Error('More than one existing records of one dataset in the local database.');
     }
@@ -138,13 +146,15 @@ export class HarvesterContext {
    * Processes a single record from an API based repository.
    * It fetches the record data, gets mapping for the given repository type, and then calls a function to synchronize data.
    * @param {string} sourceUrl The source URL of the record on the remote repository.
+   * @param {DbRecord[]} [existingDbRecord] Pre-fetched database record to avoid redundant queries (used by dbValidationPhase).
    */
-
-  public async processOneRecordTask(sourceUrl: string) {
-    // todo: change for the db validation
+  public async processOneRecordTask(sourceUrl: string, existingDbRecord?: DbRecord[]) {
     if (!sourceUrl) return null;
 
-    let dbRecord = await this.recordDao.getRecordBySourceId(sourceUrl);
+    let dbRecord =
+      existingDbRecord && existingDbRecord.length > 0
+        ? existingDbRecord
+        : await this.recordDao.getRecordBySourceId(sourceUrl);
     const hasRules = !dbRecord || !dbRecord[0] || this.ruleDao.getRulesForRecord(dbRecord[0].dar_id);
     if (!hasRules && dbRecord && dbRecord[0] && dbRecord[0].status === 'success') {
       await this.recordDao.updateLastSeen(sourceUrl);
@@ -162,12 +172,20 @@ export class HarvesterContext {
 
     const finalMappedDataset = await this.mapToCommonStructure(sourceUrl, recordData);
     const mappedSourceUrl = finalMappedDataset.metadata.externalSourceInformation.externalSourceURI || sourceUrl;
-    dbRecord = await this.recordDao.getRecordBySourceId(mappedSourceUrl);
+
+    // if the URL changed, try to fetch again
+    if (
+      mappedSourceUrl !== sourceUrl &&
+      (!existingDbRecord || existingDbRecord.length === 0 || existingDbRecord[0]?.source_url !== mappedSourceUrl)
+    ) {
+      dbRecord = await this.recordDao.getRecordBySourceId(mappedSourceUrl);
+    }
+
     if (dbRecord && dbRecord[0]) {
       const darId = dbRecord[0].dar_id;
       await this.applyRulesToRecord(finalMappedDataset, darId);
     }
-    await this.synchronizeRecord(mappedSourceUrl, newSourceChecksum, finalMappedDataset);
+    await this.synchronizeRecord(mappedSourceUrl, newSourceChecksum, finalMappedDataset, dbRecord);
   }
 
   /**

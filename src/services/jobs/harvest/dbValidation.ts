@@ -14,15 +14,17 @@ export async function dbValidationPhase(ctx: HarvesterContext) {
   log('info', `Validation of database data for ${repositoryType}. Found ${dbRecords.length} records in the database.`);
   await Promise.all(
     dbRecords.map(async (dbRecord) => {
+      const existingDbRecord = [dbRecord];
       if (repositoryType === 'SITES') {
         return fieldSitesLimiter.schedule(async () => {
-          await ctx.processOneRecordTask(dbRecord.source_url);
+          await ctx.processOneRecordTask(dbRecord.source_url, existingDbRecord);
         });
       }
       if (repositoryType === 'ZENODO' || repositoryType === 'ZENODO_IT') {
-        if (dbRecord.source_url) return zenodoLimiter.schedule(() => ctx.processOneRecordTask(dbRecord.source_url));
+        if (dbRecord.source_url)
+          return zenodoLimiter.schedule(() => ctx.processOneRecordTask(dbRecord.source_url, existingDbRecord));
       }
-      return ctx.processOneRecordTask(dbRecord.source_url);
+      return ctx.processOneRecordTask(dbRecord.source_url, existingDbRecord);
     }),
   );
 }
