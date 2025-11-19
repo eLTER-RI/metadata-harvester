@@ -143,6 +143,35 @@ export class HarvesterContext {
   }
 
   /**
+   * Checks if processing can be skipped for a record.
+   * @param {DbRecord[] | undefined} dbRecord The database record.
+   * @param {string} sourceChecksum The checksum of the source data.
+   * @returns {Promise<boolean>} True if processing can be skipped, false otherwise.
+   */
+  private async canSkipProcessing(dbRecord: DbRecord[] | undefined, sourceChecksum?: string): Promise<boolean> {
+    if (!dbRecord || !dbRecord[0]) {
+      return false;
+    }
+
+    const hasRules = dbRecord[0].dar_id ? (await this.ruleDao.getRulesForRecord(dbRecord[0].dar_id)).length > 0 : false;
+
+    if (!hasRules && dbRecord[0].status === 'success') {
+      if (sourceChecksum === undefined) {
+        return true;
+      }
+
+      if (!this.checkHarvestChanges) {
+        const isSourceChanged = dbRecord[0]?.source_checksum !== sourceChecksum;
+        if (!isSourceChanged) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  /**
    * Processes a single record from an API based repository.
    * It fetches the record data, gets mapping for the given repository type, and then calls a function to synchronize data.
    * @param {string} sourceUrl The source URL of the record on the remote repository.
@@ -155,8 +184,7 @@ export class HarvesterContext {
       existingDbRecord && existingDbRecord.length > 0
         ? existingDbRecord
         : await this.recordDao.getRecordBySourceId(sourceUrl);
-    const hasRules = !dbRecord || !dbRecord[0] || this.ruleDao.getRulesForRecord(dbRecord[0].dar_id);
-    if (!hasRules && dbRecord && dbRecord[0] && dbRecord[0].status === 'success') {
+    if (await this.canSkipProcessing(dbRecord)) {
       await this.recordDao.updateLastSeen(sourceUrl);
       return;
     }
@@ -164,8 +192,8 @@ export class HarvesterContext {
     const recordData = await fetchJson(sourceUrl);
     if (!recordData) return;
     const newSourceChecksum = calculateChecksum(recordData);
-    const isSourceChanged = dbRecord[0]?.source_checksum !== newSourceChecksum;
-    if (!hasRules && !this.checkHarvestChanges && !isSourceChanged) {
+    // check again with checksum
+    if (await this.canSkipProcessing(dbRecord, newSourceChecksum)) {
       await this.recordDao.updateLastSeen(sourceUrl);
       return;
     }
@@ -179,6 +207,10 @@ export class HarvesterContext {
       (!existingDbRecord || existingDbRecord.length === 0 || existingDbRecord[0]?.source_url !== mappedSourceUrl)
     ) {
       dbRecord = await this.recordDao.getRecordBySourceId(mappedSourceUrl);
+      if (await this.canSkipProcessing(dbRecord, newSourceChecksum)) {
+        await this.recordDao.updateLastSeen(mappedSourceUrl);
+        return;
+      }
     }
 
     if (dbRecord && dbRecord[0]) {
