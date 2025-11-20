@@ -4,6 +4,7 @@ import { Form, Button, Message } from 'semantic-ui-react';
 import { CommonDatasetMetadata } from '../../../backend/src/models/commonStructure';
 import { SiteReferencesGroup } from './metadataForm/groups/SiteReferencesGroup';
 import { KeywordsGroup } from './metadataForm/groups/KeywordsGroup';
+import { DatasetTypeGroup } from './metadataForm/groups/DatasetTypeGroup';
 
 interface CurationFormProps {
   data: CommonDatasetMetadata;
@@ -46,6 +47,7 @@ export const CurationForm = ({ data, onSubmit, isLoading = false }: CurationForm
           </Message>
         )}
 
+        <DatasetTypeGroup />
         <SiteReferencesGroup />
         <KeywordsGroup />
 
