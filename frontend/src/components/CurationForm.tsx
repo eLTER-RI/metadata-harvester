@@ -5,6 +5,7 @@ import { CommonDatasetMetadata } from '../../../backend/src/models/commonStructu
 import { SiteReferencesGroup } from './metadataForm/groups/SiteReferencesGroup';
 import { KeywordsGroup } from './metadataForm/groups/KeywordsGroup';
 import { DatasetTypeGroup } from './metadataForm/groups/DatasetTypeGroup';
+import { HabitatReferencesGroup } from './metadataForm/groups/HabitatReferencesGroup';
 
 interface CurationFormProps {
   data: CommonDatasetMetadata;
@@ -48,6 +49,7 @@ export const CurationForm = ({ data, onSubmit, isLoading = false }: CurationForm
         )}
 
         <DatasetTypeGroup />
+        <HabitatReferencesGroup />
         <SiteReferencesGroup />
         <KeywordsGroup />
 

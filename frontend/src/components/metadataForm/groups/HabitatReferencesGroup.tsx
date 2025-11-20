@@ -62,7 +62,7 @@ export const HabitatReferencesGroup = () => {
         <Segment key={field.id} style={{ marginBottom: '1rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <Header as="h4">Habitat Reference {index + 1}</Header>
-            <Button icon="trash" color="red" size="small" onClick={() => handleDeleteClick(index)} />
+            <Button type="button" icon="trash" color="red" size="small" onClick={() => handleDeleteClick(index)} />
           </div>
 
           <Form.Group widths="equal">
