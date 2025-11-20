@@ -1,4 +1,5 @@
-import { Item, Icon, ItemExtra, Button, Grid, Label, Popup } from 'semantic-ui-react';
+import { Item, Icon, Button, Grid, Label, Popup } from 'semantic-ui-react';
+import { Link } from 'react-router-dom';
 import { ActionButton } from './RecordButton';
 import { useResolveRecord } from '../../hooks/recordMutations';
 
@@ -7,7 +8,6 @@ interface RecordCardProps {
 }
 
 const RecordCard = ({ record }: RecordCardProps) => {
-  const statusColor = record.is_resolved ? 'green' : 'red';
   const { mutate: resolveRecord, isPending: isResolving } = useResolveRecord();
 
   const handleResolve = () => {
@@ -100,25 +100,27 @@ const RecordCard = ({ record }: RecordCardProps) => {
               <a href={record.source_url}>{record.source_url}</a>
             </Item.Meta>
             {renderCurationFields()}
-            {record.is_resolved && (
-              <ItemExtra>
-                <Icon name="check" color={statusColor} />
-              </ItemExtra>
-            )}
           </Grid.Column>
-          <Grid.Column width={4} textAlign="right">
-            <Button.Group vertical>
-              <ActionButton record={record} />
-              <Button
-                color={record.is_resolved ? 'grey' : 'green'}
-                onClick={handleResolve}
-                disabled={isResolving}
-                loading={isResolving}
-              >
-                <Icon name={record.is_resolved ? 'x' : 'check'} />
-                {record.is_resolved ? 'Unresolve' : 'Resolve'}
-              </Button>
-            </Button.Group>
+          <Grid.Column width={4}>
+            <Grid columns={2} verticalAlign="middle">
+              <Grid.Column textAlign="center">
+                <Button
+                  color={record.is_resolved ? 'grey' : 'green'}
+                  onClick={handleResolve}
+                  disabled={isResolving}
+                  loading={isResolving}
+                >
+                  <Icon name={record.is_resolved ? 'x' : 'check'} />
+                  {record.is_resolved ? 'Unresolve' : 'Resolve'}
+                </Button>
+              </Grid.Column>
+              <Grid.Column textAlign="center">
+                <Button.Group vertical>
+                  <Button as={Link} to={`/${record.dar_id}/edit`} icon="edit" content="Edit" />
+                  <ActionButton record={record} />
+                </Button.Group>
+              </Grid.Column>
+            </Grid>
           </Grid.Column>
         </Grid>
       </Item.Content>

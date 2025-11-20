@@ -1,5 +1,4 @@
 import { Dropdown } from 'semantic-ui-react';
-import { Link } from 'react-router-dom';
 import { useReHarvestRecord } from '../../hooks/recordMutations';
 
 interface ActionButtonProps {
@@ -21,7 +20,6 @@ export const ActionButton = ({ record }: ActionButtonProps) => {
   return (
     <Dropdown text="Actions" icon="list" floating labeled button className="icon">
       <Dropdown.Menu>
-        <Dropdown.Item as={Link} to={`/${record.dar_id}/edit`} key={'edit'} icon={'edit'} text="Edit" />
         <Dropdown.Item
           key={'reharvest'}
           icon={'refresh'}
