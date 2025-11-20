@@ -3,7 +3,7 @@ import mockFieldSitesData from './apiResponses/fieldSites.json';
 import mockFieldSitesOldData from './apiResponses/fieldsSites_old.json';
 import mockFieldSitesNonArray from './apiResponses/fieldSites-non-array-coverage.json';
 import * as fetcher from '../../../src/utilities/fetchJsonFromRemote';
-import { mapFieldSitesToCommonDatasetMetadata } from '../../../src/store/mappers/fieldSitesMapper';
+import { mapFieldSitesToCommonDatasetMetadata } from '../../../src/mappers/fieldSitesMapper';
 
 jest.mock('../../../src/utilities/fetchJsonFromRemote');
 

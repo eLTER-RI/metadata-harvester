@@ -1,6 +1,6 @@
 import { CommonDataset } from '../../../src/models/commonStructure';
 import mockDataregistryData from './apiResponses/dataregistry.json';
-import { mapDataRegistryToCommonDatasetMetadata } from '../../../src/store/mappers/dataregistryMapper';
+import { mapDataRegistryToCommonDatasetMetadata } from '../../../src/mappers/dataregistryMapper';
 
 jest.mock('../../../src/utilities/fetchJsonFromRemote');
 

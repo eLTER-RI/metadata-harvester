@@ -1,4 +1,4 @@
-import { mapB2ShareToCommonDatasetMetadata } from '../../../src/store/mappers/b2shareMapper';
+import { mapB2ShareToCommonDatasetMetadata } from '../../../src/mappers/b2shareMapper';
 import { CommonDataset } from '../../../src/models/commonStructure';
 import mockB2ShareData from './apiResponses/b2share.json';
 import mockB2ShareOldData from './apiResponses/b2share_versions_old.json';
