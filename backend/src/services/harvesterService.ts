@@ -1,7 +1,5 @@
 import 'dotenv/config';
 import express from 'express';
-import swaggerJsdoc from 'swagger-jsdoc';
-import swaggerUi from 'swagger-ui-express';
 import cors from 'cors';
 import { log } from './serviceLogging';
 import { RepositoryType } from '../models/commonStructure';
@@ -20,28 +18,9 @@ import {
 } from './recordsService';
 import pool from '../db';
 
-const swaggerOptions = {
-  definition: {
-    openapi: '3.0.0',
-    info: {
-      title: 'Data Harvester API',
-      version: '1.0.0',
-      description: 'API for managing records, rules, and background harvesting jobs.',
-    },
-    servers: [
-      {
-        url: `http://localhost:${process.env.PORT || 3000}`,
-      },
-    ],
-  },
-  apis: ['./backend/src/services/harvesterService.ts'],
-};
-
 const app = express();
 app.use(express.json());
 app.use(cors());
-const swaggerSpec = swaggerJsdoc(swaggerOptions);
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 const PORT = process.env.PORT || 3000;
 
