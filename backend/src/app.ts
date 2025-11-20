@@ -17,6 +17,7 @@ import {
   listResolvedCounts,
 } from './services/recordsService';
 import { getDeimsSites } from './services/deimsSitesService';
+import { initializeScheduler } from './services/scheduler/jobScheduler';
 import pool from './db';
 
 const app = express();
@@ -559,6 +560,29 @@ app.post('/api/sync/sites', async (req, res) => {
 
 /**
  * @swagger
+ * /api/deims-sites:
+ *   get:
+ *     tags: [Sites]
+ *     summary: Fetch all DEIMS sites from harvester database.
+ *     responses:
+ *       200:
+ *         description: List of DEIMS sites.
+ *       500:
+ *         description: Failed to fetch DEIMS sites.
+ */
+app.get('/api/deims-sites', async (req, res) => {
+  const result = await getDeimsSites(pool);
+
+  if (!result.success) {
+    log('error', `Failed to retrieve DEIMS sites: ${result.error}`);
+    return res.status(result.statusCode || 500).json({ error: result.error });
+  }
+
+  res.status(200).json(result.sites || []);
+});
+
+/**
+ * @swagger
  * /api/sync/records:
  *   post:
  *     tags: [Jobs]
@@ -699,6 +723,7 @@ const server = app.listen(PORT, () => {
     );
     console.error(e);
   });
+  initializeScheduler(pool);
 });
 
 /**

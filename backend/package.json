@@ -66,12 +66,14 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
+    "@types/node-cron": "^3.0.11",
     "bottleneck": "^2.19.5",
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
     "express": "^5.1.0",
     "flyway": "^0.1.9",
     "lodash": "^4.17.21",
+    "node-cron": "^4.2.1",
     "node-fetch": "^2.7.0",
     "semantic-ui-css": "^2.5.0",
     "swagger-jsdoc": "^7.0.0-rc.6",
