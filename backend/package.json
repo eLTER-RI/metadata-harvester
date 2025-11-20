@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "type": "module",
   "description": "",
-  "main": "src/app.ts",
+  "main": "src/server.ts",
   "scripts": {
     "ci": "npm ci 2>&1 | grep -v 'deprecated' | grep -v 'EBADENGINE' || npm ci",
-    "start": "NODE_PATH=./node_modules NODE_OPTIONS='--no-deprecation' tsx src/app.ts",
+    "start": "NODE_PATH=./node_modules NODE_OPTIONS='--no-deprecation' tsx src/server.ts",
     "build": "tsc",
     "test": "NODE_ENV=test jest --config jest.config.js",
     "test:watch": "NODE_ENV=test jest --watch",

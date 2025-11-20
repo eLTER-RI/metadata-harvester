@@ -1,5 +1,6 @@
 import request from 'supertest';
-import app, { server } from '../src/app';
+import app from '../src/app.js';
+import { server } from '../src/server.js';
 import { HarvesterContext, startRecordSync, startRepositorySync } from '../src/services/jobs/harvest/harvester';
 import { syncDeimsSites } from '../src/services/jobs/deimsSync/syncDeimsSites';
 import { syncWithDar } from '../src/services/jobs/syncDbWithRemote/localDarSync';
