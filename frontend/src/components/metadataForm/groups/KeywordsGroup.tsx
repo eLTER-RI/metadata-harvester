@@ -1,6 +1,6 @@
 import { useFormContext, useFieldArray } from 'react-hook-form';
 import { Form, Button, Segment, Header, Icon } from 'semantic-ui-react';
-import { CommonDatasetMetadata } from '../../../../../src/store/commonStructure';
+import { CommonDatasetMetadata } from '../../../../../backend/src/models/commonStructure';
 import { GroupDiffAccordion } from '../../rules/GroupDiffAccordion';
 import { useState } from 'react';
 import { DeleteConfirmModal } from '../../DeleteConfirmModal';
