@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "description": "",
-  "main": "dist/services/harvesterService.js",
+  "main": "dist/app.js",
   "scripts": {
     "start": "node dist/services/harvesterService.js",
     "test": "NODE_ENV=test jest --config jest.config.js",
@@ -13,7 +13,7 @@
     "check-format": "prettier --check 'src/**/*.{js,jsx,ts,tsx}'",
     "migrate": "node-pg-migrate",
     "migrate:create": "npm run migrate -- create --migration-file-language sql",
-    "generate:schemas": "ts-to-zod src/store/commonStructure.ts src/store/commonStructure.zod.gen.ts"
+    "generate:schemas": "ts-to-zod src/models/commonStructure.ts src/models/commonStructure.zod.gen.ts"
   },
   "repository": {
     "type": "git",
