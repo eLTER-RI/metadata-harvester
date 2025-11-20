@@ -1,22 +1,22 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import { log } from './serviceLogging';
-import { RepositoryType } from '../models/commonStructure';
-import { CONFIG } from '../config/config';
-import { HarvesterContext, startRecordSync, startRepositorySync } from './jobs/harvest/harvester';
-import { syncDeimsSites } from './jobs/deimsSync/syncDeimsSites';
-import { syncWithDar } from './jobs/syncDbWithRemote/localDarSync';
-import { createRulesForRecord, deleteRuleForRecord, getRulesForRecord } from './rulesService';
-import { listManualRecords, createManualRecord, updateManualRecord } from './manualRecordsService';
+import { log } from './services/serviceLogging';
+import { RepositoryType } from './models/commonStructure';
+import { CONFIG } from './config/config';
+import { HarvesterContext, startRecordSync, startRepositorySync } from './services/jobs/harvest/harvester';
+import { syncDeimsSites } from './services/jobs/deimsSync/syncDeimsSites';
+import { syncWithDar } from './services/jobs/syncDbWithRemote/localDarSync';
+import { createRulesForRecord, deleteRuleForRecord, getRulesForRecord } from './services/rulesService';
+import { listManualRecords, createManualRecord, updateManualRecord } from './services/manualRecordsService';
 import {
   listRecords,
   getRecordByDarId,
   updateRecordStatus,
   listRepositories,
   listResolvedCounts,
-} from './recordsService';
-import pool from '../db';
+} from './services/recordsService';
+import pool from './db';
 
 const app = express();
 app.use(express.json());
