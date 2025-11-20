@@ -1,4 +1,5 @@
-import { isEqual, isObject, isArray, keys } from 'lodash';
+import _ from 'lodash';
+const { isEqual, isObject, isArray, keys } = _;
 
 // Rule generation types and functions
 export type Rule = {

@@ -3,7 +3,8 @@ import { log } from '../services/serviceLogging';
 import { CommonDataset } from '../models/commonStructure';
 import { commonDatasetSchema } from '../models/commonStructure.zod.gen';
 import { RuleDbRecord } from '../store/dao/rulesDao';
-import { isEqual } from 'lodash';
+import _ from 'lodash';
+const { isEqual } = _;
 
 /**
  * Applies given rule set by users.
