@@ -1,6 +1,7 @@
 import { Container, Header, Dimmer, Loader, Segment, Message } from 'semantic-ui-react';
 import { CurationForm } from '../../components/CurationForm';
 import { useRecordForm } from './useRecordForm';
+import { EditManualRecordJsonForm } from './EditManualRecordJsonForm';
 
 export const RecordForm = () => {
   const { darId, formData, validationErrors, isSaving, isLoading, fetchError, saveError, isManualRecord, handleSave } =
@@ -62,7 +63,17 @@ export const RecordForm = () => {
         </Message>
       )}
 
-      {formData && <CurationForm data={formData} onSubmit={(data) => handleSave(data)} isLoading={isSaving} />}
+      {formData &&
+        (isManualRecord ? (
+          <EditManualRecordJsonForm
+            initialData={formData}
+            onSubmit={(data) => handleSave(data)}
+            isLoading={isSaving}
+            error={saveError}
+          />
+        ) : (
+          <CurationForm data={formData} onSubmit={(data) => handleSave(data)} isLoading={isSaving} />
+        ))}
     </Container>
   );
 };
