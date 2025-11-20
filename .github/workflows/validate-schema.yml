@@ -1,0 +1,45 @@
+name: schema validator
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  validate-schema:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install root dependencies
+        run: npm ci
+        working-directory: .
+
+      - name: Install backend dependencies
+        run: npm ci
+        working-directory: ./backend
+
+      - name: Generate schema
+        run: npm run generate:schemas
+        working-directory: ./backend
+
+      - name: Check for uncommitted changes
+        run: |
+          if [ "$(git status --porcelain)" ]; then
+            echo
+            echo "Generated schema is up-to-date"
+            exit "0"
+          else
+            echo "Error: generated schema was not regenerated after changes in commonStructure.ts"
+            exit "1"
+          fi
