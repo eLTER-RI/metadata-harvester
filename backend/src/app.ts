@@ -16,6 +16,7 @@ import {
   listRepositories,
   listResolvedCounts,
 } from './services/recordsService';
+import { getDeimsSites } from './services/deimsSitesService';
 import pool from './db';
 
 const app = express();
@@ -456,14 +457,18 @@ app.post('/api/harvest', async (req, res) => {
     return res.status(400).json({ error: `Invalid repository: '${repository}'.` });
   }
 
-  const context = await HarvesterContext.create(pool, repositoryType, checkHarvestChanges);
-  try {
-    await startRepositorySync(context);
-    log('info', `Job for ${repositoryType} completed successfully.`);
-  } catch (e) {
-    log('error', `Job for ${repositoryType} failed with error: ${e}`);
-  }
-  res.status(200).json({ message: `Harvesting job completed.` });
+  // Run harvest asynchronously without blocking the response
+  HarvesterContext.create(pool, repositoryType, checkHarvestChanges)
+    .then((context) => {
+      return startRepositorySync(context);
+    })
+    .then(() => {
+      log('info', `Job for ${repositoryType} completed successfully.`);
+    })
+    .catch((e) => {
+      log('error', `Job for ${repositoryType} failed with error: ${e}`);
+    });
+  res.status(200).json({ message: `Harvesting job started successfully.` });
 });
 
 /**
@@ -513,14 +518,18 @@ app.post('/api/harvest/single', async (req, res) => {
     return res.status(400).json({ error: `Invalid repository: '${repository}'.` });
   }
 
-  const context = await HarvesterContext.create(pool, repositoryType, checkHarvestChanges);
-  try {
-    await startRecordSync(context, sourceUrl);
-    log('info', `Job for ${sourceUrl} completed successfully.`);
-  } catch (e) {
-    log('error', `Job for ${sourceUrl} failed with error: ${e}`);
-  }
-  res.status(200).json({ message: `Harvesting job completed.` });
+  // Run harvest asynchronously without blocking the response
+  HarvesterContext.create(pool, repositoryType, checkHarvestChanges)
+    .then((context) => {
+      return startRecordSync(context, sourceUrl);
+    })
+    .then(() => {
+      log('info', `Job for ${sourceUrl} completed successfully.`);
+    })
+    .catch((e) => {
+      log('error', `Job for ${sourceUrl} failed with error: ${e}`);
+    });
+  res.status(200).json({ message: `Harvesting job started successfully.` });
 });
 
 /**
@@ -538,7 +547,9 @@ app.post('/api/harvest/single', async (req, res) => {
 app.post('/api/sync/sites', async (req, res) => {
   log('info', 'Command received: sync-deims');
   try {
-    await syncDeimsSites(pool);
+    syncDeimsSites(pool).catch((error) => {
+      log('error', `DEIMS sites synchronization failed: ${error}`);
+    });
     res.status(200).json({ message: 'DEIMS sites synchronization started successfully.' });
   } catch (error) {
     log('error', `${error}`);
@@ -581,7 +592,7 @@ app.post('/api/sync/records', async (req, res) => {
   if (repositoryType === 'ZENODO_IT') {
     repositoryType = 'ZENODO';
   }
-  await syncWithDar(repositoryType, pool, darCleanup).catch((e) => {
+  syncWithDar(repositoryType, pool, darCleanup).catch((e) => {
     log('error', `Error during syncWithDar for ${repositoryType}: ${e}`);
   });
   res.status(200).json({ message: `Sync job of DAR with the local database started successfully.` });
