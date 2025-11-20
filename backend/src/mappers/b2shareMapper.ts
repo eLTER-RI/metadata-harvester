@@ -1,7 +1,7 @@
-import { B2ShareExtractedSchema, Metadata } from '../../../api/schema/b2shareApi';
-import { b2shareLimiter } from '../../services/rateLimiterConcurrency';
-import { log } from '../../services/serviceLogging';
-import { fetchJson } from '../../utilities/fetchJsonFromRemote';
+import { B2ShareExtractedSchema, Metadata } from '../../api/schema/b2shareApi';
+import { b2shareLimiter } from '../services/rateLimiterConcurrency';
+import { log } from '../services/serviceLogging';
+import { fetchJson } from '../utilities/fetchJsonFromRemote';
 import {
   AlternateIdentifier,
   Geolocation,
@@ -28,7 +28,7 @@ import {
   Title,
   Description,
   ObservationLocation,
-} from '../../models/commonStructure';
+} from '../models/commonStructure';
 
 function extractB2ShareGeolocation(input: any): Geolocation[] {
   const coverages: Geolocation[] = [];

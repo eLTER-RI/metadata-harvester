@@ -1,6 +1,6 @@
-import { fieldSitesLimiter } from '../../services/rateLimiterConcurrency';
-import { log } from '../../services/serviceLogging';
-import { fetchJson } from '../../utilities/fetchJsonFromRemote';
+import { fieldSitesLimiter } from '../services/rateLimiterConcurrency';
+import { log } from '../services/serviceLogging';
+import { fetchJson } from '../utilities/fetchJsonFromRemote';
 import {
   License,
   CommonDataset,
@@ -14,7 +14,7 @@ import {
   EntityIdentifier,
   getLicenseURI,
   getChecksum,
-} from '../../models/commonStructure';
+} from '../models/commonStructure';
 
 function extractSitesGeolocation(input: any): Geolocation[] {
   const coverageGeo = input.coverageGeo;

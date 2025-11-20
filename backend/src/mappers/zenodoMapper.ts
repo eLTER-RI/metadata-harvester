@@ -1,6 +1,6 @@
-import { zenodoLimiter } from '../../services/rateLimiterConcurrency';
-import { log } from '../../services/serviceLogging';
-import { fetchJson } from '../../utilities/fetchJsonFromRemote';
+import { zenodoLimiter } from '../services/rateLimiterConcurrency';
+import { log } from '../services/serviceLogging';
+import { fetchJson } from '../utilities/fetchJsonFromRemote';
 import {
   AdditionalMetadata,
   AlternateIdentifier,
@@ -17,7 +17,7 @@ import {
   Relation,
   ResponsibleOrganizations,
   TemporalCoverage,
-} from '../../models/commonStructure';
+} from '../models/commonStructure';
 
 const ZENODO_ASSET_TYPE_MAP = new Map<string, IdentifierType>([
   ['poster', 'Other'],
