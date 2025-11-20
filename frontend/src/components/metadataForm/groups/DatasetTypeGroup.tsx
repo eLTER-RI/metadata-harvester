@@ -1,7 +1,7 @@
 import { useFormContext } from 'react-hook-form';
 import { Form, Button, Segment, Header, Icon } from 'semantic-ui-react';
 import { CommonDatasetMetadata, DatasetTypeCode } from '../../../../../backend/src/models/commonStructure';
-import { FieldDiffToggle } from '../../rules/FieldDiffToggle';
+import { GroupDiffAccordion } from '../../rules/GroupDiffAccordion';
 
 const DATASET_TYPE_CODES: DatasetTypeCode[] = [
   'SOGEO_001',
@@ -87,7 +87,7 @@ export const DatasetTypeGroup = () => {
         <Header.Subheader>Select the type of dataset</Header.Subheader>
       </Header>
 
-      <FieldDiffToggle basePath="metadata.datasetType" />
+      <GroupDiffAccordion basePath="metadata.datasetType" />
 
       <Form.Group widths="equal">
         <Form.Field>
