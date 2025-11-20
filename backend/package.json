@@ -2,9 +2,9 @@
   "name": "data-harvester",
   "version": "1.0.0",
   "description": "",
-  "main": "src/services/harvesterService.ts",
+  "main": "src/app.ts",
   "scripts": {
-    "start": "NODE_PATH=./node_modules ts-node src/services/harvesterService.ts",
+    "start": "NODE_PATH=./node_modules ts-node src/app.ts",
     "build": "tsc",
     "test": "NODE_ENV=test jest --config jest.config.js",
     "test:watch": "NODE_ENV=test jest --watch",
@@ -13,7 +13,7 @@
     "check-format": "prettier --check 'src/**/*.{js,jsx,ts,tsx}'",
     "migrate": "node-pg-migrate",
     "migrate:create": "npm run migrate -- create --migration-file-language sql",
-    "generate:schemas": "ts-to-zod src/store/commonStructure.ts src/store/commonStructure.zod.gen.ts"
+    "generate:schemas": "ts-to-zod src/models/commonStructure.ts src/models/commonStructure.zod.gen.ts"
   },
   "repository": {
     "type": "git",
