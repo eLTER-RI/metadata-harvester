@@ -9,7 +9,7 @@ import {
   getLicenseURI,
   License,
   parsePID,
-} from '../commonStructure';
+} from '../../models/commonStructure';
 
 function getAdditionalMetadata(dataRegistry: any): AdditionalMetadata[] {
   const additional_metadata: AdditionalMetadata[] = [];

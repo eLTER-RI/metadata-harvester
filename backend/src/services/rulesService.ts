@@ -1,6 +1,6 @@
 import { Pool } from 'pg';
 import { log } from './serviceLogging';
-import { RepositoryType } from '../store/commonStructure';
+import { RepositoryType } from '../models/commonStructure';
 import { RecordDao } from '../store/dao/recordDao';
 import { RuleDao, RuleDbRecord } from '../store/dao/rulesDao';
 import { HarvesterContext, startRecordSync } from './jobs/harvest/harvester';

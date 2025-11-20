@@ -28,7 +28,7 @@ import {
   Title,
   Description,
   ObservationLocation,
-} from '../commonStructure';
+} from '../../models/commonStructure';
 
 function extractB2ShareGeolocation(input: any): Geolocation[] {
   const coverages: Geolocation[] = [];

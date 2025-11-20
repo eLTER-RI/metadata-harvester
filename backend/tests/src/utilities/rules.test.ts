@@ -1,5 +1,5 @@
-import { CommonDataset } from '../../../src/store/commonStructure';
-import { commonDatasetSchema } from '../../../src/store/commonStructure.zod.gen';
+import { CommonDataset } from '../../../src/models/commonStructure';
+import { commonDatasetSchema } from '../../../src/models/commonStructure.zod.gen';
 import { RuleDbRecord } from '../../../src/store/dao/rulesDao';
 import { applyRuleToRecord } from '../../../src/utilities/rules';
 import { appendValue, getNestedValue, setNestedValue } from '../../../../shared/utils';

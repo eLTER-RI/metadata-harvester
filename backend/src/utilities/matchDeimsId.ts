@@ -1,6 +1,6 @@
 import { CONFIG } from '../config/config';
 import { fetchJson } from '../utilities/fetchJsonFromRemote';
-import { SiteReference } from '../store/commonStructure';
+import { SiteReference } from '../models/commonStructure';
 import { deimsLimiter } from '../services/rateLimiterConcurrency';
 
 /**

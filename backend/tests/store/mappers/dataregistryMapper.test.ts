@@ -1,4 +1,4 @@
-import { CommonDataset } from '../../../src/store/commonStructure';
+import { CommonDataset } from '../../../src/models/commonStructure';
 import mockDataregistryData from './apiResponses/dataregistry.json';
 import { mapDataRegistryToCommonDatasetMetadata } from '../../../src/store/mappers/dataregistryMapper';
 

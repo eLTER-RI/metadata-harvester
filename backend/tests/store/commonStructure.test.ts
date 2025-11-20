@@ -8,7 +8,7 @@ import {
   parseDOIUrl,
   parsePID,
   toPID,
-} from '../../src/store/commonStructure';
+} from '../../src/models/commonStructure';
 
 describe('commonStructure helper functions', () => {
   describe('parseDOIUrl', () => {

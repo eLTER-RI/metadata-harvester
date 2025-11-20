@@ -1,4 +1,4 @@
-import { RepositoryType, CommonDataset } from '../../../store/commonStructure';
+import { RepositoryType, CommonDataset } from '../../../models/commonStructure';
 import { RecordDao } from '../../../store/dao/recordDao';
 import { log } from '../../serviceLogging';
 

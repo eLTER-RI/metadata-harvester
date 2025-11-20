@@ -2,7 +2,7 @@ import { Pool } from 'pg';
 import { syncWithDar } from '../../../../src/services/jobs/syncDbWithRemote/localDarSync';
 import { deleteDarRecordsByIds, fetchDarRecordsByRepository } from '../../../../src/services/clients/darApi';
 import { log } from '../../../../src/services/serviceLogging';
-import { RepositoryType } from '../../../../src/store/commonStructure';
+import { RepositoryType } from '../../../../src/models/commonStructure';
 
 jest.mock('../../../../src/services/clients/darApi', () => ({
   fetchDarRecordsByRepository: jest.fn(),

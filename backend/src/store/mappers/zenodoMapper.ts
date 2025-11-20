@@ -17,7 +17,7 @@ import {
   Relation,
   ResponsibleOrganizations,
   TemporalCoverage,
-} from '../commonStructure';
+} from '../../models/commonStructure';
 
 const ZENODO_ASSET_TYPE_MAP = new Map<string, IdentifierType>([
   ['poster', 'Other'],

@@ -7,7 +7,7 @@ import {
   getZenodoMatchedSites,
   getDataRegistryMatchedSites,
 } from '../../../src/utilities/matchDeimsId';
-import { CONFIG } from '../../../config';
+import { CONFIG } from '../../../src/config/config';
 
 jest.mock('../../../src/utilities/fetchJsonFromRemote');
 

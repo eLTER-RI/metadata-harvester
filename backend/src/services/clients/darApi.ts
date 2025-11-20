@@ -1,5 +1,5 @@
 import { log } from '../serviceLogging';
-import { CommonDataset, RepositoryType } from '../../store/commonStructure';
+import { CommonDataset, RepositoryType } from '../../models/commonStructure';
 import { RecordDao } from '../../store/dao/recordDao';
 import { CONFIG } from '../../config/config';
 import { darLimiter } from '../rateLimiterConcurrency';

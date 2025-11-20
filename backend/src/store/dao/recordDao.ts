@@ -1,5 +1,5 @@
 import { Pool } from 'pg';
-import { RepositoryType, SiteReference, HabitatReference, DatasetType, Keywords } from '../commonStructure';
+import { RepositoryType, SiteReference, HabitatReference, DatasetType, Keywords } from '../../models/commonStructure';
 
 export interface DbRecord {
   source_url: string;

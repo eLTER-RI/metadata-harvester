@@ -1,4 +1,4 @@
-import { CommonDataset, RepositoryType, SiteReference } from '../../../store/commonStructure';
+import { CommonDataset, RepositoryType, SiteReference } from '../../../models/commonStructure';
 import { log } from '../../serviceLogging';
 import { CONFIG } from '../../../config/config';
 import { Pool } from 'pg';

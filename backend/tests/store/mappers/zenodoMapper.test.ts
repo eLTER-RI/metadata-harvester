@@ -1,4 +1,4 @@
-import { CommonDataset } from '../../../src/store/commonStructure';
+import { CommonDataset } from '../../../src/models/commonStructure';
 import mockZenodoData from './apiResponses/zenodo.json';
 import mockZenodoOldData from './apiResponses/zenodo_versions_old.json';
 import mockZenodoVersions from './apiResponses/zenodo_versions.json';

@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import { Pool } from 'pg';
 import { RecordDao } from '../../../store/dao/recordDao';
-import { RepositoryType } from '../../../store/commonStructure';
+import { RepositoryType } from '../../../models/commonStructure';
 import { log } from '../../serviceLogging';
 import { deleteDarRecordsByIds, fetchDarRecordsByRepository } from '../../clients/darApi';
 

@@ -6,10 +6,10 @@ import {
   putToDar,
 } from '../../../src/services/clients/darApi';
 import { RecordDao } from '../../../src/store/dao/recordDao';
-import { CommonDataset, RepositoryType } from '../../../src/store/commonStructure';
+import { CommonDataset, RepositoryType } from '../../../src/models/commonStructure';
 import { log } from '../../../src/services/serviceLogging';
 import { darLimiter } from '../../../src/services/rateLimiterConcurrency';
-import { CONFIG } from '../../../config';
+import { CONFIG } from '../../../src/config/config';
 
 jest.mock('../../../src/services/serviceLogging', () => ({
   log: jest.fn(),

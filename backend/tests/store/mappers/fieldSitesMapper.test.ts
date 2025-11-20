@@ -1,4 +1,4 @@
-import { CommonDataset } from '../../../src/store/commonStructure';
+import { CommonDataset } from '../../../src/models/commonStructure';
 import mockFieldSitesData from './apiResponses/fieldSites.json';
 import mockFieldSitesOldData from './apiResponses/fieldsSites_old.json';
 import mockFieldSitesNonArray from './apiResponses/fieldSites-non-array-coverage.json';

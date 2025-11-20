@@ -4,7 +4,7 @@ import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 import cors from 'cors';
 import { log } from './serviceLogging';
-import { RepositoryType } from '../store/commonStructure';
+import { RepositoryType } from '../models/commonStructure';
 import { CONFIG } from '../config/config';
 import { HarvesterContext, startRecordSync, startRepositorySync } from './jobs/harvest/harvester';
 import { syncDeimsSites } from './jobs/deimsSync/syncDeimsSites';

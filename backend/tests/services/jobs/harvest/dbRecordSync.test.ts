@@ -1,7 +1,7 @@
 import { dbRecordUpsert } from '../../../../src/services/jobs/harvest/dbRecordSync';
 import { DbRecord, RecordDao } from '../../../../src/store/dao/recordDao';
 import { log } from '../../../../src/services/serviceLogging';
-import { RepositoryType } from '../../../../src/store/commonStructure';
+import { RepositoryType } from '../../../../src/models/commonStructure';
 
 jest.mock('../../../../src/services/serviceLogging', () => ({
   log: jest.fn(),
