@@ -10,7 +10,7 @@ import { createRulesForRecord, deleteRuleForRecord, getRulesForRecord } from '..
 const mockListRecords = jest.fn();
 const mockListReposWithCount = jest.fn();
 const mockGetRecordByDarId = jest.fn();
-jest.mock('../../src/store/dao/recordDao', () => ({
+jest.mock('../src/store/dao/recordDao', () => ({
   RecordDao: jest.fn().mockImplementation(() => ({
     listRecords: mockListRecords,
     listRepositoriesWithCount: mockListReposWithCount,
@@ -20,7 +20,7 @@ jest.mock('../../src/store/dao/recordDao', () => ({
 const mockListResolvedCount = jest.fn();
 const mockCreateResolved = jest.fn();
 const mockDeleteResolved = jest.fn();
-jest.mock('../../src/store/dao/resolvedRecordsDao', () => ({
+jest.mock('../src/store/dao/resolvedRecordsDao', () => ({
   ResolvedRecordDao: jest.fn().mockImplementation(() => ({
     listResolvedUnresolvedCount: mockListResolvedCount,
     create: mockCreateResolved,
@@ -31,7 +31,7 @@ const mockGetRules = jest.fn();
 const mockCreateRules = jest.fn();
 const mockCreateOrUpdateRule = jest.fn();
 const mockDeleteRule = jest.fn();
-jest.mock('../../src/store/dao/rulesDao', () => ({
+jest.mock('../src/store/dao/rulesDao', () => ({
   RuleDao: jest.fn().mockImplementation(() => ({
     getRulesForRecord: mockGetRules,
     createRules: mockCreateRules,
@@ -40,9 +40,9 @@ jest.mock('../../src/store/dao/rulesDao', () => ({
   })),
 }));
 // jobs
-jest.mock('../../src/services/jobs/harvest/harvester');
-jest.mock('../../src/services/jobs/deimsSync/syncDeimsSites');
-jest.mock('../../src/services/jobs/syncDbWithRemote/localDarSync');
+jest.mock('../src/services/jobs/harvest/harvester');
+jest.mock('../src/services/jobs/deimsSync/syncDeimsSites');
+jest.mock('../src/services/jobs/syncDbWithRemote/localDarSync');
 const mockStartRepoSync = startRepositorySync as jest.Mock;
 const mockStartRecordSync = startRecordSync as jest.Mock;
 const mockSyncDeims = syncDeimsSites as jest.Mock;
@@ -50,13 +50,13 @@ const mockSyncDar = syncWithDar as jest.Mock;
 const mockHarvesterContextCreate = HarvesterContext.create as jest.Mock;
 
 // services
-jest.mock('../../src/services/serviceLogging', () => ({
+jest.mock('../src/services/serviceLogging', () => ({
   log: jest.fn(),
 }));
 const mockCreateRulesForRecord = createRulesForRecord as jest.Mock;
 const mockDeleteRuleForRecord = deleteRuleForRecord as jest.Mock;
 const mockGetRulesForRecord = getRulesForRecord as jest.Mock;
-jest.mock('../../src/services/rulesService', () => ({
+jest.mock('../src/services/rulesService', () => ({
   createRulesForRecord: jest.fn(),
   deleteRuleForRecord: jest.fn(),
   getRulesForRecord: jest.fn(),

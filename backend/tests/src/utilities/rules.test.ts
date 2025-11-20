@@ -4,7 +4,7 @@ import { RuleDbRecord } from '../../../src/store/dao/rulesDao';
 import { applyRuleToRecord } from '../../../src/utilities/rules';
 import { appendValue, getNestedValue, setNestedValue } from '../../../../shared/utils';
 
-jest.mock('../../../src/store/commonStructure.zod.gen', () => ({
+jest.mock('../../../src/models/commonStructure.zod.gen', () => ({
   commonDatasetSchema: {
     safeParse: jest.fn(),
   },
