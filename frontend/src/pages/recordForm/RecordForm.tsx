@@ -1,5 +1,5 @@
 import { Container, Header, Dimmer, Loader, Segment, Message } from 'semantic-ui-react';
-import { MetadataForm } from '../../components/MetadataForm';
+import { CurationForm } from '../../components/CurationForm';
 import { useRecordForm } from './useRecordForm';
 
 export const RecordForm = () => {
@@ -62,7 +62,7 @@ export const RecordForm = () => {
         </Message>
       )}
 
-      {formData && <MetadataForm data={formData} onSubmit={(data) => handleSave(data)} isLoading={isSaving} />}
+      {formData && <CurationForm data={formData} onSubmit={(data) => handleSave(data)} isLoading={isSaving} />}
     </Container>
   );
 };
