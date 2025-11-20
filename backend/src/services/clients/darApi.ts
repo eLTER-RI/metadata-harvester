@@ -1,7 +1,7 @@
 import { log } from '../serviceLogging';
 import { CommonDataset, RepositoryType } from '../../store/commonStructure';
 import { RecordDao } from '../../store/dao/recordDao';
-import { CONFIG } from '../../../config';
+import { CONFIG } from '../../config/config';
 import { darLimiter } from '../rateLimiterConcurrency';
 
 interface DarApiResponse {

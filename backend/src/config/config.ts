@@ -1,4 +1,4 @@
-import { RepositoryType } from './src/store/commonStructure';
+import { RepositoryType } from '../store/commonStructure';
 
 const currentEnv = process.env.NODE_ENV;
 if (currentEnv !== 'prod' && currentEnv !== 'dev' && currentEnv !== 'test') {

@@ -1,6 +1,6 @@
 import { CommonDataset, RepositoryType, SiteReference } from '../../../store/commonStructure';
 import { log } from '../../serviceLogging';
-import { CONFIG } from '../../../../config';
+import { CONFIG } from '../../../config/config';
 import { Pool } from 'pg';
 import { mapFieldSitesToCommonDatasetMetadata } from '../../../store/mappers/fieldSitesMapper';
 import { fetchJson, fetchXml } from '../../../utilities/fetchJsonFromRemote';

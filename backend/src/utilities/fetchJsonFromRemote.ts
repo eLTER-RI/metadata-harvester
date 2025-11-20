@@ -1,5 +1,5 @@
 import fetch from 'node-fetch';
-import { CONFIG } from '../../config';
+import { CONFIG } from '../config/config';
 import { JSDOM } from 'jsdom';
 import { log } from '../services/serviceLogging';
 

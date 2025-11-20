@@ -5,7 +5,7 @@ import swaggerUi from 'swagger-ui-express';
 import cors from 'cors';
 import { log } from './serviceLogging';
 import { RepositoryType } from '../store/commonStructure';
-import { CONFIG } from '../../config';
+import { CONFIG } from '../config/config';
 import { HarvesterContext, startRecordSync, startRepositorySync } from './jobs/harvest/harvester';
 import { syncDeimsSites } from './jobs/deimsSync/syncDeimsSites';
 import { syncWithDar } from './jobs/syncDbWithRemote/localDarSync';
