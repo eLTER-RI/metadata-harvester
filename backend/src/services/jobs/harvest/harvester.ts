@@ -60,6 +60,31 @@ export class HarvesterContext {
   }
 
   /**
+   * Finds an older version of the record in the database.
+   * Checks if any of the relatedIdentifiers marking a version as previous exist in the database.
+   * @param {CommonDataset} dataset The dataset containing related identifiers.
+   * @returns {Promise<{record: DbRecord, oldUrl: string} | null>} The matched old version record and its URL, or null if not found.
+   */
+  private async findOlderVersionInDb(dataset: CommonDataset): Promise<{ record: DbRecord; oldUrl: string } | null> {
+    const oldVersionUrls = dataset.metadata.relatedIdentifiers
+      ?.filter((id) => id.relationType === 'IsNewVersionOf')
+      .map((id) => id.relatedID);
+
+    if (!oldVersionUrls || oldVersionUrls.length === 0) {
+      return null;
+    }
+
+    for (const oldUrl of oldVersionUrls) {
+      const oldVersionRecords = await this.recordDao.getRecordBySourceUrl(oldUrl);
+      if (oldVersionRecords.length > 0) {
+        return { record: oldVersionRecords[0], oldUrl };
+      }
+    }
+
+    return null;
+  }
+
+  /**
    * Synchronization of the record from source url with the local database and DAR.
    * This function also handles missing record on both local DB side or DAR side.
    *
@@ -85,52 +110,45 @@ export class HarvesterContext {
     dataset: CommonDataset,
     existingDbMatches?: DbRecord[],
   ) {
-    const darChecksum = calculateChecksum(dataset);
-    const darMatches = await findDarRecordBySourceURL(url);
     // Use existing matches if provided (even if empty array), otherwise fetch from DB
     const dbMatches =
       existingDbMatches !== undefined ? existingDbMatches : await this.recordDao.getRecordBySourceUrl(url);
     if (dbMatches.length > 1) {
       throw new Error('More than one existing records of one dataset in the local database.');
     }
-    const rewriteRecord =
-      dbMatches.length === 0 ||
-      dbMatches[0]?.dar_checksum !== darChecksum ||
-      dbMatches[0]?.source_checksum !== sourceChecksum;
-    const oldVersions = dataset.metadata.relatedIdentifiers
-      ?.filter((id) => id.relationType === 'IsNewVersionOf')
-      .map((id) => id.relatedID);
+    const darChecksum = calculateChecksum(dataset);
 
     // Scenario 1: Handle records that are new versions of existing ones.
-    if (oldVersions && oldVersions.length > 0) {
-      for (const oldUrl of oldVersions) {
-        const oldVersionsInDb = await this.recordDao.getRecordBySourceUrl(oldUrl);
-        if (oldVersionsInDb.length > 0) {
-          log('warn', 'New version for record on url: ' + url + 'found: ' + oldVersionsInDb[0].dar_id);
-          const success = await putToDar(oldVersionsInDb[0].dar_id, this.recordDao, url, dataset);
-          if (success) {
-            await dbRecordUpsert(
-              oldVersionsInDb[0].dar_id,
-              this.recordDao,
-              url,
-              this.repositoryType,
-              sourceChecksum,
-              darChecksum,
-              dataset,
-              oldUrl,
-            );
-          }
-          return;
-        }
+    const oldVersionMatch = await this.findOlderVersionInDb(dataset);
+    if (oldVersionMatch) {
+      log('warn', `New version for record on url: ${url} found: ${oldVersionMatch.record.dar_id}`);
+      const success = await putToDar(oldVersionMatch.record.dar_id, this.recordDao, url, dataset);
+      if (success) {
+        await dbRecordUpsert(
+          oldVersionMatch.record.dar_id,
+          this.recordDao,
+          url,
+          this.repositoryType,
+          sourceChecksum,
+          darChecksum,
+          dataset,
+          oldVersionMatch.oldUrl,
+        );
       }
+      return;
     }
 
+    const darMatches = await findDarRecordBySourceURL(url);
     if (!darMatches) {
       const darId = await postToDar(this.recordDao, url, dataset);
       await dbRecordUpsert(darId, this.recordDao, url, this.repositoryType, sourceChecksum, darChecksum, dataset);
       return;
     }
 
+    const rewriteRecord =
+      dbMatches.length === 0 ||
+      dbMatches[0]?.dar_checksum !== darChecksum ||
+      dbMatches[0]?.source_checksum !== sourceChecksum;
     if (rewriteRecord) {
       await this.resolvedRecordsDao.delete(darMatches);
       await this.handleChangedRecord(dbMatches, sourceChecksum, url, darMatches, dataset, darChecksum);
