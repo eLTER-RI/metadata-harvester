@@ -35,6 +35,10 @@ export class ResolvedRecordDao {
     resolved?: boolean;
     repositories?: string[];
     title?: string;
+    sites?: string;
+    habitats?: string;
+    keywords?: string;
+    datasetTypes?: string;
   }): Promise<{ resolved: boolean; count: number }[]> {
     const values = [];
     const conditions = [];
@@ -54,6 +58,42 @@ export class ResolvedRecordDao {
     if (options?.title) {
       conditions.push(`h.title ILIKE $${paramCount}`);
       values.push(`%${options.title}%`);
+      paramCount++;
+    }
+
+    if (options?.sites) {
+      conditions.push(
+        `EXISTS
+          (SELECT 1 FROM jsonb_array_elements(h.site_references) AS site
+            WHERE site->>'siteID' ILIKE $${paramCount} OR site->>'siteName' ILIKE $${paramCount})`,
+      );
+      values.push(`%${options.sites}%`);
+      paramCount++;
+    }
+
+    if (options?.habitats) {
+      conditions.push(
+        `EXISTS
+          (SELECT 1 FROM jsonb_array_elements(h.habitat_references) AS habitat
+            WHERE habitat->>'soHabitatCode' ILIKE $${paramCount})`,
+      );
+      values.push(`%${options.habitats}%`);
+      paramCount++;
+    }
+
+    if (options?.keywords) {
+      conditions.push(
+        `EXISTS
+          (SELECT 1 FROM jsonb_array_elements(h.keywords) AS kw
+            WHERE kw->>'keywordLabel' ILIKE $${paramCount})`,
+      );
+      values.push(`%${options.keywords}%`);
+      paramCount++;
+    }
+
+    if (options?.datasetTypes) {
+      conditions.push(`(h.dataset_type->>'datasetTypeCode' ILIKE $${paramCount})`);
+      values.push(`%${options.datasetTypes}%`);
       paramCount++;
     }
 

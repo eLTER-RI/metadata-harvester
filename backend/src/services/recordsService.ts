@@ -6,6 +6,10 @@ export interface ListRecordsOptions {
   resolved?: boolean;
   repositories?: string[];
   title?: string;
+  sites?: string;
+  habitats?: string;
+  keywords?: string;
+  datasetTypes?: string;
   size?: number;
   offset?: number;
 }
@@ -37,6 +41,10 @@ export interface UpdateRecordStatusResult {
 export interface ListRepositoriesOptions {
   resolved?: boolean;
   title?: string;
+  sites?: string;
+  habitats?: string;
+  keywords?: string;
+  datasetTypes?: string;
 }
 
 export interface ListRepositoriesResult {
@@ -50,6 +58,10 @@ export interface ListResolvedCountOptions {
   resolved?: boolean;
   repositories?: string[];
   title?: string;
+  sites?: string;
+  habitats?: string;
+  keywords?: string;
+  datasetTypes?: string;
 }
 
 export interface ListResolvedCountResult {

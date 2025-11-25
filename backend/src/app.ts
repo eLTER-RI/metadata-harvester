@@ -59,6 +59,22 @@ const PORT = process.env.PORT || 3000;
  *         name: title
  *         description: Search for records by title.
  *         schema: { type: string }
+ *       - in: query
+ *         name: sites
+ *         description: Filter by site ID or site name (case-insensitive partial match).
+ *         schema: { type: string }
+ *       - in: query
+ *         name: habitats
+ *         description: Filter by habitat code (case-insensitive partial match).
+ *         schema: { type: string }
+ *       - in: query
+ *         name: keywords
+ *         description: Filter by keyword label (case-insensitive partial match).
+ *         schema: { type: string }
+ *       - in: query
+ *         name: datasetTypes
+ *         description: Filter by dataset type code (case-insensitive partial match).
+ *         schema: { type: string }
  *     responses:
  *       200:
  *         description: A paginated list of records.
@@ -72,6 +88,10 @@ app.get('/api/records', async (req, res) => {
     const resolvedParam = req.query.resolved as string;
     const repositoryParam = req.query['repositories[]'] as string | string[];
     const titleParam = req.query.title as string;
+    const sitesParam = req.query.sites as string;
+    const habitatsParam = req.query.habitats as string;
+    const keywordsParam = req.query.keywords as string;
+    const datasetTypesParam = req.query.datasetTypes as string;
     let repositories: string[] | undefined;
     if (repositoryParam) {
       repositories = Array.isArray(repositoryParam) ? repositoryParam : [repositoryParam];
@@ -80,6 +100,10 @@ app.get('/api/records', async (req, res) => {
       resolved: resolvedParam ? resolvedParam === 'true' : undefined,
       repositories: repositories,
       title: titleParam,
+      sites: sitesParam,
+      habitats: habitatsParam,
+      keywords: keywordsParam,
+      datasetTypes: datasetTypesParam,
       size: size,
       offset: (page - 1) * size,
     };
@@ -119,6 +143,22 @@ app.get('/api/records', async (req, res) => {
  *         name: title
  *         description: Search for records by title.
  *         schema: { type: string }
+ *       - in: query
+ *         name: sites
+ *         description: Filter by site ID or site name (case-insensitive partial match).
+ *         schema: { type: string }
+ *       - in: query
+ *         name: habitats
+ *         description: Filter by habitat code (case-insensitive partial match).
+ *         schema: { type: string }
+ *       - in: query
+ *         name: keywords
+ *         description: Filter by keyword label (case-insensitive partial match).
+ *         schema: { type: string }
+ *       - in: query
+ *         name: datasetTypes
+ *         description: Filter by dataset type code (case-insensitive partial match).
+ *         schema: { type: string }
  *     responses:
  *       200:
  *         description: A list of repositories and the number of harvested records.
@@ -129,9 +169,17 @@ app.get('/api/repositories', async (req, res) => {
   try {
     const resolvedParam = req.query.resolved as string;
     const titleParam = req.query.title as string;
+    const sitesParam = req.query.sites as string;
+    const habitatsParam = req.query.habitats as string;
+    const keywordsParam = req.query.keywords as string;
+    const datasetTypesParam = req.query.datasetTypes as string;
     const options = {
       resolved: resolvedParam ? resolvedParam === 'true' : undefined,
       title: titleParam,
+      sites: sitesParam,
+      habitats: habitatsParam,
+      keywords: keywordsParam,
+      datasetTypes: datasetTypesParam,
     };
 
     const result = await listRepositories(pool, options);
@@ -167,6 +215,22 @@ app.get('/api/repositories', async (req, res) => {
  *         name: title
  *         description: Filter by record title.
  *         schema: { type: string }
+ *       - in: query
+ *         name: sites
+ *         description: Filter by site ID or site name (case-insensitive partial match).
+ *         schema: { type: string }
+ *       - in: query
+ *         name: habitats
+ *         description: Filter by habitat code (case-insensitive partial match).
+ *         schema: { type: string }
+ *       - in: query
+ *         name: keywords
+ *         description: Filter by keyword label (case-insensitive partial match).
+ *         schema: { type: string }
+ *       - in: query
+ *         name: datasetTypes
+ *         description: Filter by dataset type code (case-insensitive partial match).
+ *         schema: { type: string }
  *     responses:
  *       200:
  *         description: Counts of resolved and unresolved records.
@@ -178,6 +242,10 @@ app.get('/api/resolved', async (req, res) => {
     const resolvedParam = req.query.resolved as string;
     const repositoryParam = req.query['repositories[]'] as string | string[];
     const titleParam = req.query.title as string;
+    const sitesParam = req.query.sites as string;
+    const habitatsParam = req.query.habitats as string;
+    const keywordsParam = req.query.keywords as string;
+    const datasetTypesParam = req.query.datasetTypes as string;
     let repositories: string[] | undefined;
     if (repositoryParam) {
       repositories = Array.isArray(repositoryParam) ? repositoryParam : [repositoryParam];
@@ -186,6 +254,10 @@ app.get('/api/resolved', async (req, res) => {
       resolved: resolvedParam ? resolvedParam === 'true' : undefined,
       repositories: repositories,
       title: titleParam,
+      sites: sitesParam,
+      habitats: habitatsParam,
+      keywords: keywordsParam,
+      datasetTypes: datasetTypesParam,
     };
 
     const result = await listResolvedCounts(pool, options);
