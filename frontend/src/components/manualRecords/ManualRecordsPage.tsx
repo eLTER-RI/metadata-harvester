@@ -1,5 +1,6 @@
 import { Container, Header, Input, Button, Segment, Icon } from 'semantic-ui-react';
 import { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import ManualRecordsList from './ManualRecordsList';
 import { useManualRecords } from '../../store/RecordsProvider';
 
@@ -28,6 +29,7 @@ export const ManualRecordsPage = () => {
   return (
     <Container>
       <Header as="h1">Manual Records</Header>
+      <Button as={Link} to="/create" primary icon="plus" content="Create Record" />
 
       <Segment>
         <Input
