@@ -1,11 +1,9 @@
 import { Container, Header, Dimmer, Loader, Segment, Message } from 'semantic-ui-react';
 import { CurationForm } from '../../components/CurationForm';
 import { useRecordForm } from './useRecordForm';
-import { EditManualRecordJsonForm } from './EditManualRecordJsonForm';
 
 export const RecordForm = () => {
-  const { darId, formData, validationErrors, isSaving, isLoading, fetchError, saveError, isManualRecord, handleSave } =
-    useRecordForm();
+  const { darId, formData, validationErrors, isSaving, isLoading, fetchError, saveError, handleSave } = useRecordForm();
 
   if (isLoading) {
     return (
@@ -31,23 +29,16 @@ export const RecordForm = () => {
   return (
     <Container>
       <Header as="h1">Edit Record {darId}</Header>
-      {isManualRecord ? (
-        <Message info>
-          <Message.Header>Updating Manual Record</Message.Header>
-          <p>Changes will be saved to the manual records database and updated in DAR.</p>
-        </Message>
-      ) : (
-        <Message info>
-          <Message.Header>Rule Generation and Re-Harvest</Message.Header>
-          <p>
-            Modification to this record will stay as long as the previous value will stay the same on the source
-            repository.
-          </p>
-        </Message>
-      )}
+      <Message info>
+        <Message.Header>Rule Generation and Re-Harvest</Message.Header>
+        <p>
+          Modification to this record will stay as long as the previous value will stay the same on the source
+          repository.
+        </p>
+      </Message>
       {saveError && (
         <Message negative>
-          <Message.Header>Error {isManualRecord ? 'Updating Manual Record' : 'Saving Rules'}</Message.Header>
+          <Message.Header>Error Saving Rules</Message.Header>
           <p>{saveError?.message || 'An error occurred'}</p>
         </Message>
       )}
@@ -63,17 +54,7 @@ export const RecordForm = () => {
         </Message>
       )}
 
-      {formData &&
-        (isManualRecord ? (
-          <EditManualRecordJsonForm
-            initialData={formData}
-            onSubmit={(data) => handleSave(data)}
-            isLoading={isSaving}
-            error={saveError}
-          />
-        ) : (
-          <CurationForm data={formData} onSubmit={(data) => handleSave(data)} isLoading={isSaving} />
-        ))}
+      {formData && <CurationForm data={formData} onSubmit={(data) => handleSave(data)} isLoading={isSaving} />}
     </Container>
   );
 };
