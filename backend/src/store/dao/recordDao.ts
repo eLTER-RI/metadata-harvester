@@ -221,7 +221,7 @@ export class RecordDao {
     const where = conditions.length > 0 ? ` WHERE ${conditions.join(' AND ')}` : '';
     let query = `
       SELECT
-        h.source_url, h.source_repository, h.dar_id, h.last_harvested, h.title, h.status,
+        h.source_url, h.source_repository, h.dar_id, h.last_harvested, h.last_seen_at, h.title, h.status,
         h.site_references, h.habitat_references, h.dataset_type, h.keywords,
         CASE WHEN r.dar_id IS NOT NULL THEN true ELSE false END AS is_resolved
       FROM harvested_records h
