@@ -125,6 +125,25 @@ export const useUpdateManualRecord = () => {
   });
 };
 
+export const useDeleteManualRecord = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (darId: string) => {
+      const response = await api.delete(`/manual-records/${darId}`);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['manualRecords'] });
+      queryClient.invalidateQueries({ queryKey: ['records'] });
+      queryClient.invalidateQueries({ queryKey: ['filters'] });
+    },
+    onError: () => {
+      // TODO: add toast notification
+    },
+  });
+};
+
 export const useReHarvestRecord = () => {
   const queryClient = useQueryClient();
 

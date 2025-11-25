@@ -1,6 +1,9 @@
-import { Item, Grid } from 'semantic-ui-react';
+import { Item, Grid, Button, Icon } from 'semantic-ui-react';
 import { Link } from 'react-router-dom';
-import { Button } from 'semantic-ui-react';
+import { useState } from 'react';
+import { useDeleteManualRecord } from '../../hooks/recordMutations';
+import { getDarRecordUrl } from '../../utils/darUrl';
+import { DeleteConfirmModal } from '../DeleteConfirmModal';
 
 interface ManualRecordCardProps {
   record: {
@@ -13,6 +16,20 @@ interface ManualRecordCardProps {
 }
 
 const ManualRecordCard = ({ record }: ManualRecordCardProps) => {
+  const { mutate: deleteRecord, isPending: isDeleting } = useDeleteManualRecord();
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  const handleDelete = () => {
+    deleteRecord(record.dar_id, {
+      onSuccess: () => {
+        setShowConfirm(false);
+      },
+      onError: () => {
+        setShowConfirm(false);
+      },
+    });
+  };
+
   return (
     <Item className="search-listing-item">
       <Item.Content className="content">
@@ -20,12 +37,34 @@ const ManualRecordCard = ({ record }: ManualRecordCardProps) => {
           <Grid.Column>
             <Item.Header>{record.title || 'No Title'}</Item.Header>
             <Item.Content>
-              <strong>DAR ID:</strong> {record.dar_id}
+              <strong>DAR ID:</strong>{' '}
+              <a href={getDarRecordUrl(record.dar_id)}>
+                {record.dar_id}
+                <Icon name="external alternate" size="small" style={{ marginLeft: '0.25em' }} />
+              </a>
             </Item.Content>
             {record.created_at && <Item.Meta>Created: {new Date(record.created_at).toLocaleDateString()}</Item.Meta>}
           </Grid.Column>
           <Grid.Column>
-            <Button as={Link} to={`/${record.dar_id}/edit`} icon="edit" content="Edit" />
+            <Button.Group>
+              <Button as={Link} to={`/${record.dar_id}/edit`} icon="edit" content="Edit" />
+              <Button
+                negative
+                icon="trash"
+                content="Delete"
+                onClick={() => setShowConfirm(true)}
+                loading={isDeleting}
+                disabled={isDeleting}
+              />
+            </Button.Group>
+            <DeleteConfirmModal
+              open={showConfirm}
+              onClose={() => setShowConfirm(false)}
+              onConfirm={handleDelete}
+              title="Delete Manual Record"
+              itemName={record.title || record.dar_id}
+              isLoading={isDeleting}
+            />
           </Grid.Column>
         </Grid>
       </Item.Content>
