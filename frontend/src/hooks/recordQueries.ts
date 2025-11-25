@@ -20,18 +20,51 @@ export const useFetchRecords = (
   pageSize: number,
   resolvedFilter: boolean | undefined,
   repositoryFilter: string[],
+  sitesFilter: string,
+  habitatsFilter: string,
+  keywordsFilter: string,
+  datasetTypeFilter: string,
   searchQuery: string,
 ) => {
   return useQuery<RecordsResponse>({
-    queryKey: ['records', { currentPage, pageSize, resolvedFilter, repositoryFilter, searchQuery }],
+    queryKey: [
+      'records',
+      {
+        currentPage,
+        pageSize,
+        resolvedFilter,
+        repositoryFilter,
+        sitesFilter,
+        habitatsFilter,
+        keywordsFilter,
+        datasetTypeFilter,
+        searchQuery,
+      },
+    ],
     queryFn: async () => {
-      const params = {
+      const params: any = {
         page: currentPage,
         size: pageSize,
         title: searchQuery || null,
         resolved: resolvedFilter,
-        repositories: repositoryFilter,
       };
+
+      if (repositoryFilter.length > 0) {
+        params['repositories[]'] = repositoryFilter;
+      }
+      if (sitesFilter) {
+        params.sites = sitesFilter;
+      }
+      if (habitatsFilter) {
+        params.habitats = habitatsFilter;
+      }
+      if (keywordsFilter) {
+        params.keywords = keywordsFilter;
+      }
+      if (datasetTypeFilter) {
+        params.datasetTypes = datasetTypeFilter;
+      }
+
       const response = await api.get<RecordsResponse>('/records', { params });
       return response.data || { records: [], totalCount: 0, totalPages: 0 };
     },
@@ -42,16 +75,38 @@ export const useFetchRecords = (
 export const useFetchFilterValues = (
   resolvedFilter: boolean | undefined,
   repositoryFilter: string[],
+  sitesFilter: string,
+  habitatsFilter: string,
+  keywordsFilter: string,
+  datasetTypeFilter: string,
   searchQuery: string,
 ) => {
   return useQuery<FilterValues>({
-    queryKey: ['filters', { resolvedFilter, repositoryFilter, searchQuery }],
+    queryKey: [
+      'filters',
+      { resolvedFilter, repositoryFilter, sitesFilter, habitatsFilter, keywordsFilter, datasetTypeFilter, searchQuery },
+    ],
     queryFn: async (): Promise<FilterValues> => {
-      const params = {
+      const params: any = {
         resolved: resolvedFilter,
-        repositories: repositoryFilter,
         title: searchQuery || null,
       };
+
+      if (repositoryFilter.length > 0) {
+        params['repositories[]'] = repositoryFilter;
+      }
+      if (sitesFilter) {
+        params.sites = sitesFilter;
+      }
+      if (habitatsFilter) {
+        params.habitats = habitatsFilter;
+      }
+      if (keywordsFilter) {
+        params.keywords = keywordsFilter;
+      }
+      if (datasetTypeFilter) {
+        params.datasetTypes = datasetTypeFilter;
+      }
 
       const [repoResponse, resolvedResponse] = await Promise.all([
         api.get<FilterValues['repositories']>('/repositories', { params }),

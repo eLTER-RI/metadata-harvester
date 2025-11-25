@@ -31,11 +31,19 @@ interface RecordsContextType {
   currentPage: number;
   resolvedFilter: boolean | undefined;
   repositoryFilter: string[];
+  sitesFilter: string;
+  habitatsFilter: string;
+  keywordsFilter: string;
+  datasetTypeFilter: string;
   searchQuery: string;
   setCurrentPage: (page: number) => void;
   setPageSize: (page: number) => void;
   setResolvedFilter: (resolved: boolean | undefined) => void;
   setRepositoryFilter: (repository: string[]) => void;
+  setSitesFilter: (sites: string) => void;
+  setHabitatsFilter: (habitats: string) => void;
+  setKeywordsFilter: (keywords: string) => void;
+  setDatasetTypeFilter: (datasetTypes: string) => void;
   setSearchQuery: (title: string) => void;
   manualRecordsPageSize: number;
   manualRecordsCurrentPage: number;
@@ -52,6 +60,10 @@ export const RecordsProvider = ({ children }: { children: React.ReactNode }) => 
   const [currentPage, setCurrentPage] = useState(1);
   const [resolvedFilter, setResolvedFilter] = useState<boolean | undefined>(undefined);
   const [repositoryFilter, setRepositoryFilter] = useState<string[]>([]);
+  const [sitesFilter, setSitesFilter] = useState<string>('');
+  const [habitatsFilter, setHabitatsFilter] = useState<string>('');
+  const [keywordsFilter, setKeywordsFilter] = useState<string>('');
+  const [datasetTypeFilter, setDatasetTypeFilter] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
   const [manualRecordsPageSize, setManualRecordsPageSize] = useState(10);
   const [manualRecordsCurrentPage, setManualRecordsCurrentPage] = useState(1);
@@ -62,11 +74,19 @@ export const RecordsProvider = ({ children }: { children: React.ReactNode }) => 
     currentPage,
     resolvedFilter,
     repositoryFilter,
+    sitesFilter,
+    habitatsFilter,
+    keywordsFilter,
+    datasetTypeFilter,
     searchQuery,
     setCurrentPage,
     setPageSize,
     setResolvedFilter,
     setRepositoryFilter,
+    setSitesFilter,
+    setHabitatsFilter,
+    setKeywordsFilter,
+    setDatasetTypeFilter,
     setSearchQuery,
     manualRecordsPageSize,
     manualRecordsCurrentPage,
@@ -85,19 +105,47 @@ export const useRecords = () => {
     throw new Error('Context cannot be undefined.');
   }
 
-  const { currentPage, pageSize, resolvedFilter, repositoryFilter, searchQuery } = context;
+  const {
+    currentPage,
+    pageSize,
+    resolvedFilter,
+    repositoryFilter,
+    sitesFilter,
+    habitatsFilter,
+    keywordsFilter,
+    datasetTypeFilter,
+    searchQuery,
+  } = context;
 
   const {
     data: recordsData,
     isLoading: isRecordsLoading,
     error: recordsError,
-  } = useFetchRecords(currentPage, pageSize, resolvedFilter, repositoryFilter, searchQuery);
+  } = useFetchRecords(
+    currentPage,
+    pageSize,
+    resolvedFilter,
+    repositoryFilter,
+    sitesFilter,
+    habitatsFilter,
+    keywordsFilter,
+    datasetTypeFilter,
+    searchQuery,
+  );
 
   const {
     data: filterValuesData,
     isLoading: isFilterLoading,
     error: filterError,
-  } = useFetchFilterValues(resolvedFilter, repositoryFilter, searchQuery);
+  } = useFetchFilterValues(
+    resolvedFilter,
+    repositoryFilter,
+    sitesFilter,
+    habitatsFilter,
+    keywordsFilter,
+    datasetTypeFilter,
+    searchQuery,
+  );
 
   return {
     ...context,
