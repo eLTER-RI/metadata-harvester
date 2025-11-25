@@ -4,11 +4,13 @@ import { CommonDatasetMetadata } from '../../../../../backend/src/models/commonS
 import { GroupDiffAccordion } from '../../rules/GroupDiffAccordion';
 import { useState } from 'react';
 import { DeleteConfirmModal } from '../../DeleteConfirmModal';
+import { useFetchDeimsSites } from '../../../hooks/recordQueries';
 
 export const SiteReferencesGroup = () => {
   const {
     control,
-    register,
+    setValue,
+    watch,
     formState: { errors },
   } = useFormContext<CommonDatasetMetadata>();
   const { fields, append, remove } = useFieldArray({
@@ -17,6 +19,7 @@ export const SiteReferencesGroup = () => {
   });
   const [modalOpen, setModalOpen] = useState(false);
   const [indexToDelete, setIndexToDelete] = useState<number | null>(null);
+  const { data: deimsSites = [], isLoading: isLoadingSites } = useFetchDeimsSites();
 
   const addSiteReference = () => {
     append({
@@ -59,24 +62,34 @@ export const SiteReferencesGroup = () => {
             <Button type="button" icon="trash" color="red" size="small" onClick={() => handleDeleteClick(index)} />
           </div>
 
-          <Form.Group widths="equal">
-            <Form.Field>
-              <label>Site ID *</label>
-              <Form.Input
-                placeholder="Site identifier"
-                {...register(`siteReferences.${index}.siteID`)}
-                error={errors.siteReferences?.[index]?.siteID ? { content: 'Site ID is required' } : false}
-              />
-            </Form.Field>
-            <Form.Field>
-              <label>Site Name *</label>
-              <Form.Input
-                placeholder="Name of the site"
-                {...register(`siteReferences.${index}.siteName`)}
-                error={errors.siteReferences?.[index]?.siteName ? { content: 'Site name is required' } : false}
-              />
-            </Form.Field>
-          </Form.Group>
+          <Form.Field>
+            <label>Select a DEIMS Site *</label>
+            <Form.Select
+              search
+              clearable
+              placeholder={isLoadingSites ? 'Loading sites' : 'Search and select a DEIMS site'}
+              value={watch(`siteReferences.${index}.siteID`) || ''}
+              options={deimsSites.map((site) => ({
+                key: site.siteID,
+                text: site.siteName,
+                value: site.siteID,
+              }))}
+              loading={isLoadingSites}
+              onChange={(_, { value }) => {
+                if (value) {
+                  const selectedSite = deimsSites.find((s) => s.siteID === value);
+                  if (selectedSite) {
+                    setValue(`siteReferences.${index}.siteID`, selectedSite.siteID);
+                    setValue(`siteReferences.${index}.siteName`, selectedSite.siteName);
+                  }
+                } else {
+                  setValue(`siteReferences.${index}.siteID`, '');
+                  setValue(`siteReferences.${index}.siteName`, '');
+                }
+              }}
+              error={errors.siteReferences?.[index]?.siteID ? { content: 'Site selection is required' } : false}
+            />
+          </Form.Field>
         </Segment>
       ))}
 

@@ -122,3 +122,20 @@ export const useFetchManualRecords = (currentPage: number, pageSize: number, sea
     placeholderData: keepPreviousData,
   });
 };
+
+export interface DeimsSite {
+  siteID: string;
+  siteName: string;
+  siteData?: any;
+}
+
+export const useFetchDeimsSites = () => {
+  return useQuery<DeimsSite[]>({
+    queryKey: ['deims-sites'],
+    queryFn: async () => {
+      const response = await api.get<DeimsSite[]>('/deims-sites');
+      return response.data || [];
+    },
+    staleTime: 30 * 60 * 1000, // cache for 30 minutes
+  });
+};
