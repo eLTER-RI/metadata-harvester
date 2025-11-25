@@ -35,11 +35,12 @@ jobs:
 
       - name: Check for uncommitted changes
         run: |
-          if [ "$(git status --porcelain)" ]; then
-            echo
+          if [ -z "$(git status --porcelain)" ]; then
             echo "Generated schema is up-to-date"
             exit "0"
           else
-            echo "Error: generated schema was not regenerated after changes in commonStructure.ts"
+            echo "Error: Schema was regenerated but changes were not committed."
+            echo "Please run 'npm run generate:schemas' in the backend directory and commit the changes."
+            git status --porcelain
             exit "1"
           fi
