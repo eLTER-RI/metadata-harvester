@@ -553,9 +553,16 @@ app.post('/api/harvest/single', async (req, res) => {
 app.post('/api/sync/sites', async (req, res) => {
   log('info', 'Command received: sync-deims');
   try {
-    syncDeimsSites(pool).catch((error) => {
+    const syncPromise = syncDeimsSites(pool);
+    syncPromise.catch((error) => {
       log('error', `DEIMS sites synchronization failed: ${error}`);
     });
+    await Promise.race([
+      syncPromise.catch((error) => {
+        throw error;
+      }),
+      new Promise((resolve) => setTimeout(resolve, 0)),
+    ]);
     res.status(200).json({ message: 'DEIMS sites synchronization started successfully.' });
   } catch (error) {
     log('error', `${error}`);
