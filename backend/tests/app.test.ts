@@ -1,6 +1,6 @@
 import request from 'supertest';
-import app from '../src/app.js';
-import { server } from '../src/server.js';
+import app from '../src/app';
+import { server } from '../src/server';
 import { HarvesterContext, startRecordSync, startRepositorySync } from '../src/services/jobs/harvest/harvester';
 import { syncDeimsSites } from '../src/services/jobs/deimsSync/syncDeimsSites';
 import { syncWithDar } from '../src/services/jobs/syncDbWithRemote/localDarSync';
@@ -319,7 +319,7 @@ describe('Harvester Service API', () => {
       mockStartRepoSync.mockResolvedValue(undefined);
       const response = await request(app).post('/api/harvest').send({ repository: 'ZENODO' });
       expect(response.status).toBe(200);
-      expect(response.body.message).toBe('Harvesting job completed.');
+      expect(response.body.message).toBe('Harvesting job started successfully.');
       expect(mockHarvesterContextCreate).toHaveBeenCalledWith(expect.any(Object), 'ZENODO', true);
       expect(mockStartRepoSync).toHaveBeenCalled();
     });
@@ -353,7 +353,7 @@ describe('Harvester Service API', () => {
         .post('/api/harvest/single')
         .send({ sourceUrl: 'http://b2share.eudat.eu/a1b2c3-d4e5f6', repository: 'ZENODO' });
       expect(response.status).toBe(200);
-      expect(response.body.message).toBe('Harvesting job completed.');
+      expect(response.body.message).toBe('Harvesting job started successfully.');
       expect(mockHarvesterContextCreate).toHaveBeenCalledWith(expect.any(Object), 'ZENODO', true);
       expect(mockStartRecordSync).toHaveBeenCalledWith({}, 'http://b2share.eudat.eu/a1b2c3-d4e5f6');
     });
