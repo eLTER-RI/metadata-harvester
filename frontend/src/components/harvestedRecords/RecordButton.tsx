@@ -1,5 +1,6 @@
 import { Dropdown } from 'semantic-ui-react';
 import { useReHarvestRecord } from '../../hooks/recordMutations';
+import { getDarRecordUrl } from '../../utils/darUrl';
 
 interface ActionButtonProps {
   record: any;
@@ -31,7 +32,7 @@ export const ActionButton = ({ record }: ActionButtonProps) => {
           key={'detail'}
           icon={'eye'}
           text="Detail"
-          href={`https://dar.elter-ri.eu/external-datasets/${record.dar_id}`}
+          href={getDarRecordUrl(record.dar_id)}
           target="_blank"
           rel="noopener noreferrer"
         />
