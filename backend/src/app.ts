@@ -8,7 +8,12 @@ import { HarvesterContext, startRecordSync, startRepositorySync } from './servic
 import { syncDeimsSites } from './services/jobs/deimsSync/syncDeimsSites';
 import { syncWithDar } from './services/jobs/syncDbWithRemote/localDarSync';
 import { createRulesForRecord, deleteRuleForRecord, getRulesForRecord } from './services/rulesService';
-import { listManualRecords, createManualRecord, updateManualRecord } from './services/manualRecordsService';
+import {
+  listManualRecords,
+  createManualRecord,
+  updateManualRecord,
+  deleteManualRecord,
+} from './services/manualRecordsService';
 import {
   listRecords,
   getRecordByDarId,
@@ -821,6 +826,47 @@ app.put('/api/manual-records/:darId', async (req, res) => {
     log('error', `Error updating manual record: ${error}`);
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
     res.status(500).json({ error: `Failed to update manual record: ${errorMessage}` });
+  }
+});
+
+/**
+ * @swagger
+ * /api/manual-records/{darId}:
+ *   delete:
+ *     tags: [Manual Records]
+ *     summary: Delete a manual record from DAR and local database
+ *     parameters:
+ *       - in: path
+ *         name: darId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The dar id of the record to delete
+ *     responses:
+ *       200:
+ *         description: Record deleted successfully.
+ *       404:
+ *         description: Record not found.
+ *       500:
+ *         description: Failed to delete record.
+ */
+app.delete('/api/manual-records/:darId', async (req, res) => {
+  try {
+    const { darId } = req.params;
+
+    const result = await deleteManualRecord(pool, darId);
+    if (!result.success) {
+      log('error', `Failed to delete manual record: ${result.error}`);
+      return res.status(result.statusCode || 500).json({ error: result.error });
+    }
+
+    res.status(200).json({
+      message: result.message,
+    });
+  } catch (error) {
+    log('error', `Error deleting manual record: ${error}`);
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+    res.status(500).json({ error: `Failed to delete manual record: ${errorMessage}` });
   }
 });
 

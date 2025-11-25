@@ -1,7 +1,7 @@
 import { Pool } from 'pg';
 import { log } from './serviceLogging';
 import { ManualRecordDao, DbManualRecord } from '../store/dao/manualRecordDao';
-import { postToDarManual, putToDarManual } from './clients/darApi';
+import { postToDarManual, putToDarManual, deleteDarRecordsByIds } from './clients/darApi';
 
 export interface ListManualRecordsOptions {
   size?: number;
@@ -32,6 +32,13 @@ export interface UpdateManualRecordResult {
   success: boolean;
   id?: number;
   dar_id?: string;
+  message?: string;
+  error?: string;
+  statusCode?: number;
+}
+
+export interface DeleteManualRecordResult {
+  success: boolean;
   message?: string;
   error?: string;
   statusCode?: number;
@@ -190,4 +197,43 @@ export async function updateManualRecord(
     dar_id: darId,
     message: 'Record updated successfully in DAR.',
   };
+}
+
+/**
+ * Deletes a manual record from DAR and local database.
+ * @param {Pool} pool Database connection pool.
+ * @param {string} darId The DAR ID of the record to delete.
+ * @returns {Promise<DeleteManualRecordResult>} Result object.
+ */
+export async function deleteManualRecord(pool: Pool, darId: string): Promise<DeleteManualRecordResult> {
+  const manualRecordDao = new ManualRecordDao(pool);
+  const manualRecord = await manualRecordDao.getRecordByDarId(darId);
+
+  if (!manualRecord) {
+    return {
+      success: false,
+      error: `Manual record with dar id ${darId} not found`,
+      statusCode: 404,
+    };
+  }
+
+  try {
+    await deleteDarRecordsByIds([darId]);
+    log('info', `Successfully deleted record ${darId} from DAR`);
+
+    await manualRecordDao.deleteRecord(manualRecord.id);
+    log('info', `Successfully deleted manual record ${darId} from local database`);
+
+    return {
+      success: true,
+      message: 'Record deleted successfully from both DAR and local database.',
+    };
+  } catch (error) {
+    log('error', `Error deleting manual record ${darId}: ${error}`);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to delete record',
+      statusCode: 500,
+    };
+  }
 }
