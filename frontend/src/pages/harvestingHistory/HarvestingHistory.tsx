@@ -1,10 +1,31 @@
+import { useState } from 'react';
 import { Container, Header, Table, Button, Icon, Label, ButtonGroup, Segment, Dimmer, Loader } from 'semantic-ui-react';
 import { useFetchRecords } from '../../hooks/recordQueries';
 import { useReHarvestRecord } from '../../hooks/recordMutations';
 import { getDarRecordUrl } from '../../utils/darUrl';
+import RecordsPagination from '../../components/pagination/Pagination';
+
+type SortField = 'last_harvested' | 'last_seen_at' | 'status';
+type SortDirection = 'asc' | 'desc';
+const PAGE_SIZE = 50;
 
 export const HarvestingHistory = () => {
-  const { data, isLoading } = useFetchRecords(1, 1000000, undefined, [], '', '', '', '', '');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sortField, setSortField] = useState<SortField>('last_harvested');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const { data, isLoading } = useFetchRecords(
+    currentPage,
+    PAGE_SIZE,
+    undefined,
+    [],
+    '',
+    '',
+    '',
+    '',
+    '',
+    sortField,
+    sortDirection,
+  );
   const reHarvestMutation = useReHarvestRecord();
 
   const records = data?.records || [];
@@ -15,6 +36,23 @@ export const HarvestingHistory = () => {
       repository,
       checkHarvestChanges: false,
     });
+  };
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('desc');
+    }
+    setCurrentPage(1);
+  };
+
+  const getSortedValue = (field: SortField): 'ascending' | 'descending' | undefined => {
+    if (sortField !== field) {
+      return undefined;
+    }
+    return sortDirection === 'asc' ? 'ascending' : 'descending';
   };
 
   const getStatusColor = (status: string) => {
@@ -61,15 +99,21 @@ export const HarvestingHistory = () => {
         Harvested Records History
       </Header>
 
-      <Table compact celled>
+      <Table sortable compact celled>
         <Table.Header>
           <Table.Row>
             <Table.HeaderCell>Repository</Table.HeaderCell>
             <Table.HeaderCell>Title</Table.HeaderCell>
-            <Table.HeaderCell>Status</Table.HeaderCell>
-            <Table.HeaderCell>Last Harvested</Table.HeaderCell>
-            <Table.HeaderCell>Last Seen</Table.HeaderCell>
-            <Table.HeaderCell style={{ width: '1%', whiteSpace: 'nowrap' }}>Actions</Table.HeaderCell>
+            <Table.HeaderCell sorted={getSortedValue('status')} onClick={() => handleSort('status')}>
+              Status
+            </Table.HeaderCell>
+            <Table.HeaderCell sorted={getSortedValue('last_harvested')} onClick={() => handleSort('last_harvested')}>
+              Last Harvested
+            </Table.HeaderCell>
+            <Table.HeaderCell sorted={getSortedValue('last_seen_at')} onClick={() => handleSort('last_seen_at')}>
+              Last Seen
+            </Table.HeaderCell>
+            <Table.HeaderCell>Actions</Table.HeaderCell>
           </Table.Row>
         </Table.Header>
         <Table.Body>
@@ -108,6 +152,15 @@ export const HarvestingHistory = () => {
           })}
         </Table.Body>
       </Table>
+      {data && (
+        <RecordsPagination
+          currentPage={currentPage}
+          totalRecords={data.totalCount}
+          totalPages={data.totalPages}
+          pageSize={PAGE_SIZE}
+          setCurrentPage={setCurrentPage}
+        />
+      )}
     </Container>
   );
 };
