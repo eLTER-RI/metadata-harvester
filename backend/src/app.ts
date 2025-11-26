@@ -92,10 +92,20 @@ app.get('/api/records', async (req, res) => {
     const habitatsParam = req.query.habitats as string;
     const keywordsParam = req.query.keywords as string;
     const datasetTypesParam = req.query.datasetTypes as string;
+    const orderByParam = req.query.orderBy as string;
+    const orderDirectionParam = req.query.orderDirection as string;
     let repositories: string[] | undefined;
     if (repositoryParam) {
       repositories = Array.isArray(repositoryParam) ? repositoryParam : [repositoryParam];
     }
+
+    let orderBy: 'last_harvested' | 'last_seen_at' | 'status' = 'last_harvested';
+    if (orderByParam === 'last_seen_at' || orderByParam === 'status') {
+      orderBy = orderByParam;
+    }
+
+    const orderDirection = orderDirectionParam === 'asc' ? 'asc' : 'desc';
+
     const options = {
       resolved: resolvedParam ? resolvedParam === 'true' : undefined,
       repositories: repositories,
@@ -106,6 +116,8 @@ app.get('/api/records', async (req, res) => {
       datasetTypes: datasetTypesParam,
       size: size,
       offset: (page - 1) * size,
+      orderBy: orderBy,
+      orderDirection: orderDirection as 'asc' | 'desc',
     };
 
     const result = await listRecords(pool, options);

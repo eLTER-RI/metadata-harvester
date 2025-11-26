@@ -158,6 +158,8 @@ export class RecordDao {
     datasetTypes?: string;
     size?: number;
     offset?: number;
+    orderBy?: 'last_harvested' | 'last_seen_at' | 'status';
+    orderDirection?: 'asc' | 'desc';
   }): Promise<{ records: DbRecord[]; totalCount: number }> {
     const values = [];
     const conditions = [];
@@ -219,6 +221,23 @@ export class RecordDao {
     }
 
     const where = conditions.length > 0 ? ` WHERE ${conditions.join(' AND ')}` : '';
+    const orderBy = options?.orderBy || 'last_harvested';
+    const orderDirection = options?.orderDirection || 'desc';
+
+    let orderByColumn: string;
+    switch (orderBy) {
+      case 'last_seen_at':
+        orderByColumn = 'h.last_seen_at';
+        break;
+      case 'status':
+        orderByColumn = 'h.status';
+        break;
+      case 'last_harvested':
+      default:
+        orderByColumn = 'h.last_harvested';
+        break;
+    }
+
     let query = `
       SELECT
         h.source_url, h.source_repository, h.dar_id, h.last_harvested, h.last_seen_at, h.title, h.status,
@@ -227,7 +246,7 @@ export class RecordDao {
       FROM harvested_records h
       LEFT JOIN resolved_records r ON h.dar_id = r.dar_id
       ${where}
-      ORDER BY h.last_harvested DESC
+      ORDER BY ${orderByColumn} ${orderDirection.toUpperCase()}
   `;
 
     const countQuery = `

@@ -12,6 +12,8 @@ export interface ListRecordsOptions {
   datasetTypes?: string;
   size?: number;
   offset?: number;
+  orderBy?: 'last_harvested' | 'last_seen_at' | 'status';
+  orderDirection?: 'asc' | 'desc';
 }
 
 export interface ListRecordsResult {
