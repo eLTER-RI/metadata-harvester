@@ -25,6 +25,8 @@ export const useFetchRecords = (
   keywordsFilter: string,
   datasetTypeFilter: string,
   searchQuery: string,
+  orderBy?: 'last_harvested' | 'last_seen_at' | 'status',
+  orderDirection?: 'asc' | 'desc',
 ) => {
   return useQuery<RecordsResponse>({
     queryKey: [
@@ -39,6 +41,8 @@ export const useFetchRecords = (
         keywordsFilter,
         datasetTypeFilter,
         searchQuery,
+        orderBy,
+        orderDirection,
       },
     ],
     queryFn: async () => {
@@ -48,6 +52,13 @@ export const useFetchRecords = (
         title: searchQuery || null,
         resolved: resolvedFilter,
       };
+
+      if (orderBy) {
+        params.orderBy = orderBy;
+      }
+      if (orderDirection) {
+        params.orderDirection = orderDirection;
+      }
 
       if (repositoryFilter.length > 0) {
         params['repositories[]'] = repositoryFilter;

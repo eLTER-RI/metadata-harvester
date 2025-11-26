@@ -1,4 +1,5 @@
 import { Container, Header, Grid, Card, Button, Icon, Segment } from 'semantic-ui-react';
+import { Link } from 'react-router-dom';
 import { useHarvestRepository } from '../../hooks/recordMutations';
 
 interface RepositoryInfo {
@@ -95,10 +96,16 @@ export const HarvestPage = () => {
             manually.
           </p>
 
-          <Button primary size="large" style={{ marginBottom: '1rem' }} onClick={handleHarvestAll}>
-            <Icon name="download" />
-            Harvest All Repositories
-          </Button>
+          <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+            <Button primary size="large" onClick={handleHarvestAll}>
+              <Icon name="download" />
+              Harvest All Repositories
+            </Button>
+            <Button as={Link} to="/harvest/history" secondary size="large">
+              <Icon name="table" />
+              View History
+            </Button>
+          </div>
         </Segment>
 
         <Grid columns={2} stackable>

@@ -5,6 +5,7 @@ import { HomePage } from './pages/homepage';
 import { HarvestPage } from './pages/harvest';
 import { RecordPage } from './pages/recordForm';
 import { ManualRecordsPage } from './components/manualRecords/ManualRecordsPage';
+import { HarvestingHistory } from './pages/harvestingHistory/HarvestingHistory';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -13,6 +14,7 @@ const router = createBrowserRouter(
       <Route path={'/harvested_records'} element={<LandingPage />} />
       <Route path={'/manual_records'} element={<ManualRecordsPage />} />
       <Route path={'/harvest'} element={<HarvestPage />} />
+      <Route path={'/harvest/history'} element={<HarvestingHistory />} />
       <Route path={'/create'} element={<RecordPage />} />
       <Route path={'/:darId/edit'} element={<RecordPage />} />
     </Route>,
