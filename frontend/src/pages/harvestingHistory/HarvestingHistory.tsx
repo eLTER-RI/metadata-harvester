@@ -55,6 +55,24 @@ export const HarvestingHistory = () => {
     return sortDirection === 'asc' ? 'ascending' : 'descending';
   };
 
+  const formatDate = (dateString: string | null | undefined): string => {
+    if (!dateString) {
+      return 'never';
+    }
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch {
+      return dateString;
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'success':
@@ -102,35 +120,50 @@ export const HarvestingHistory = () => {
       <Table sortable compact celled>
         <Table.Header>
           <Table.Row>
-            <Table.HeaderCell>Repository</Table.HeaderCell>
-            <Table.HeaderCell>Title</Table.HeaderCell>
-            <Table.HeaderCell sorted={getSortedValue('status')} onClick={() => handleSort('status')}>
+            <Table.HeaderCell width={2}>Repository</Table.HeaderCell>
+            <Table.HeaderCell width={4}>Title</Table.HeaderCell>
+            <Table.HeaderCell width={2} sorted={getSortedValue('status')} onClick={() => handleSort('status')}>
               Status
             </Table.HeaderCell>
-            <Table.HeaderCell sorted={getSortedValue('last_harvested')} onClick={() => handleSort('last_harvested')}>
+            <Table.HeaderCell
+              width={2}
+              sorted={getSortedValue('last_harvested')}
+              onClick={() => handleSort('last_harvested')}
+            >
               Last Harvested
             </Table.HeaderCell>
-            <Table.HeaderCell sorted={getSortedValue('last_seen_at')} onClick={() => handleSort('last_seen_at')}>
+            <Table.HeaderCell
+              width={2}
+              sorted={getSortedValue('last_seen_at')}
+              onClick={() => handleSort('last_seen_at')}
+            >
               Last Seen
             </Table.HeaderCell>
-            <Table.HeaderCell>Actions</Table.HeaderCell>
+            <Table.HeaderCell width={2}>Actions</Table.HeaderCell>
           </Table.Row>
         </Table.Header>
         <Table.Body>
           {records.map((record: any) => {
             return (
               <Table.Row key={record.source_url}>
-                <Table.Cell>
-                  <strong>{record.source_repository}</strong>
+                <Table.Cell>{record.source_repository}</Table.Cell>
+                <Table.Cell
+                  style={{
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                  title={record.title ?? 'No title'}
+                >
+                  {record.title ?? 'No title'}
                 </Table.Cell>
-                <Table.Cell>{record.title ?? 'No title'}</Table.Cell>
                 <Table.Cell>
                   <Label color={getStatusColor(record.status)} size="small">
                     {record.status}
                   </Label>
                 </Table.Cell>
-                <Table.Cell>{record.last_harvested}</Table.Cell>
-                <Table.Cell>{record.last_seen_at}</Table.Cell>
+                <Table.Cell>{formatDate(record.last_harvested)}</Table.Cell>
+                <Table.Cell>{formatDate(record.last_seen_at)}</Table.Cell>
                 <Table.Cell style={{ whiteSpace: 'nowrap' }}>
                   <ButtonGroup size="small">
                     {record.source_url && <Button compact icon="external" content="Source" href={record.source_url} />}
