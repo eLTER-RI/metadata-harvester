@@ -8,12 +8,12 @@ export const HomePage = () => {
     data: filterValues,
     isLoading: isFilterLoading,
     isError: isFilterError,
-  } = useFetchFilterValues(undefined, [], '');
+  } = useFetchFilterValues(undefined, [], '', '', '', '', '');
   const {
     data: recordsData,
     isLoading: isRecordsLoading,
     isError: isRecordsError,
-  } = useFetchRecords(1, 1, undefined, [], '');
+  } = useFetchRecords(1, 1, undefined, [], '', '', '', '', '');
 
   const totalRecords = recordsData?.totalCount || 0;
   const filterValuesData = filterValues || { repositories: [], resolved: [] };
