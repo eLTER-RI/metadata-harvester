@@ -29,11 +29,12 @@ export const GroupDiffAccordion = ({ basePath }: GroupDiffToggleProps) => {
   if (!hasRule) return null;
 
   return (
-    <Segment>
+    <Segment color="blue" style={{ backgroundColor: 'lightblue', borderLeft: '4px solid teal' }}>
       <Accordion styled fluid>
         <AccordionTitle as="h4" active={open} index={0} onClick={() => setOpen((v) => !v)}>
           <Icon name="dropdown" />
-          Changes
+          <Icon name="edit" />
+          Changes Detected
         </AccordionTitle>
         <AccordionContent active={open}>
           <DiffView oldValue={prev} newValue={curr} splitView={true} />
