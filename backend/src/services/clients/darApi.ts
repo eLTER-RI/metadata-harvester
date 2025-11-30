@@ -28,7 +28,7 @@ interface DarApiResponse {
 export async function putToDar(darId: string, recordDao: RecordDao, sourceUrl: string, dataset: CommonDataset) {
   log('info', `PUT ${sourceUrl} to Dar record with id ${darId}.`);
   const apiResponse = await darLimiter.schedule(() =>
-    fetch(`${CONFIG.API_URL}/${darId}`, {
+    fetch(`${CONFIG.API_URL}/external-datasets/${darId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -75,7 +75,7 @@ export async function postToDar(
 ): Promise<string | null> {
   log('info', `Posting ${sourceUrl} to Dar.`);
   const apiResponse = await darLimiter.schedule(() =>
-    fetch(CONFIG.API_URL!, {
+    fetch(`${CONFIG.API_URL}/external-datasets`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -151,7 +151,7 @@ async function sendDarRequest(
  * @returns The ID of the newly created record in DAR, or null if the request fails.
  */
 export async function postToDarManual(data: any): Promise<string | null> {
-  const response = await sendDarRequest(CONFIG.API_URL!, 'POST', data, 'manual record');
+  const response = await sendDarRequest(`${CONFIG.API_URL}/external-datasets`, 'POST', data, 'manual record');
   if (!response) {
     return null;
   }
@@ -166,7 +166,12 @@ export async function postToDarManual(data: any): Promise<string | null> {
  * @returns true if successful, false otherwise.
  */
 export async function putToDarManual(darId: string, data: any): Promise<boolean> {
-  const response = await sendDarRequest(`${CONFIG.API_URL}/${darId}`, 'PUT', data, `manual record ${darId}`);
+  const response = await sendDarRequest(
+    `${CONFIG.API_URL}/external-datasets/${darId}`,
+    'PUT',
+    data,
+    `manual record ${darId}`,
+  );
   if (!response) {
     return false;
   }
@@ -183,7 +188,7 @@ export async function putToDarManual(darId: string, data: any): Promise<boolean>
 export async function deleteDarRecordsByIds(ids: string[]) {
   const deletePromises = ids.map((id) => {
     return darLimiter.schedule(() => {
-      const url = `${CONFIG.API_URL}/${id}`;
+      const url = `${CONFIG.API_URL}/external-datasets/${id}`;
 
       log('info', `Starting with deletion of a record with ID: ${id}`);
 
@@ -230,7 +235,7 @@ export async function deleteDarRecordsByIds(ids: string[]) {
  */
 function getUrlWithExternalSourceURIQuery(externalSourceURI: string): string {
   const encodedURI = encodeURIComponent(externalSourceURI);
-  return `${CONFIG.API_URL}?q=&metadata_externalSourceInformation_externalSourceURI=${encodedURI}`;
+  return `${CONFIG.API_URL}/external-datasets?q=&metadata_externalSourceInformation_externalSourceURI=${encodedURI}`;
 }
 
 /**

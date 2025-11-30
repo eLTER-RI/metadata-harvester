@@ -223,11 +223,11 @@ describe('DAR API Tests', () => {
       expect(scheduleSpy).toHaveBeenCalledTimes(2);
       expect(global.fetch).toHaveBeenCalledTimes(2);
 
-      expect(global.fetch).toHaveBeenCalledWith(`${CONFIG.API_URL}/id1`, {
+      expect(global.fetch).toHaveBeenCalledWith(`${CONFIG.API_URL}/external-datasets/id1`, {
         method: 'DELETE',
         headers: expect.any(Object),
       });
-      expect(global.fetch).toHaveBeenCalledWith(`${CONFIG.API_URL}/id2`, {
+      expect(global.fetch).toHaveBeenCalledWith(`${CONFIG.API_URL}/external-datasets/id2`, {
         method: 'DELETE',
         headers: expect.any(Object),
       });

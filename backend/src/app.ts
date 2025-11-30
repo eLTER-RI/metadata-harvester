@@ -14,6 +14,7 @@ import {
   updateManualRecord,
   deleteManualRecord,
 } from './services/manualRecordsService';
+import { createOnlineAsset, deleteOnlineAsset, getOnlineAssets } from './services/clients/oarApi';
 import {
   listRecords,
   getRecordByDarId,
@@ -739,7 +740,7 @@ app.post('/api/sync/records', async (req, res) => {
 app.get('/api/external-record/:darId', async (req, res) => {
   try {
     const { darId } = req.params;
-    const externalApiUrl = `${CONFIG.API_URL}/${darId}`;
+    const externalApiUrl = `${CONFIG.API_URL}/external-datasets/${darId}`;
     const apiResponse = await fetch(externalApiUrl);
 
     if (!apiResponse.ok) {
