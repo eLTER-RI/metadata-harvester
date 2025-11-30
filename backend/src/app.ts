@@ -962,5 +962,143 @@ app.delete('/api/manual-records/:darId', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/oar:
+ *   post:
+ *     tags: [OAR]
+ *     summary: Create record in OAR for DAR record
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - url
+ *             properties:
+ *               url:
+ *                 type: string
+ *                 description: The online URL for the asset
+ *               darAssetId:
+ *                 type: string
+ *                 description: The DAR asset ID (optional)
+ *     responses:
+ *       201:
+ *         description: Online asset created successfully.
+ *       400:
+ *         description: Invalid input.
+ *       500:
+ *         description: Failed to create online asset.
+ */
+app.post('/api/oar', async (req, res) => {
+  try {
+    const { url, darAssetId: bodyDarAssetId } = req.body;
+    const darAssetId = bodyDarAssetId || (req.query.darAssetId as string);
+
+    if (!url) {
+      return res.status(400).json({ error: 'URL is required' });
+    }
+
+    if (!darAssetId) {
+      return res.status(400).json({ error: "Missing required field: 'darAssetId'." });
+    }
+
+    const result = await createOnlineAsset(darAssetId, url);
+    if (!result) {
+      return res.status(500).json({ error: 'Failed to create record in OAR' });
+    }
+
+    res.status(201).json(result);
+  } catch (error) {
+    log('error', `Failed to create record in OAR: ${error}`);
+    res.status(500).json({ error: `Failed to create record in OAR: ${error}` });
+  }
+});
+
+/**
+ * @swagger
+ * /api/oar:
+ *   get:
+ *     tags: [OAR]
+ *     summary: Get OAR record for DAR record
+ *     parameters:
+ *       - in: query
+ *         name: darAssetId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The DAR asset ID
+ *     responses:
+ *       200:
+ *         description: List of online assets.
+ *       400:
+ *         description: Invalid input.
+ *       500:
+ *         description: Failed to get online assets.
+ */
+app.get('/api/oar', async (req, res) => {
+  try {
+    const { darAssetId } = req.query;
+
+    if (!darAssetId || typeof darAssetId !== 'string') {
+      return res.status(400).json({ error: 'darAssetId is required' });
+    }
+
+    const assets = await getOnlineAssets(darAssetId);
+
+    if (assets === null) {
+      return res.status(500).json({ error: 'Failed to get online assets from OAR' });
+    }
+
+    res.status(200).json(assets);
+  } catch (error) {
+    log('error', `Failed to get online assets: ${error}`);
+    res.status(500).json({ error: `Failed to get online assets: ${error}` });
+  }
+});
+
+/**
+ * @swagger
+ * /api/oar/{onlineAssetId}:
+ *   delete:
+ *     tags: [OAR]
+ *     summary: Delete an online asset from OAR
+ *     parameters:
+ *       - in: path
+ *         name: onlineAssetId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The ID of the online asset to delete
+ *     responses:
+ *       200:
+ *         description: Online asset deleted successfully.
+ *       404:
+ *         description: Online asset not found.
+ *       500:
+ *         description: Failed to delete online asset.
+ */
+app.delete('/api/oar/:onlineAssetId', async (req, res) => {
+  try {
+    const { onlineAssetId } = req.params;
+
+    if (!onlineAssetId) {
+      return res.status(400).json({ error: 'Online asset ID is required' });
+    }
+
+    const success = await deleteOnlineAsset(onlineAssetId);
+
+    if (!success) {
+      return res.status(500).json({ error: 'Failed to delete online asset from OAR' });
+    }
+
+    res.status(200).json({ message: 'Online asset deleted successfully' });
+  } catch (error) {
+    log('error', `Failed to delete online asset: ${error}`);
+    res.status(500).json({ error: `Failed to delete online asset: ${error}` });
+  }
+});
+
 export { server };
 export default app;
