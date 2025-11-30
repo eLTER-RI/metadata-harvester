@@ -33,15 +33,11 @@ export interface OARResponse {
 /**
  * Sends a GET request to the OAR API for online assets.
  * @param {string} darAssetId The DAR asset ID
- * @param {string} darAssetType The DAR asset type
  * @returns Array of online assets, or null if the request fails
  */
-export async function getOnlineAssets(
-  darAssetId: string,
-  darAssetType: string = 'external-dataset',
-): Promise<OARResponse[] | null> {
+export async function getOnlineAssets(darAssetId: string): Promise<OARResponse[] | null> {
   const oarApiUrl = `${CONFIG.API_URL}/oar/online-assets`;
-  const url = `${oarApiUrl}?darAssetId=${encodeURIComponent(darAssetId)}&darAssetType=${encodeURIComponent(darAssetType)}`;
+  const url = `${oarApiUrl}?darAssetId=${encodeURIComponent(darAssetId)}&darAssetType=external-dataset`;
   log('info', `Fetching online assets for DAR asset ${darAssetId} at ${url}`);
   const authToken = process.env.OAR_TOKEN ? `Bearer ${process.env.OAR_TOKEN}` : CONFIG.AUTH_TOKEN;
   const apiResponse = await fetch(url, {
@@ -66,15 +62,31 @@ export async function getOnlineAssets(
 /**
  * Sends a POST request to the OAR API.
  * @param {CreateOARRequest} onlineAsset The online asset data to create
- * @param {string} darAssetId The DAR asset ID
- * @param {string} darAssetType The DAR asset type
  * @returns The created OAR record, or null if the request fails
  */
-export async function createOnlineAsset(onlineAsset: CreateOARRequest): Promise<OARResponse | null> {
-  const url = `${CONFIG.API_URL}/oar/online-assets`;
-  log('info', `Posting asset for DAR record ${onlineAsset.darAssetId} to OAR: ${url}`);
+export async function createOnlineAsset(darAssetId: string, url: string): Promise<OARResponse | null> {
+  const onlineAsset = {
+    darAssetId,
+    darAssetType: 'external-dataset',
+    sourceFiles: {
+      usedSourceFiles: 'All' as const,
+      sourceFileUrls: null,
+    },
+    onlineUrl: url,
+    metadata: {
+      geoserver: {
+        layers: [],
+        getCapabilitiesUrl: `${CONFIG.API_URL}/oar/online-assets/ows?service=WMS&version=1.3.0&request=GetCapabilities`,
+      },
+    },
+    serviceType: 'geoserver',
+    expectedLifetime: new Date(Date.now() + 10 * 365 * 24 * 60 * 60 * 1000).toISOString(), // 10 years from now
+  };
+
+  const oarUrl = `${CONFIG.API_URL}/oar/online-assets`;
+  log('info', `Posting asset for DAR record ${onlineAsset.darAssetId} to OAR: ${oarUrl}`);
   const authToken = process.env.OAR_TOKEN ? `Bearer ${process.env.OAR_TOKEN}` : CONFIG.AUTH_TOKEN;
-  const apiResponse = await fetch(url, {
+  const apiResponse = await fetch(oarUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -84,13 +96,13 @@ export async function createOnlineAsset(onlineAsset: CreateOARRequest): Promise<
   });
 
   if (!apiResponse) {
-    log('error', `Posting for DAR record ${onlineAsset.darAssetId} to OAR: ${url} failed`);
+    log('error', `Posting for DAR record ${onlineAsset.darAssetId} to OAR: ${oarUrl} failed`);
     return null;
   }
 
   if (!apiResponse.ok) {
     const responseText = await apiResponse.text().catch(() => 'Could not read error response.');
-    log('error', `Posting to ${url}: ${apiResponse.status}: ${responseText}`);
+    log('error', `Posting to ${oarUrl}: ${apiResponse.status}: ${responseText}`);
     return null;
   }
 
