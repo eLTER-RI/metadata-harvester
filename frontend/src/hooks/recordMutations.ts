@@ -173,3 +173,24 @@ export const useReHarvestRecord = () => {
     },
   });
 };
+
+export const useCreateOarAsset = () => {
+  return useMutation({
+    mutationFn: async ({ url, darAssetId }: { url: string; darAssetId: string }) => {
+      const response = await api.post('/oar', { url, darAssetId });
+      return response.data;
+    },
+  });
+};
+
+export const useDeleteOarAsset = () => {
+  return useMutation({
+    mutationFn: async (onlineAssetId: string) => {
+      const response = await api.delete(`/oar/${onlineAssetId}`);
+      return response.data;
+    },
+    onError: () => {
+      // TODO: add toast notification
+    },
+  });
+};
