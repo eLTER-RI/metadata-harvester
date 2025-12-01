@@ -188,10 +188,14 @@ export const useCreateOarAsset = () => {
 };
 
 export const useDeleteOarAsset = () => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (onlineAssetId: string) => {
       const response = await api.delete(`/oar/${onlineAssetId}`);
       return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['oar'] });
     },
     onError: () => {
       // TODO: add toast notification

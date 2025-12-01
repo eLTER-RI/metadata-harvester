@@ -1,7 +1,7 @@
 import { Button, Message, Modal, List, Loader, Form, Input } from 'semantic-ui-react';
 import { useFetchOarAssets } from '../../hooks/recordQueries';
 import { useParams } from 'react-router-dom';
-import { useCreateOarAsset } from '../../hooks/recordMutations';
+import { useCreateOarAsset, useDeleteOarAsset } from '../../hooks/recordMutations';
 import { useState } from 'react';
 
 interface OarFormProps {
@@ -18,6 +18,7 @@ export const OarForm = ({ darAssetId: propDarAssetId, open, onClose, asModal = f
   const [message, setMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(null);
   const { data: assets = [], isLoading } = useFetchOarAssets(darAssetId);
   const { mutate: createOarAsset, isPending: isCreating } = useCreateOarAsset();
+  const { mutate: deleteOarAsset, isPending: isDeleting } = useDeleteOarAsset();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,6 +39,20 @@ export const OarForm = ({ darAssetId: propDarAssetId, open, onClose, asModal = f
         },
       },
     );
+  };
+
+  const handleDelete = (assetId: string) => {
+    deleteOarAsset(assetId, {
+      onSuccess: () => {
+        setMessage({ type: 'success', text: 'Online services and data deleted.' });
+      },
+      onError: (err: any) => {
+        setMessage({
+          type: 'error',
+          text: err?.response?.data?.error || 'Failed to delete online services and data record.',
+        });
+      },
+    });
   };
 
   const content = (
@@ -72,6 +87,16 @@ export const OarForm = ({ darAssetId: propDarAssetId, open, onClose, asModal = f
         <List divided>
           {assets.map((asset: any) => (
             <List.Item key={asset.id}>
+              <List.Content floated="right">
+                <Button
+                  negative
+                  size="small"
+                  icon="trash"
+                  onClick={() => handleDelete(asset.id)}
+                  loading={isDeleting}
+                  disabled={isDeleting}
+                />
+              </List.Content>
               <List.Content>
                 <List.Header>{asset.onlineUrl}</List.Header>
                 <List.Description>
