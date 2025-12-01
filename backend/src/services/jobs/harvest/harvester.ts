@@ -17,7 +17,7 @@ import { DbRecord, RecordDao } from '../../../store/dao/recordDao';
 import { mapB2ShareToCommonDatasetMetadata } from '../../../mappers/b2shareMapper';
 import { mapDataRegistryToCommonDatasetMetadata } from '../../../mappers/dataregistryMapper';
 import { mapZenodoToCommonDatasetMetadata } from '../../../mappers/zenodoMapper';
-import { b2shareLimiter, fieldSitesLimiter, zenodoLimiter } from '../../rateLimiterConcurrency';
+import { b2shareLimiter, b2shareJuelichLimiter, fieldSitesLimiter, zenodoLimiter } from '../../rateLimiterConcurrency';
 import { dbValidationPhase } from './dbValidation';
 import { RuleDao } from '../../../store/dao/rulesDao';
 import { findDarRecordBySourceURL, postToDar, putToDar, deleteDarRecordsByIds } from '../../clients/darApi';
@@ -342,8 +342,11 @@ export class HarvesterContext {
       hits.map(async (hit: any) => {
         if (!hit) return null;
         const recordUrl = getNestedValue(hit, selfLinkKey);
-        if (this.repositoryType === 'B2SHARE_EUDAT' || this.repositoryType === 'B2SHARE_JUELICH') {
+        if (this.repositoryType === 'B2SHARE_EUDAT') {
           return b2shareLimiter.schedule(() => this.processOneRecordTask(recordUrl));
+        }
+        if (this.repositoryType === 'B2SHARE_JUELICH') {
+          return b2shareJuelichLimiter.schedule(() => this.processOneRecordTask(recordUrl));
         }
         if (this.repositoryType === 'ZENODO' || this.repositoryType === 'ZENODO_IT') {
           return zenodoLimiter.schedule(() => this.processOneRecordTask(recordUrl));

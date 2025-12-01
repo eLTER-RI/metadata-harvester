@@ -1,6 +1,11 @@
 import { log } from './../../serviceLogging';
 import { HarvesterContext } from './harvester';
-import { b2shareLimiter, fieldSitesLimiter, zenodoLimiter } from './../../rateLimiterConcurrency';
+import {
+  b2shareLimiter,
+  b2shareJuelichLimiter,
+  fieldSitesLimiter,
+  zenodoLimiter,
+} from './../../rateLimiterConcurrency';
 
 /**
  * This function validates the records present in the local database against the source.
@@ -24,8 +29,11 @@ export async function dbValidationPhase(ctx: HarvesterContext) {
         if (dbRecord.source_url)
           return zenodoLimiter.schedule(() => ctx.processOneRecordTask(dbRecord.source_url, existingDbRecord));
       }
-      if (repositoryType === 'B2SHARE_EUDAT' || repositoryType === 'B2SHARE_JUELICH') {
+      if (repositoryType === 'B2SHARE_EUDAT') {
         return b2shareLimiter.schedule(() => ctx.processOneRecordTask(dbRecord.source_url, existingDbRecord));
+      }
+      if (repositoryType === 'B2SHARE_JUELICH') {
+        return b2shareJuelichLimiter.schedule(() => ctx.processOneRecordTask(dbRecord.source_url, existingDbRecord));
       }
       return ctx.processOneRecordTask(dbRecord.source_url, existingDbRecord);
     }),

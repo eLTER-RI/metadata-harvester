@@ -7,7 +7,9 @@ function createRateLimiter(requestsPerMinute: number): Bottleneck {
   });
 }
 
-export const b2shareLimiter = createRateLimiter(80); // 40 requests per minute = 750ms between requests
+export const b2shareLimiter = createRateLimiter(80); // 80 requests per minute = 750ms between requests
+
+export const b2shareJuelichLimiter = createRateLimiter(40); // 40 requests per minute = 1500ms between requests
 
 export const zenodoLimiter = createRateLimiter(80); // 80 requests per minute = 750ms between requests
 
