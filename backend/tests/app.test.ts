@@ -106,6 +106,12 @@ describe('Harvester Service API', () => {
         title: 'test',
         size: 10,
         offset: 0,
+        datasetTypes: undefined,
+        habitats: undefined,
+        keywords: undefined,
+        sites: undefined,
+        orderBy: 'last_harvested',
+        orderDirection: 'desc',
       });
     });
 
