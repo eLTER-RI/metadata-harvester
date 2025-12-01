@@ -101,6 +101,7 @@ export const OarForm = ({ darAssetId: propDarAssetId, open, onClose, asModal = f
                 <List.Header>{asset.onlineUrl}</List.Header>
                 <List.Description>
                   {asset.serviceType}
+                  <br />
                   {asset.state}
                 </List.Description>
               </List.Content>
