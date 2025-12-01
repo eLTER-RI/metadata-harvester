@@ -91,21 +91,6 @@ export const ManualRecordJsonForm = ({ initialData, darId }: ManualRecordJsonFor
     }
   };
 
-  const handleFormatJson = () => {
-    try {
-      const parsed = JSON.parse(jsonInput);
-      const formatted = JSON.stringify(parsed, null, 2);
-      setJsonInput(formatted);
-      setJsonError(null);
-    } catch (err) {
-      if (err instanceof SyntaxError) {
-        setJsonError(`Invalid JSON: ${err.message}`);
-      } else {
-        setJsonError('Failed to format JSON');
-      }
-    }
-  };
-
   return (
     <Container>
       <Header as="h1">{isEditMode ? `Edit Record ${darId}` : 'Create New Record'}</Header>
@@ -133,14 +118,6 @@ export const ManualRecordJsonForm = ({ initialData, darId }: ManualRecordJsonFor
               disabled={isSaving}
             />
           </Form.Field>
-
-          {isEditMode && (
-            <div style={{ marginBottom: '1em', display: 'flex', gap: '0.5em' }}>
-              <Button type="button" onClick={handleFormatJson} disabled={isSaving || !jsonInput.trim()}>
-                Format JSON
-              </Button>
-            </div>
-          )}
 
           {jsonError && (
             <Message negative>
