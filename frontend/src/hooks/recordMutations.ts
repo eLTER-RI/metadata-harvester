@@ -175,10 +175,14 @@ export const useReHarvestRecord = () => {
 };
 
 export const useCreateOarAsset = () => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ url, darAssetId }: { url: string; darAssetId: string }) => {
       const response = await api.post('/oar', { url, darAssetId });
       return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['oar'] });
     },
   });
 };

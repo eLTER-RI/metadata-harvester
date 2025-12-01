@@ -191,7 +191,7 @@ export const useFetchManualRecords = (currentPage: number, pageSize: number, sea
 
 export const useFetchOarAssets = (darAssetId: string | undefined) => {
   return useQuery({
-    queryKey: ['oarAssets', darAssetId],
+    queryKey: ['oar', darAssetId],
     queryFn: async () => {
       const response = await api.get('/oar', { params: { darAssetId } });
       return response.data || [];

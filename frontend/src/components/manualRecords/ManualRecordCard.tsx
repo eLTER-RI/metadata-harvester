@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useDeleteManualRecord } from '../../hooks/recordMutations';
 import { getDarRecordUrl } from '../../utils/darUrl';
 import { DeleteConfirmModal } from '../DeleteConfirmModal';
+import { OarForm } from '../oar/OarForm';
 
 interface ManualRecordCardProps {
   record: {
@@ -18,6 +19,7 @@ interface ManualRecordCardProps {
 const ManualRecordCard = ({ record }: ManualRecordCardProps) => {
   const { mutate: deleteRecord, isPending: isDeleting } = useDeleteManualRecord();
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showOarForm, setShowOarForm] = useState(false);
 
   const handleDelete = () => {
     deleteRecord(record.dar_id, {
@@ -48,6 +50,7 @@ const ManualRecordCard = ({ record }: ManualRecordCardProps) => {
           <Grid.Column>
             <Button.Group>
               <Button as={Link} to={`/${record.dar_id}/edit`} icon="edit" content="Edit" />
+              <Button icon="cloud" content="Manage OAR Assets" onClick={() => setShowOarForm(true)} />
               <Button
                 negative
                 icon="trash"
@@ -64,6 +67,12 @@ const ManualRecordCard = ({ record }: ManualRecordCardProps) => {
               title="Delete Manual Record"
               itemName={record.title || record.dar_id}
               isLoading={isDeleting}
+            />
+            <OarForm
+              darAssetId={record.dar_id}
+              open={showOarForm}
+              onClose={() => setShowOarForm(false)}
+              asModal={true}
             />
           </Grid.Column>
         </Grid>

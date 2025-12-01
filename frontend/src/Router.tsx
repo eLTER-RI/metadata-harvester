@@ -6,6 +6,7 @@ import { HarvestPage } from './pages/harvest';
 import { RecordPage } from './pages/recordForm';
 import { ManualRecordsPage } from './components/manualRecords/ManualRecordsPage';
 import { HarvestingHistory } from './pages/harvestingHistory/HarvestingHistory';
+import { OarFormPage } from './pages/oarForm';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -17,6 +18,7 @@ const router = createBrowserRouter(
       <Route path={'/harvest/history'} element={<HarvestingHistory />} />
       <Route path={'/create'} element={<RecordPage />} />
       <Route path={'/:darId/edit'} element={<RecordPage />} />
+      <Route path={'/:darId/oar/create'} element={<OarFormPage />} />
     </Route>,
   ),
 );
