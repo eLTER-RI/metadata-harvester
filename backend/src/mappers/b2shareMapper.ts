@@ -1,5 +1,5 @@
 import { B2ShareExtractedSchema, Metadata } from '../../api/schema/b2shareApi';
-import { b2shareLimiter } from '../services/rateLimiterConcurrency';
+import { b2shareLimiter, b2shareJuelichLimiter } from '../services/rateLimiterConcurrency';
 import { log } from '../services/serviceLogging';
 import { fetchJson } from '../utilities/fetchJsonFromRemote';
 import {
@@ -28,6 +28,7 @@ import {
   Title,
   Description,
   ObservationLocation,
+  File,
 } from '../models/commonStructure';
 
 function extractB2ShareGeolocation(input: any): Geolocation[] {
@@ -207,36 +208,63 @@ export function extractB2ShareCreators(creators: any[] | undefined): any[] | und
     return undefined;
   }
 
-  return creators.map((c: any) => {
-    const personOrOrg = c.person_or_org || {};
-    const name = personOrOrg.name || '';
-    const givenName = personOrOrg.given_name || '';
-    const familyName = personOrOrg.family_name || (name && !givenName ? name : '');
+  const mappedCreators = creators
+    .map((c: any) => {
+      let familyName = '';
+      let givenName = '';
 
-    return {
-      creatorFamilyName: familyName,
-      creatorGivenName: givenName,
-      creatorEmail: '',
-      creatorAffiliation:
-        c.affiliations?.length != undefined && c.affiliations?.length > 0 && c.affiliations[0].affiliation_name
-          ? {
-              entityName: c.affiliations[0].affiliation_name,
-              entityID: {
-                entityID: c.affiliations[0].affiliation_identifier,
-                entityIDSchema: c.affiliations[0].scheme?.toLowerCase(),
-              },
-            }
-          : undefined,
-      creatorIDs: c.name_identifiers?.map((i: any) => ({
-        entityID: extractIdFromUrl(i.name_identifier),
-        entityIDSchema: isValidEntityIdSchema(i.scheme)
-          ? i.scheme.toLowerCase()
-          : i.scheme_uri && isValidEntityIdSchema(i.scheme_uri)
-            ? i.scheme_uri.toLowerCase()
+      // Juelich format
+      if (c.creator_name && typeof c.creator_name === 'string') {
+        const nameParts = c.creator_name.split(',').map((part: string) => part.trim());
+        if (nameParts.length >= 2) {
+          familyName = nameParts[0];
+          givenName = nameParts.slice(1).join(' ');
+        } else {
+          // No comma, treat as family name
+          familyName = c.creator_name;
+        }
+      } else {
+        // EUDAT format
+        const personOrOrg = c.person_or_org || {};
+        const name = personOrOrg.name || '';
+        givenName = personOrOrg.given_name || '';
+        familyName = personOrOrg.family_name || (name && !givenName ? name : '');
+      }
+
+      return {
+        creatorFamilyName: familyName,
+        creatorGivenName: givenName,
+        creatorEmail: '',
+        creatorAffiliation:
+          c.affiliations?.length != undefined && c.affiliations?.length > 0 && c.affiliations[0].affiliation_name
+            ? {
+                entityName: c.affiliations[0].affiliation_name,
+                entityID: {
+                  entityID: c.affiliations[0].affiliation_identifier,
+                  entityIDSchema: c.affiliations[0].scheme?.toLowerCase(),
+                },
+              }
             : undefined,
-      })),
-    };
-  });
+        creatorIDs: c.name_identifiers?.map((i: any) => ({
+          entityID: extractIdFromUrl(i.name_identifier),
+          entityIDSchema: isValidEntityIdSchema(i.scheme)
+            ? i.scheme.toLowerCase()
+            : i.scheme_uri && isValidEntityIdSchema(i.scheme_uri)
+              ? i.scheme_uri.toLowerCase()
+              : undefined,
+        })),
+      };
+    })
+    .filter((creator) => {
+      // filtering out empty creators
+      return (
+        (creator.creatorFamilyName && creator.creatorFamilyName.trim()) ||
+        (creator.creatorGivenName && creator.creatorGivenName.trim()) ||
+        (creator.creatorEmail && creator.creatorEmail.trim())
+      );
+    });
+
+  return mappedCreators.length > 0 ? mappedCreators : undefined;
 }
 
 export function extractB2ShareContributors(contributors: any[] | undefined): {
@@ -259,9 +287,25 @@ export function extractB2ShareContributors(contributors: any[] | undefined): {
       organizationalContributors.push(c);
     } else {
       // Process personal contributors
-      const name = personOrOrg.name || '';
-      const givenName = personOrOrg.given_name || '';
-      const familyName = personOrOrg.family_name || (name && !givenName ? name : '');
+      let familyName = '';
+      let givenName = '';
+
+      // Juelich format
+      if (c.contributor_name && typeof c.contributor_name === 'string') {
+        const nameParts = c.contributor_name.split(',').map((part: string) => part.trim());
+        if (nameParts.length >= 2) {
+          familyName = nameParts[0];
+          givenName = nameParts.slice(1).join(' ');
+        } else {
+          // No comma, treat as family name
+          familyName = c.contributor_name;
+        }
+      } else {
+        // EUDAT format
+        const name = personOrOrg.name || '';
+        givenName = personOrOrg.given_name || '';
+        familyName = personOrOrg.family_name || (name && !givenName ? name : '');
+      }
 
       const contributor: Contributor = {
         contributorFamilyName: familyName,
@@ -372,10 +416,24 @@ function extractB2ShareKeywords(input: any): Keywords[] {
   if (input.keywords && Array.isArray(input.keywords)) {
     input.keywords.forEach((kw: any) => {
       if (kw && typeof kw === 'string' && kw.trim().length > 0) {
-        keywords.push({
-          keywordLabel: kw.trim(),
-          keywordURI: kw && typeof kw === 'string' ? kw.trim() : undefined,
-        });
+        const trimmedKw = kw.trim();
+        const splitKeywords = trimmedKw.split(/\s*[;,]\s*/);
+        if (splitKeywords.length > 1) {
+          splitKeywords.forEach((keyword: string) => {
+            const trimmedKeyword = keyword.trim();
+            if (trimmedKeyword.length > 0) {
+              keywords.push({
+                keywordLabel: trimmedKeyword,
+                keywordURI: undefined,
+              });
+            }
+          });
+        } else {
+          keywords.push({
+            keywordLabel: trimmedKw,
+            keywordURI: trimmedKw,
+          });
+        }
       }
     });
   }
@@ -458,6 +516,40 @@ function extractB2ShareDescriptions(metadata: any): Description[] | undefined {
     return metadata.descriptions.map((d: any) => ({
       descriptionText: d.description,
       descriptionType: d.description_type || 'Abstract',
+    }));
+  }
+  return undefined;
+}
+
+function extractB2ShareFiles(b2share: any): File[] | undefined {
+  // EUDAT format: files.entries (object)
+  if (b2share.files?.entries && !Array.isArray(b2share.files) && typeof b2share.files.entries === 'object') {
+    return Object.values(b2share.files.entries).map((f: any) => ({
+      name: f.key,
+      sourceUrl: f.pids?.epic?.identifier
+        ? convertHttpToHttps(f.pids.epic.identifier)
+        : f.ePIC_PID
+          ? convertHttpToHttps(f.ePIC_PID)
+          : undefined,
+      md5: getChecksum(f.checksum),
+      size: f.size?.toString(),
+      sizeMeasureType: 'B',
+      format: f.key?.split('.').pop(),
+    }));
+  }
+  // Juelich format: files (array)
+  if (Array.isArray(b2share.files) && b2share.files.length > 0) {
+    return b2share.files.map((f: any) => ({
+      name: f.key,
+      sourceUrl: f.ePIC_PID
+        ? convertHttpToHttps(f.ePIC_PID)
+        : f.pids?.epic?.identifier
+          ? convertHttpToHttps(f.pids.epic.identifier)
+          : undefined,
+      md5: getChecksum(f.checksum),
+      size: f.size?.toString(),
+      sizeMeasureType: 'B',
+      format: f.key?.split('.').pop(),
     }));
   }
   return undefined;
@@ -547,15 +639,17 @@ function getAdditionalMetadata(b2share: any): AdditionalMetadata[] {
 async function handleB2ShareVersioning(
   url: string,
   b2share: any,
+  repositoryType: 'B2SHARE_EUDAT' | 'B2SHARE_JUELICH',
 ): Promise<[string, B2ShareExtractedSchema, RelatedIdentifier[]]> {
   const relatedIdentifiers: RelatedIdentifier[] = [];
+  const limiter = repositoryType === 'B2SHARE_EUDAT' ? b2shareLimiter : b2shareJuelichLimiter;
 
   if (!b2share.links?.versions) {
     return [url, b2share, []];
   }
 
   try {
-    const versions = await b2shareLimiter.schedule(() => fetchJson(b2share.links.versions));
+    const versions = await limiter.schedule(async () => await fetchJson(b2share.links.versions));
     if (!versions || !versions.hits?.hits) {
       return [url, b2share, []];
     }
@@ -581,7 +675,7 @@ async function handleB2ShareVersioning(
     if (latestVersion.id !== b2share.id) {
       const latestUrl = latestVersion.links.self;
       log('warn', 'New version for record on url: ' + url + ' found: ' + latestUrl);
-      const latestRecordData = await b2shareLimiter.schedule(() => fetchJson(latestUrl));
+      const latestRecordData = await limiter.schedule(async () => await fetchJson(latestUrl));
       if (latestRecordData) {
         return [latestUrl, latestRecordData, relatedIdentifiers];
       }
@@ -601,7 +695,7 @@ export async function mapB2ShareToCommonDatasetMetadata(
   repositoryType: 'B2SHARE_EUDAT' | 'B2SHARE_JUELICH',
 ): Promise<CommonDataset> {
   let b2share: any = recordData;
-  const [latestUrl, latestData, versionRelations] = await handleB2ShareVersioning(url, recordData);
+  const [latestUrl, latestData, versionRelations] = await handleB2ShareVersioning(url, recordData, repositoryType);
   if (latestData) b2share = latestData;
 
   const licenses: License[] = [];
@@ -643,7 +737,7 @@ export async function mapB2ShareToCommonDatasetMetadata(
   const { personalContributors, organizationalContributors } = extractB2ShareContributors(
     b2share.metadata.contributors,
   );
-  return {
+  const result: CommonDataset = {
     pids: pids,
     metadata: {
       assetType: 'Dataset',
@@ -695,20 +789,7 @@ export async function mapB2ShareToCommonDatasetMetadata(
       temporalCoverages: extractTemporalCoverages(b2share),
       geoLocations: extractB2ShareGeolocation(b2share.metadata),
       licenses: licenses.length > 0 ? licenses : undefined,
-      files: b2share.files?.entries
-        ? Object.values(b2share.files.entries).map((f: any) => ({
-            name: f.key,
-            sourceUrl: f.pids?.epic?.identifier
-              ? convertHttpToHttps(f.pids.epic.identifier)
-              : f.ePIC_PID
-                ? convertHttpToHttps(f.ePIC_PID)
-                : undefined,
-            md5: getChecksum(f.checksum),
-            size: f.size?.toString(),
-            sizeMeasureType: 'B',
-            format: f.key?.split('.').pop(),
-          }))
-        : undefined,
+      files: extractB2ShareFiles(b2share),
       externalSourceInformation: {
         externalSourceName: repositoryType == 'B2SHARE_EUDAT' ? 'B2Share Eudat' : 'B2Share Juelich',
         // CRITICAL: externalSourceURI is used as database primary key (source_url)
@@ -740,4 +821,5 @@ export async function mapB2ShareToCommonDatasetMetadata(
       additionalMetadata: additional_metadata,
     },
   };
+  return result;
 }
