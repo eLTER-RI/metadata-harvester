@@ -49,6 +49,14 @@ export class RecordDao {
   }
 
   async updateRecord(source_url: string, record: Partial<DbRecord>): Promise<void> {
+    // check if record changed
+    const existingRecords = await this.getRecordBySourceUrl(source_url);
+    const existingRecord = existingRecords.length > 0 ? existingRecords[0] : null;
+    const recordChanged =
+      !existingRecord ||
+      (record.source_checksum && existingRecord.source_checksum !== record.source_checksum) ||
+      (record.dar_checksum && existingRecord.dar_checksum !== record.dar_checksum);
+
     const setParts: string[] = [];
     const values: any[] = [];
     let paramCount = 1;
@@ -94,7 +102,11 @@ export class RecordDao {
       values.push(record.keywords ? JSON.stringify(record.keywords) : null);
     }
 
-    setParts.push(`last_harvested = NOW()`);
+    // last_harvested only updated when record changed
+    if (recordChanged) {
+      setParts.push(`last_harvested = NOW()`);
+    }
+    // always update last_seen_at
     setParts.push(`last_seen_at = NOW()`);
 
     values.push(source_url);
