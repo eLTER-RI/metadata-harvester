@@ -76,7 +76,7 @@
     "node-cron": "^4.2.1",
     "node-fetch": "^2.7.0",
     "semantic-ui-css": "^2.5.0",
-    "swagger-jsdoc": "^7.0.0-rc.6",
+    "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
     "ts-to-zod": "^4.0.0",
     "typescript-eslint": "^8.32.1"

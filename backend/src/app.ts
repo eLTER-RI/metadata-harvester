@@ -24,11 +24,15 @@ import {
 } from './services/recordsService';
 import { getDeimsSites } from './services/deimsSitesService';
 import { initializeScheduler } from './services/scheduler/jobScheduler';
+import { setupSwagger } from '../api/swager/swagger.config';
 import pool from './db';
 
 const app = express();
 app.use(express.json());
 app.use(cors());
+
+// Setup Swagger documentation
+setupSwagger(app);
 
 const PORT = process.env.PORT || 3000;
 

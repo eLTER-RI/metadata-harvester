@@ -1,6 +1,7 @@
 import swaggerJsdoc from 'swagger-jsdoc';
 import { Express } from 'express';
 import swaggerUi from 'swagger-ui-express';
+import path from 'path';
 
 export function setupSwagger(app: Express): void {
   const swaggerOptions = {
@@ -17,7 +18,7 @@ export function setupSwagger(app: Express): void {
         },
       ],
     },
-    apis: ['./backend/src/api/routes/**/*.ts', './backend/src/api/controllers/**/*.ts'],
+    apis: [path.resolve(process.cwd(), 'src/app.ts')],
   };
 
   const swaggerSpec = swaggerJsdoc(swaggerOptions);
