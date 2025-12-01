@@ -23,7 +23,6 @@ import {
   listResolvedCounts,
 } from './services/recordsService';
 import { getDeimsSites } from './services/deimsSitesService';
-import { initializeScheduler } from './services/scheduler/jobScheduler';
 import { setupSwagger } from '../api/swager/swagger.config';
 import pool from './db';
 
@@ -33,8 +32,6 @@ app.use(cors());
 
 // Setup Swagger documentation
 setupSwagger(app);
-
-const PORT = process.env.PORT || 3000;
 
 /**
  * @swagger
@@ -814,19 +811,6 @@ app.get('/api/manual-records', async (req, res) => {
   }
 });
 
-const server = app.listen(PORT, () => {
-  log('info', `Data Harvester API listening at http://localhost:${PORT}`);
-  // health check for db
-  pool.query('SELECT 1').catch((e) => {
-    log(
-      'error',
-      'Database connection failed. Ensure that Postgres is running, you have correct configuration, and environment variables.',
-    );
-    console.error(e);
-  });
-  initializeScheduler(pool);
-});
-
 /**
  * @swagger
  * /api/manual-records:
@@ -1104,5 +1088,4 @@ app.delete('/api/oar/:onlineAssetId', async (req, res) => {
   }
 });
 
-export { server };
 export default app;
