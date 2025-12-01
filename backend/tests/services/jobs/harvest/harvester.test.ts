@@ -596,6 +596,18 @@ describe('Test harvester file', () => {
     });
 
     it('should log "Source data changed" when source checksum differs', async () => {
+      const testContext = new HarvesterContext(
+        mockPool,
+        mockRecordDao,
+        mockRuleDao,
+        mockResolvedRecordsDao,
+        [{ siteID: 'deims-1', siteName: 'Test Site' }],
+        'ZENODO',
+        CONFIG.REPOSITORIES.ZENODO,
+        false,
+      );
+
+      const testHandleChangedSpy = jest.spyOn(testContext as any, 'handleChangedRecord');
       const dbRecord: DbRecord = {
         source_url: 'sites.org',
         source_repository: 'SITES',
@@ -613,13 +625,14 @@ describe('Test harvester file', () => {
 
       mockRecordDao.getRecordBySourceUrl.mockResolvedValue([dbRecord]);
       mockRuleDao.getRulesForRecord.mockResolvedValue([]);
+      mockedFindDar.mockResolvedValue('dar-id-');
       // DAR checksum same
       mockedCalculateChecksum.mockReturnValue('dar-checksum');
 
       // different source checksum
-      await (context as any).synchronizeRecord(sourceUrl, 'new-source-checksum', dataset);
+      await (testContext as any).synchronizeRecord(sourceUrl, 'new-source-checksum', dataset);
 
-      expect(handleChangedSpy).toHaveBeenCalled();
+      expect(testHandleChangedSpy).toHaveBeenCalled();
       expect(log).toHaveBeenCalledWith('info', expect.stringContaining('Source data changed'));
       expect(mockedPutToDar).toHaveBeenCalledTimes(1);
       expect(mockedDbRecordUpsert).toHaveBeenCalledTimes(1);
