@@ -53,9 +53,7 @@ export class RecordDao {
     const existingRecords = await this.getRecordBySourceUrl(source_url);
     const existingRecord = existingRecords.length > 0 ? existingRecords[0] : null;
     const recordChanged =
-      !existingRecord ||
-      (record.source_checksum && existingRecord.source_checksum !== record.source_checksum) ||
-      (record.dar_checksum && existingRecord.dar_checksum !== record.dar_checksum);
+      !existingRecord || (record.dar_checksum && existingRecord.dar_checksum !== record.dar_checksum);
 
     const setParts: string[] = [];
     const values: any[] = [];
