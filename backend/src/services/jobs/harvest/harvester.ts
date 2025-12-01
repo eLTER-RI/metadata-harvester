@@ -145,10 +145,7 @@ export class HarvesterContext {
       return;
     }
 
-    const rewriteRecord =
-      dbMatches.length === 0 ||
-      dbMatches[0]?.dar_checksum !== darChecksum ||
-      dbMatches[0]?.source_checksum !== sourceChecksum;
+    const rewriteRecord = dbMatches.length === 0 || dbMatches[0]?.dar_checksum !== darChecksum;
     if (rewriteRecord) {
       await this.resolvedRecordsDao.delete(darMatches);
       await this.handleChangedRecord(dbMatches, sourceChecksum, url, darMatches, dataset, darChecksum);
