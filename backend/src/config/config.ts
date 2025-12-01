@@ -91,7 +91,7 @@ const repositories: Record<RepositoryType, RepositoryConfig> = {
   } as RepositoryConfig,
   ZENODO: {
     apiUrl: 'https://zenodo.org/api/communities/c4f49aa1-a5ef-46b1-a7ec-7756cd391aa4/records?q=&sort=oldest',
-    pageSize: 100,
+    pageSize: 25,
     dataKey: 'hits.hits',
     selfLinkKey: 'links.self',
     processFunction: 'processApiPage',
@@ -101,7 +101,7 @@ const repositories: Record<RepositoryType, RepositoryConfig> = {
   ZENODO_IT: {
     apiUrl: 'https://zenodo.org/api/communities/43025cdd-7116-4ed8-8bba-d484ee58896f/records?q=&sort=oldest',
     mappedRecordsPath: './data/mapped_zenodo_lter_it_records.json',
-    pageSize: 100,
+    pageSize: 25,
     dataKey: 'hits.hits',
     selfLinkKey: 'links.self',
     processFunction: 'processApiPage',
