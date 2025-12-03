@@ -35,7 +35,7 @@ npm install
 
 ### Backend Environment Variables
 
-Copy the `.env.example` file into `.env` file in the `backend/` directory, and set up variables.
+Copy the `.env.example` file into `.env` file in the `backend/` directory, and set up variables. You can set up your FIELDSITES_TOKEN at https://auth.fieldsites.se/login/. DEV_AUTH_TOKEN and PROD_AUTH_TOKEN need to use tokens for given DAR instances with write access to /external-datasets.
 
 ### Frontend Environment
 
@@ -49,8 +49,8 @@ Connect to PostgreSQL, and create a database. You can do it for example the foll
 ```bash
 $ sudo su postgres
 $ psql
-$ CREATE DATABASE data_harvester_dev;
-$ CREATE DATABASE data_harvester;
+$ CREATE DATABASE data_harvester_dev; # or use what you put into DEV_DB_NAME in ./backend/.env
+$ CREATE DATABASE data_harvester; # or use what you put into DB_NAME in ./backend/.env
 ```
 
 ### 2. Run Database Migrations
