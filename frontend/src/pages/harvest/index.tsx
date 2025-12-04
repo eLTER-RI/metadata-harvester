@@ -1,5 +1,6 @@
-import { Container, Header, Grid, Card, Button, Icon, Segment } from 'semantic-ui-react';
+import { Container, Header, Grid, Card, Button, Icon, Segment, Message } from 'semantic-ui-react';
 import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { useHarvestRepository } from '../../hooks/recordMutations';
 
 interface RepositoryInfo {
@@ -44,26 +45,51 @@ const repositories: RepositoryInfo[] = [
 
 export const HarvestPage = () => {
   const harvestMutation = useHarvestRepository();
+  const [harvestingRepositories, setHarvestingRepositories] = useState<Set<string>>(new Set());
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (harvestMutation.isSuccess && harvestingRepositories.size > 0) {
+      const reposList = Array.from(harvestingRepositories).join(', ');
+      setSuccessMessage(`Harvesting job started successfully for: ${reposList}.`);
+    }
+  }, [harvestMutation.isSuccess, harvestingRepositories]);
 
   const handleHarvest = (repositoryName: string) => {
+    if (harvestingRepositories.has(repositoryName)) return;
+
+    setSuccessMessage(null);
+
+    const reposToHarvest: string[] = [];
     if (repositoryName === 'ZENODO') {
-      harvestMutation.mutate({
-        repository: 'ZENODO',
-        checkHarvestChanges: false,
-      });
-      harvestMutation.mutate({
-        repository: 'ZENODO_IT',
-        checkHarvestChanges: false,
-      });
+      reposToHarvest.push('ZENODO', 'ZENODO_IT');
     } else {
+      reposToHarvest.push(repositoryName);
+    }
+
+    setHarvestingRepositories((prev) => new Set([...prev, ...reposToHarvest]));
+
+    reposToHarvest.forEach((repo) => {
       harvestMutation.mutate({
-        repository: repositoryName,
+        repository: repo,
         checkHarvestChanges: false,
       });
-    }
+    });
   };
 
   const handleHarvestAll = () => {
+    setSuccessMessage(null);
+
+    const allRepos: string[] = [];
+    repositories.forEach((repo) => {
+      if (repo.name === 'ZENODO') {
+        allRepos.push('ZENODO', 'ZENODO_IT');
+      } else {
+        allRepos.push(repo.name);
+      }
+    });
+
+    setHarvestingRepositories(new Set(allRepos));
     repositories.forEach((repo) => {
       if (repo.name === 'ZENODO') {
         harvestMutation.mutate({
@@ -96,16 +122,27 @@ export const HarvestPage = () => {
             manually.
           </p>
 
-          <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
-            <Button primary size="large" onClick={handleHarvestAll}>
-              <Icon name="download" />
-              Harvest All Repositories
-            </Button>
-            <Button as={Link} to="/harvest/history" secondary size="large">
-              <Icon name="table" />
-              View History
-            </Button>
-          </div>
+          {successMessage && (
+            <Message success style={{ marginBottom: '1rem' }}>
+              <Message.Header>Harvesting Started Successfully</Message.Header>
+              <p>{successMessage}</p>
+            </Message>
+          )}
+
+          <Button
+            primary
+            size="large"
+            onClick={handleHarvestAll}
+            disabled={harvestingRepositories.size > 0}
+            loading={harvestingRepositories.size > 0}
+          >
+            <Icon name="download" />
+            Harvest All Repositories
+          </Button>
+          <Button as={Link} to="/harvest/history" secondary size="large">
+            <Icon name="table" />
+            View History
+          </Button>
         </Segment>
 
         <Grid columns={2} stackable>
@@ -119,7 +156,19 @@ export const HarvestPage = () => {
                   </Card.Header>
                   <Card.Description style={{ marginBottom: '1rem' }}>{repo.description}</Card.Description>
 
-                  <Button color={repo.color} fluid onClick={() => handleHarvest(repo.name)}>
+                  <Button
+                    color={repo.color}
+                    fluid
+                    onClick={() => handleHarvest(repo.name)}
+                    disabled={
+                      harvestingRepositories.has(repo.name) ||
+                      (repo.name === 'ZENODO' && harvestingRepositories.has('ZENODO_IT'))
+                    }
+                    loading={
+                      harvestingRepositories.has(repo.name) ||
+                      (repo.name === 'ZENODO' && harvestingRepositories.has('ZENODO_IT'))
+                    }
+                  >
                     <Icon name="download" />
                     Start Harvest
                   </Button>
