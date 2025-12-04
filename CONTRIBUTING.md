@@ -1,5 +1,10 @@
 # Contributing to eLTER Data Harvester
 
+## Creating a New Migration
+```bash
+npm run migrate:create migration_name
+```
+
 ## Adding a New Repository
 
 Adding a new repository to harvest from requires several steps:
@@ -26,7 +31,6 @@ Create a new mapper file in `backend/src/mappers/` (e.g., `newRepositoryMapper.t
 - Export a function that maps the repository's data format to `CommonDataset`
 - Handle site matching (using DEIMS sites)
 - Handle record versioning (fetch latest version of record)
-- Extract a cleanup metadata
 
 ### 3. Add Repository Configuration
 

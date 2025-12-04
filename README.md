@@ -74,8 +74,6 @@ Migrations are located in `backend/migrations/`.
 cd backend
 # run all migrations
 npm run migrate up
-# create a new migration
-npm run migrate:create migration_name
 ```
 
 ## Running the Application
