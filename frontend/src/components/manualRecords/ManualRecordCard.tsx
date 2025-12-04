@@ -40,7 +40,7 @@ const ManualRecordCard = ({ record }: ManualRecordCardProps) => {
             <Item.Header>{record.title || 'No Title'}</Item.Header>
             <Item.Content>
               <strong>DAR ID:</strong>{' '}
-              <a href={getDarRecordUrl(record.dar_id)}>
+              <a href={getDarRecordUrl(record.dar_id)} target="_blank" rel="noopener noreferrer">
                 {record.dar_id}
                 <Icon name="external alternate" size="small" style={{ marginLeft: '0.25em' }} />
               </a>

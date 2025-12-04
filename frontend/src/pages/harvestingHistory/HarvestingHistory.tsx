@@ -166,9 +166,25 @@ export const HarvestingHistory = () => {
                 <Table.Cell>{formatDate(record.last_seen_at)}</Table.Cell>
                 <Table.Cell style={{ whiteSpace: 'nowrap' }}>
                   <ButtonGroup size="small">
-                    {record.source_url && <Button compact icon="external" content="Source" href={record.source_url} />}
+                    {record.source_url && (
+                      <Button
+                        compact
+                        icon="external"
+                        content="Source"
+                        href={record.source_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      />
+                    )}
                     {record.dar_id && (
-                      <Button compact icon="external" content="DAR" href={getDarRecordUrl(record.dar_id)} />
+                      <Button
+                        compact
+                        icon="external"
+                        content="DAR"
+                        href={getDarRecordUrl(record.dar_id)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      />
                     )}
                     <Button
                       compact

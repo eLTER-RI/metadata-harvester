@@ -97,7 +97,9 @@ const RecordCard = ({ record }: RecordCardProps) => {
             <Item.Header>{record.title || 'No Title'}</Item.Header>
             <Item.Meta>
               <Icon name="linkify" size="small" />
-              <a href={record.source_url}>{record.source_url}</a>
+              <a href={record.source_url} target="_blank" rel="noopener noreferrer">
+                {record.source_url}
+              </a>
             </Item.Meta>
             {renderCurationFields()}
           </Grid.Column>
