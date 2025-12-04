@@ -315,7 +315,8 @@ app.get('/api/records/:darId', async (req, res) => {
     const result = await getRecordByDarId(pool, darId);
 
     if (!result.success) {
-      log('error', `Failed to fetch harvested record: ${result.error}`);
+      const logLevel = result.statusCode === 404 ? 'info' : 'error';
+      log(logLevel, `Failed to fetch harvested record: ${result.error}`);
       return res.status(result.statusCode || 500).json({ error: result.error });
     }
 
