@@ -1,6 +1,6 @@
-import './App.css'
-import { Router } from "./Router.tsx";
-import { RecordsProvider } from "./store/RecordsProvider.tsx"
+import './App.css';
+import { Router } from './Router.tsx';
+import { RecordsProvider } from './store/RecordsProvider.tsx';
 
 function App() {
   return (
@@ -9,7 +9,7 @@ function App() {
         <Router />
       </RecordsProvider>
     </>
-  )
+  );
 }
 
-export default App
+export default App;

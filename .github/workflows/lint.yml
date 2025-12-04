@@ -8,7 +8,7 @@ on:
       - main
 
 jobs:
-  lint-and-check-formatting:
+  lint-backend:
     runs-on: ubuntu-latest
 
     steps:
@@ -28,10 +28,38 @@ jobs:
         run: npm install
         working-directory: ./backend
 
-      - name: Run ESLint
+      - name: Run ESLint (Backend)
         run: npm run lint
         working-directory: ./backend
 
-      - name: Check Prettier formatting
+      - name: Check Prettier formatting (Backend)
         run: npm run check-format
         working-directory: ./backend
+
+  lint-frontend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 22
+
+      - name: Install shared dependencies
+        run: npm ci
+        working-directory: ./shared
+
+      - name: Install frontend dependencies
+        run: npm install
+        working-directory: ./frontend
+
+      - name: Run ESLint (Frontend)
+        run: npm run lint
+        working-directory: ./frontend
+
+      - name: Check Prettier formatting (Frontend)
+        run: npm run check-format
+        working-directory: ./frontend

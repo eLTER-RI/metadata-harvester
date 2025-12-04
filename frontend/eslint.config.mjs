@@ -8,9 +8,9 @@ import globals from 'globals';
 export default tseslint.config(
   eslint.configs.recommended,
   {
-    files: ['**/*.ts', '**/*.tsx'],
-    extends: [...tseslint.configs.recommended],
+    files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
     languageOptions: {
+      parser: tseslint.parser,
       parserOptions: {
         ecmaVersion: 2021,
         sourceType: 'module',
@@ -19,8 +19,13 @@ export default tseslint.config(
         },
       },
       globals: {
+        ...globals.browser,
         ...globals.node,
+        React: 'readonly',
       },
+    },
+    plugins: {
+      '@typescript-eslint': tseslint.plugin,
     },
     rules: {
       'no-console': 'off',
@@ -31,13 +36,16 @@ export default tseslint.config(
         },
       ],
       '@typescript-eslint/no-explicit-any': 'off',
+      'no-unused-vars': 'off',
+      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
       'prettier/prettier': ['error', { printWidth: 120 }],
     },
   },
   {
-    files: ['**/*.js', '**/*.mjs'],
+    files: ['**/*.mjs'],
     languageOptions: {
       globals: {
+        ...globals.browser,
         ...globals.node,
       },
     },

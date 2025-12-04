@@ -8,15 +8,12 @@ import globals from 'globals';
 export default tseslint.config(
   eslint.configs.recommended,
   {
-    files: ['**/*.ts', '**/*.tsx'],
+    files: ['**/*.ts'],
     extends: [...tseslint.configs.recommended],
     languageOptions: {
       parserOptions: {
         ecmaVersion: 2021,
         sourceType: 'module',
-        ecmaFeatures: {
-          jsx: true,
-        },
       },
       globals: {
         ...globals.node,
@@ -31,6 +28,18 @@ export default tseslint.config(
         },
       ],
       '@typescript-eslint/no-explicit-any': 'off',
+      'prettier/prettier': ['error', { printWidth: 120 }],
+    },
+  },
+  {
+    files: ['**/*.js', '**/*.mjs'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      },
+    },
+    rules: {
+      'no-console': 'off',
       'prettier/prettier': ['error', { printWidth: 120 }],
     },
   },
