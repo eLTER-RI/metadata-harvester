@@ -35,6 +35,20 @@ services:
       DEV_DB_NAME: data_harvester_dev
       DATABASE_URL: postgresql://postgres:postgres@db:5432/data_harvester_dev
       NODE_ENV: dev
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f -s http://localhost:3000/api-docs > /dev/null || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  sync-sites-init:
+    image: curlimages/curl:latest
+    depends_on:
+      backend:
+        condition: service_healthy
+    command: sh -c "curl -X POST http://backend:3000/api/sync/sites"
+    restart: "no"
 
   frontend:
     build:
