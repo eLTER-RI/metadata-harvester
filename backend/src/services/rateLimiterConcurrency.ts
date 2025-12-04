@@ -15,6 +15,8 @@ export const zenodoLimiter = createRateLimiter(80); // 80 requests per minute = 
 
 export const fieldSitesLimiter = createRateLimiter(80); // 80 requests per minute = 750ms between requests
 
+export const dataRegistryLimiter = createRateLimiter(80); // 80 requests per minute = 750ms between requests
+
 export const deimsLimiter = createRateLimiter(80); // 80 requests per minute = 750ms between requests
 
 export const darLimiter = createRateLimiter(200); // 200 requests per minute = 1000ms between requests (1 per second)

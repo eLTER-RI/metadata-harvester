@@ -17,7 +17,13 @@ import { DbRecord, RecordDao } from '../../../store/dao/recordDao';
 import { mapB2ShareToCommonDatasetMetadata } from '../../../mappers/b2shareMapper';
 import { mapDataRegistryToCommonDatasetMetadata } from '../../../mappers/dataregistryMapper';
 import { mapZenodoToCommonDatasetMetadata } from '../../../mappers/zenodoMapper';
-import { b2shareLimiter, b2shareJuelichLimiter, fieldSitesLimiter, zenodoLimiter } from '../../rateLimiterConcurrency';
+import {
+  b2shareLimiter,
+  b2shareJuelichLimiter,
+  fieldSitesLimiter,
+  zenodoLimiter,
+  dataRegistryLimiter,
+} from '../../rateLimiterConcurrency';
 import { dbValidationPhase } from './dbValidation';
 import { RuleDao } from '../../../store/dao/rulesDao';
 import { findDarRecordBySourceURL, postToDar, putToDar, deleteDarRecordsByIds } from '../../clients/darApi';
@@ -353,6 +359,9 @@ export class HarvesterContext {
         }
         if (this.repositoryType === 'ZENODO' || this.repositoryType === 'ZENODO_IT') {
           return zenodoLimiter.schedule(() => this.processOneRecordTask(recordUrl));
+        }
+        if (this.repositoryType === 'DATAREGISTRY') {
+          return dataRegistryLimiter.schedule(() => this.processOneRecordTask(recordUrl));
         }
         return this.processOneRecordTask(recordUrl);
       }),

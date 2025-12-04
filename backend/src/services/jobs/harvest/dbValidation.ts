@@ -5,6 +5,7 @@ import {
   b2shareJuelichLimiter,
   fieldSitesLimiter,
   zenodoLimiter,
+  dataRegistryLimiter,
 } from './../../rateLimiterConcurrency';
 
 /**
@@ -34,6 +35,9 @@ export async function dbValidationPhase(ctx: HarvesterContext) {
       }
       if (repositoryType === 'B2SHARE_JUELICH') {
         return b2shareJuelichLimiter.schedule(() => ctx.processOneRecordTask(dbRecord.source_url, existingDbRecord));
+      }
+      if (repositoryType === 'DATAREGISTRY') {
+        return dataRegistryLimiter.schedule(() => ctx.processOneRecordTask(dbRecord.source_url, existingDbRecord));
       }
       return ctx.processOneRecordTask(dbRecord.source_url, existingDbRecord);
     }),
