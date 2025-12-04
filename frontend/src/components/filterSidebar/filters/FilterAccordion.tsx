@@ -26,4 +26,3 @@ export const FilterAccordion = ({ title, index, isActive, onToggle, children }: 
     </>
   );
 };
-

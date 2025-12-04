@@ -49,4 +49,3 @@ export const AssetStatusFilter = ({ index, isActive, onToggle }: AssetStatusFilt
     </FilterAccordion>
   );
 };
-
