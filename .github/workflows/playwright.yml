@@ -20,9 +20,9 @@ jobs:
         with:
           node-version: 22
 
-      - name: Install root dependencies
+      - name: Install shared dependencies
         run: npm ci
-        working-directory: .
+        working-directory: ./shared
 
       - name: Install frontend dependencies
         run: npm ci
