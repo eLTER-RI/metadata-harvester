@@ -32,7 +32,11 @@ test.describe('Harvest Page', () => {
 
     const firstHarvestButton = page.getByRole('button', { name: /Start Harvest/i }).first();
     await firstHarvestButton.click();
-    await harvestAllButton.click();
+    expect(firstHarvestButton).toBeDisabled();
+    expect(harvestAllButton).toBeDisabled();
+    const secondHarvestButton = page.getByRole('button', { name: /Start Harvest/i }).nth(1);
+    expect(secondHarvestButton).toBeEnabled();
+    await secondHarvestButton.click();
     await expect(page.getByText(/European research data repository/i)).toBeVisible();
     await expect(page.getByText(/Juelich research data repository/i)).toBeVisible();
     await expect(page.getByText(/Zenodo eLTER community/i)).toBeVisible();
