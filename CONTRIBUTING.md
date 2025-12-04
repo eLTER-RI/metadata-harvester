@@ -68,3 +68,7 @@ If your repository references sites, create a site matching function similar to 
 ```typescript
 export async function getNewRepositoryMatchedSites(): Promise<any[]> {}
 ```
+
+### 5. Rate Limiter
+
+Add a ratelimiter into the `./backend/src/services/rateLimiterConcurrency.ts` in order to not overload the remote service.
