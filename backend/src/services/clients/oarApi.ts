@@ -85,12 +85,11 @@ export async function createOnlineAsset(darAssetId: string, url: string): Promis
 
   const oarUrl = `${CONFIG.API_URL}/oar/online-assets`;
   log('info', `Posting asset for DAR record ${onlineAsset.darAssetId} to OAR: ${oarUrl}`);
-  const authToken = process.env.OAR_TOKEN ? `Bearer ${process.env.OAR_TOKEN}` : CONFIG.AUTH_TOKEN;
   const apiResponse = await fetch(oarUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: authToken,
+      Authorization: CONFIG.OAR_TOKEN,
     },
     body: JSON.stringify(onlineAsset),
   });

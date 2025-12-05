@@ -27,14 +27,17 @@ const envConfigs = {
   prod: {
     API_URL: process.env.PROD_API_URL,
     AUTH_TOKEN: `Bearer ${process.env.PROD_AUTH_TOKEN}`,
+    OAR_TOKEN: `Bearer ${process.env.PROD_OAR_TOKEN}`,
   },
   dev: {
     API_URL: process.env.DEV_API_URL,
     AUTH_TOKEN: `Bearer ${process.env.DEV_AUTH_TOKEN}`,
+    OAR_TOKEN: `Bearer ${process.env.DEV_OAR_TOKEN}`,
   },
   test: {
     API_URL: 'http://mock-api-for-tests.com',
     AUTH_TOKEN: 'Bearer mock-token',
+    OAR_TOKEN: `Bearer moc-token`,
   },
 };
 
