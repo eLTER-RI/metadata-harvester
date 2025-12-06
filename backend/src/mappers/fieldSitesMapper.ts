@@ -137,21 +137,9 @@ export async function mapFieldSitesToCommonDatasetMetadata(
   const responsibleOrganization: ResponsibleOrganizations[] = [];
   if (fieldSites.submission?.submitter) {
     const submitter = fieldSites.submission.submitter;
-    const creatorIds: EntityIdentifier[] = [];
-    if (submitter.website) {
-      creatorIds.push({
-        entityID: submitter.website,
-      });
-    }
-    if (submitter.self?.uri && submitter.self?.uri != submitter.website) {
-      creatorIds.push({
-        entityID: submitter.self.uri,
-      });
-    }
     responsibleOrganization.push({
       organizationEmail: submitter.email,
       organizationName: submitter.name,
-      organizationIDs: creatorIds,
     });
   }
 
