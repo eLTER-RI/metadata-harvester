@@ -26,7 +26,7 @@ import {
 } from '../../rateLimiterConcurrency';
 import { dbValidationPhase } from './dbValidation';
 import { RuleDao } from '../../../store/dao/rulesDao';
-import { findDarRecordBySourceURL, postToDar, putToDar, deleteDarRecordsByIds } from '../../clients/darApi';
+import { findDarRecordBySourceURL, postToDar, putToDar } from '../../clients/darApi';
 import { dbRecordUpsert } from './dbRecordSync';
 import { ResolvedRecordDao } from '../../../store/dao/resolvedRecordsDao';
 import { getNestedValue } from '../../../../../shared/utils';
