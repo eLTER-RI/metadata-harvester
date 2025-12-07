@@ -1,10 +1,11 @@
 import { useFormContext, useFieldArray } from 'react-hook-form';
-import { Form, Button, Segment, Header, Icon } from 'semantic-ui-react';
+import { Form, Button, Segment, Header, Icon, Message } from 'semantic-ui-react';
 import { CommonDatasetMetadata } from '../../../../../backend/src/models/commonStructure';
 import { GroupDiffAccordion } from '../../rules/GroupDiffAccordion';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DeleteConfirmModal } from '../../DeleteConfirmModal';
 import { useFetchDeimsSites } from '../../../hooks/recordQueries';
+import { useSyncSites } from '../../../hooks/recordMutations';
 
 export const SiteReferencesGroup = () => {
   const {
@@ -20,6 +21,22 @@ export const SiteReferencesGroup = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [indexToDelete, setIndexToDelete] = useState<number | null>(null);
   const { data: deimsSites = [], isLoading: isLoadingSites } = useFetchDeimsSites();
+  const syncSitesMutation = useSyncSites();
+  const [isSyncingSites, setIsSyncingSites] = useState(false);
+  const [syncSuccessMessage, setSyncSuccessMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (syncSitesMutation.isSuccess && isSyncingSites) {
+      setSyncSuccessMessage('DEIMS sites synchronization started successfully.');
+    }
+  }, [syncSitesMutation.isSuccess, isSyncingSites]);
+
+  const handleSyncSites = () => {
+    if (isSyncingSites) return;
+    setIsSyncingSites(true);
+    setSyncSuccessMessage(null);
+    syncSitesMutation.mutate();
+  };
 
   const addSiteReference = () => {
     append({
@@ -64,6 +81,15 @@ export const SiteReferencesGroup = () => {
 
           <Form.Field>
             <label>Select a DEIMS Site *</label>
+            <Button
+              type="button"
+              size="small"
+              icon="sync"
+              content="Sync DEIMS Sites"
+              onClick={handleSyncSites}
+              disabled={isSyncingSites}
+              loading={isSyncingSites}
+            />
             <Form.Select
               search
               clearable
@@ -89,6 +115,11 @@ export const SiteReferencesGroup = () => {
               }}
               error={errors.siteReferences?.[index]?.siteID ? { content: 'Site selection is required' } : false}
             />
+            {syncSuccessMessage && (
+              <Message success size="small">
+                {syncSuccessMessage}
+              </Message>
+            )}
           </Form.Field>
         </Segment>
       ))}

@@ -202,3 +202,20 @@ export const useDeleteOarAsset = () => {
     },
   });
 };
+
+export const useSyncSites = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const response = await api.post('/sync/sites');
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sites'] });
+    },
+    onError: () => {
+      // TODO: add toast notification
+    },
+  });
+};
