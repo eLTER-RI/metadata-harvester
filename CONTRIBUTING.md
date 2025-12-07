@@ -37,12 +37,12 @@ Create a new mapper file in `backend/src/mappers/` (e.g., `newRepositoryMapper.t
 Add the repository configuration to `backend/src/config/config.ts`:
 
 **Configuration fields:**
-- `apiUrl`: API URL listing all records records
+- `apiUrl`: API URL listing all records.
 - `pageSize`: If paginated, choose the pagesize, ideally based on the size of repository, and its limits.
-- `selfLinkKey`: JSON path to the link for the record itself (e.g., `'links.self'`)
-- `dataKey`: JSON path to array of records (e.g., `'hits.hits'`)
+- `selfLinkKey`: JSON path to the link for the record itself (e.g., `'links.self'`).
+- `dataKey`: JSON path to array of records (e.g., `'hits.hits'`).
 - `singleRecordKey`: Sometimes, the key to access when listing is different then for getting one record (response.resources vs response.resource). Use this field in such case, and follow the implementation for `DATAREGISTRY`.
-- `processFunction`: Either `'processApiPage'` (JSON API) or `'processFieldSitesPage'` (XML/sitemap)
+- `processFunction`: Either `'processApiPage'` (JSON API) or `'processFieldSitesPage'` (XML/sitemap).
 - `darQuery`: DAR API query to find existing records from this repository. Repositories use searching by `project`.
 
 ### 4. Add Mapping Logic
@@ -71,4 +71,4 @@ export async function getNewRepositoryMatchedSites(): Promise<any[]> {}
 
 ### 5. Rate Limiter
 
-Add a ratelimiter into the `./backend/src/services/rateLimiterConcurrency.ts` in order to not overload the remote service.
+Add a ratelimiter into the `./backend/src/services/rateLimiterConcurrency.ts` in order to not overload the remote service. Use the rate limiter on places where the code logic might call the repository API (mapper, harvesting logic, db validation logic).
