@@ -99,14 +99,6 @@ describe('SITES Mapper', () => {
     expect(commonDataset.metadata.responsibleOrganizations).toEqual([
       {
         organizationEmail: 'data@fieldsites.se',
-        organizationIDs: [
-          {
-            entityID: 'https://www.fieldsites.se/en-GB/research-stations/skogaryd-32652394',
-          },
-          {
-            entityID: 'https://meta.fieldsites.se/resources/stations/Skogaryd',
-          },
-        ],
         organizationName: 'Skogaryd Research Catchment',
       },
       {
