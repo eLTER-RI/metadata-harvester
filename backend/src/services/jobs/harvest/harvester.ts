@@ -471,15 +471,17 @@ export const startRepositorySync = async (ctx: HarvesterContext) => {
     log('info', `Phase 2 completed for ${ctx.repositoryType}.`);
 
     // Phase 3: Cleanup - Delete records that haven't been seen since some threshold
-    const cleanupThreshold = CONFIG.CLEANUP_DAYS_THRESHOLD;
-    const deletedDarIds = await ctx.recordDao.deleteUnseenRecords(ctx.repositoryType, cleanupThreshold);
-    if (deletedDarIds.length > 0) {
-      log(
-        'info',
-        `Cleaned up ${deletedDarIds.length} records that haven't been seen in ${cleanupThreshold}+ days for ${ctx.repositoryType}.`,
-      );
-      await deleteDarRecordsByIds(deletedDarIds);
-    }
+    // Harvester won't be in use for upcoming days, let's turn off deletion mechanism temporarily
+    // to prevent unwanted deletions.
+    // const cleanupThreshold = CONFIG.CLEANUP_DAYS_THRESHOLD;
+    // const deletedDarIds = await ctx.recordDao.deleteUnseenRecords(ctx.repositoryType, cleanupThreshold);
+    // if (deletedDarIds.length > 0) {
+    //   log(
+    //     'info',
+    //     `Cleaned up ${deletedDarIds.length} records that haven't been seen in ${cleanupThreshold}+ days for ${ctx.repositoryType}.`,
+    //   );
+    //   await deleteDarRecordsByIds(deletedDarIds);
+    // }
 
     await client.query('COMMIT');
     log('info', `Harvesting for repository: ${ctx.repositoryType} finished successfully`);
