@@ -35,4 +35,3 @@ jobs:
       - name: Run Playwright tests
         run: npm run test:playwright
         working-directory: ./frontend
-
