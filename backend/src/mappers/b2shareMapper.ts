@@ -34,7 +34,7 @@ import {
 function extractB2ShareGeolocation(input: any): Geolocation[] {
   const coverages: Geolocation[] = [];
 
-  // new format
+  // new format for EUDAT v3
   if (input.locations?.features && Array.isArray(input.locations.features)) {
     input.locations.features.forEach((feature: any) => {
       if (!feature?.geometry) {
@@ -90,7 +90,7 @@ function extractB2ShareGeolocation(input: any): Geolocation[] {
     });
   }
 
-  // old format
+  // old format for Juelich
   input.spatial_coverages?.map((spatCoverage: any) => {
     if (spatCoverage.point) {
       coverages.push({
@@ -147,7 +147,7 @@ function extractB2ShareGeolocation(input: any): Geolocation[] {
 export function extractB2ShareAlternateIdentifiers(input: any): AlternateIdentifier[] {
   const identifiers: AlternateIdentifier[] = [];
 
-  // new format
+  // new format for EUDAT v3
   if (input.identifiers) {
     input.identifiers.forEach((item: any) => {
       if (!item || !item.identifier || !item.scheme) {
@@ -172,7 +172,7 @@ export function extractB2ShareAlternateIdentifiers(input: any): AlternateIdentif
     });
   }
 
-  //  old format
+  //  old format for Juelich
   if (input.alternate_identifiers) {
     input.alternate_identifiers.forEach((item: any) => {
       if (
@@ -492,14 +492,14 @@ function extractTemporalCoverages(b2share: any): TemporalCoverage[] | undefined 
 }
 
 function extractB2ShareTitles(metadata: any): Title[] {
-  // new format
+  // new format for EUDAT v3
   if (metadata.titles && Array.isArray(metadata.titles) && metadata.titles.length > 0) {
     return metadata.titles.map((t: any) => ({
       titleText: typeof t === 'string' ? t : t.title || t.titleText || '',
       titleLanguage: t.language || t.titleLanguage || '',
     }));
   }
-  // old format
+  // old format for Juelich
   if (metadata.title) {
     return [{ titleText: metadata.title, titleLanguage: '' }];
   }
@@ -507,11 +507,11 @@ function extractB2ShareTitles(metadata: any): Title[] {
 }
 
 function extractB2ShareDescriptions(metadata: any): Description[] | undefined {
-  // new format
+  // new format for EUDAT v3
   if (metadata.description && typeof metadata.description === 'string') {
     return [{ descriptionText: metadata.description, descriptionType: 'Abstract' }];
   }
-  // old format
+  // old format for Juelich
   if (metadata.descriptions && Array.isArray(metadata.descriptions) && metadata.descriptions.length > 0) {
     return metadata.descriptions.map((d: any) => ({
       descriptionText: d.description,
@@ -582,7 +582,7 @@ function parseB2shareAlternateIdentifiers(b2share: any): AlternateIdentifier[] {
     });
   }
 
-  // new format
+  // new format for EUDAT v3
   if (b2share.pids?.epic?.identifier) {
     identifiers.push({
       alternateID: b2share.pids.epic.identifier,
@@ -590,7 +590,7 @@ function parseB2shareAlternateIdentifiers(b2share: any): AlternateIdentifier[] {
     });
   }
 
-  // old format
+  // old format for Juelich
   if (b2share.metadata.ePIC_PID && typeof b2share.metadata.ePIC_PID === 'string') {
     identifiers.push({
       alternateID: b2share.metadata.ePIC_PID,
@@ -746,7 +746,7 @@ export async function mapB2ShareToCommonDatasetMetadata(
       titles: extractB2ShareTitles(b2share.metadata),
       creators: extractB2ShareCreators(b2share.metadata.creators),
       contactPoints: (() => {
-        // new format
+        // new format for EUDAT v3
         if (
           b2share.metadata.contact_emails &&
           Array.isArray(b2share.metadata.contact_emails) &&
@@ -764,7 +764,7 @@ export async function mapB2ShareToCommonDatasetMetadata(
             })
             .filter((e: any) => e && e.contactEmail !== '');
         }
-        // old format
+        // old format for Juelich
         if (b2share.metadata.contact_email && typeof b2share.metadata.contact_email === 'string') {
           return b2share.metadata.contact_email
             .split(/[;, ]+/)
