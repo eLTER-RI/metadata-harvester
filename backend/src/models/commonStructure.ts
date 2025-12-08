@@ -1,7 +1,15 @@
-// There was already an attempt to create a common schema
-// https://gitlab.ics.muni.cz/dataraptors/elter/elter-invenio/-/blob/master/models/datasets-metadata.yaml?ref_type=heads
-// https://gitlab.ics.muni.cz/dataraptors/elter/elter-invenio/-/blob/master/models/dataset-type.yaml?ref_type=heads
-// https://gitlab.ics.muni.cz/dataraptors/elter/elter-invenio/-/blob/master/models/datasets-datatypes.yaml?ref_type=heads
+/**
+ * This files represents the DAR eLTER schema.
+ *
+ * This file defines the structure and types used to represent dataset metadata.
+ * It serves as a unified schema for normalizing data from various repositories into unified format.
+ * The file also includes normalisation functions that can be used across mappers.
+ *
+ * There were previous attempts to create a common schema for this purpose:
+ * @link https://gitlab.ics.muni.cz/dataraptors/elter/elter-invenio/-/blob/master/models/datasets-metadata.yaml
+ * @link https://gitlab.ics.muni.cz/dataraptors/elter/elter-invenio/-/blob/master/models/dataset-type.yaml
+ * @link https://gitlab.ics.muni.cz/dataraptors/elter/elter-invenio/-/blob/master/models/datasets-datatypes.yaml
+ */
 
 export type RepositoryType = 'B2SHARE_EUDAT' | 'SITES' | 'B2SHARE_JUELICH' | 'ZENODO' | 'ZENODO_IT' | 'DATAREGISTRY';
 
@@ -484,6 +492,11 @@ export type DataLevel = {
   dataLevelURI?: string;
 };
 
+/**
+ * Parses an URL, and returns it in the format of DOI.
+ * @param {string} url URL string
+ * @returns {DOI | undefined} DOI object or undefined if did not find
+ */
 export function parseDOIUrl(url: string): DOI | null {
   const match = url.match(/^https?:\/\/([^/]+)\/(.+)$/i);
   if (!match) return null;
@@ -494,6 +507,11 @@ export function parseDOIUrl(url: string): DOI | null {
   };
 }
 
+/**
+ * Parses an URL, and returns it in the format of PID.
+ * @param {string} url URL string
+ * @returns {PID | undefined} PID object or undefined if did not find
+ */
 export function parsePID(url: string): PID | undefined {
   const match = url.match(/^https?:\/\/([^/]+)\/(.+)$/i);
   if (!match) return undefined;
@@ -506,6 +524,11 @@ export function parsePID(url: string): PID | undefined {
   };
 }
 
+/**
+ * Transforms AlternateIdentifier to PID if they are including a DOI object or alternative DOI.
+ * @param {AlternateIdentifier[]} identifiers List of AlternateIdentifiers
+ * @returns {PID | undefined} PID object or undefined if did not find
+ */
 export function toPID(identifiers: AlternateIdentifier[]): PID | undefined {
   const doiEntry = identifiers.find((id) => id.alternateIDType.toLowerCase() === 'doi');
   if (!doiEntry) return undefined;
@@ -521,6 +544,10 @@ export function toPID(identifiers: AlternateIdentifier[]): PID | undefined {
   };
 }
 
+/**
+ * @param schema
+ * @returns {boolean} True if string is a valid entityId, false otherwise.
+ */
 export function isValidEntityIdSchema(schema: string | undefined): boolean {
   if (!schema) {
     return false;
@@ -528,6 +555,12 @@ export function isValidEntityIdSchema(schema: string | undefined): boolean {
   return validEntityIdSchemas.has(schema.toLowerCase());
 }
 
+/**
+ * Returns date in YYYY-MM-DD format. Is not string, and only uses a regex
+ * for matching.
+ * @param {string} isoString A datetime string.
+ * @returns {string | undefined} Normalized date expected by DAR.
+ */
 export function normalizeDate(isoString: string) {
   try {
     let normalized: string;
@@ -545,6 +578,12 @@ export function normalizeDate(isoString: string) {
   }
 }
 
+/**
+ * Returns date in YYYY-MM-DD format. Is stricter than normalizeDate,
+ * and returns only valid date.
+ * @param {string} isoString A datetime string.
+ * @returns {string | undefined} Normalized date expected by DAR.
+ */
 export function formatDate(isoString: string): string | undefined {
   try {
     const date = new Date(isoString);
@@ -557,6 +596,11 @@ export function formatDate(isoString: string): string | undefined {
   }
 }
 
+/**
+ * Returns correct URI for license for different format of License IDs/names.
+ * @param {string} licenseId - License ID/name.
+ * @returns {string | undefined} URL of the license.
+ */
 export function getLicenseURI(licenseId: string): string | undefined {
   switch (licenseId) {
     case 'cc by':
@@ -592,6 +636,11 @@ export function getLicenseURI(licenseId: string): string | undefined {
   }
 }
 
+/**
+ * Normalizes the checksum string by removing prefix.
+ * @param {any} checksum Checksum string.
+ * @returns {string | undefined} Checksum without prefix or undefined if not a string.
+ */
 export function getChecksum(checksum?: any): string | undefined {
   if (!checksum || typeof checksum !== 'string') {
     return undefined;
