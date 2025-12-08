@@ -153,10 +153,9 @@ export function getZenodoRelationType(zenodoRelation: string | undefined): Relat
 
   if (mappedRelation) {
     return mappedRelation;
-  } else {
-    process.stdout.write(`Unknown Zenodo relation: "${zenodoRelation}". Mapping to 'Other'.`);
-    return undefined;
   }
+  process.stdout.write(`Unknown Zenodo relation: "${zenodoRelation}". Mapping to 'Other'.`);
+  return undefined;
 }
 
 export function getZenodoIdentifierType(zenodoIdentifierType: string | undefined): IdentifierType | undefined {
@@ -169,10 +168,9 @@ export function getZenodoIdentifierType(zenodoIdentifierType: string | undefined
 
   if (mappedRelation) {
     return mappedRelation;
-  } else {
-    process.stderr.write(`Unknown Zenodo identifier type: "${zenodoIdentifierType}". Mapping to 'Other'.`);
-    return undefined;
   }
+  process.stderr.write(`Unknown Zenodo identifier type: "${zenodoIdentifierType}". Mapping to 'Other'.`);
+  return undefined;
 }
 
 function mapZenodoCommunitiesToProjects(communitiesArray: { id: string }[]): Project[] {
