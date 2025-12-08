@@ -60,11 +60,6 @@ services:
       VITE_API_URL: http://localhost:3000/api
     depends_on:
       - backend
-    volumes:
-      - ./frontend:/app/frontend
-      - ./shared:/app/shared
-      - /app/frontend/node_modules
-      - /app/shared/node_modules
 
 volumes:
   postgres_data_dev:

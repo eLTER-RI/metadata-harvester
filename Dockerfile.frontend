@@ -2,6 +2,7 @@ FROM node:20-slim
 
 RUN groupadd -g 1000 appuser 2>/dev/null || true && \
     useradd -m -u 1000 -g appuser appuser 2>/dev/null || true
+USER 1000
 
 WORKDIR /app/shared
 COPY --chown=1000:1000 shared/package*.json ./
@@ -14,6 +15,5 @@ RUN npm install
 COPY --chown=1000:1000 frontend/ .
 
 EXPOSE 5173
-USER 1000
 
 CMD ["npm", "run", "dev"]
