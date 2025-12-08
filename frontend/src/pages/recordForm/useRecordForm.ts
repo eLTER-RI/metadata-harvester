@@ -2,7 +2,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useFetchRecord, useFetchRules, useFetchHarvestedRecord } from '../../hooks/recordQueries';
 import { useCreateRules, useUpdateManualRecord } from '../../hooks/recordMutations';
 import { useEffect, useState } from 'react';
-import { CommonDatasetMetadata } from '../../../../src/store/commonStructure';
 import { generateRules } from '../../utils/generateRules';
 import { ZodError } from 'zod';
 
@@ -14,7 +13,7 @@ export const useRecordForm = () => {
   const { data: harvestedRecord, isLoading: harvestedLoading } = useFetchHarvestedRecord(darId);
   const { mutate: createRules, error: saveError } = useCreateRules();
   const { mutate: updateManualRecord, error: updateManualError } = useUpdateManualRecord();
-  const [formData, setFormData] = useState<CommonDatasetMetadata | undefined>();
+  const [formData, setFormData] = useState<any | undefined>();
   const [validationErrors, setValidationErrors] = useState<string[] | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -30,7 +29,7 @@ export const useRecordForm = () => {
 
   useEffect(() => {
     if (originalRecord) {
-      const commonFormData: CommonDatasetMetadata = {
+      const commonFormData = {
         assetType: originalRecord.metadata?.assetType || 'Dataset',
         datasetType: originalRecord.metadata?.datasetType,
         alternateIdentifiers: originalRecord.metadata?.alternateIdentifiers || [],
@@ -61,11 +60,12 @@ export const useRecordForm = () => {
           externalSourceInfo: '',
         },
       };
+      console.log(originalRecord);
       setFormData(commonFormData);
     }
   }, [originalRecord]);
 
-  const handleSave = async (data: CommonDatasetMetadata, onSuccess?: () => void) => {
+  const handleSave = async (data: any, onSuccess?: () => void) => {
     setValidationErrors(null);
     setFormData(data);
     setIsSaving(true);
