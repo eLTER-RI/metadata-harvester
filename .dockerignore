@@ -1,0 +1,16 @@
+node_modules
+dist
+coverage
+*.log
+.env
+.git
+.gitignore
+README.md
+notes.txt
+*.md
+playwright-report
+test-results
+pulled_data
+logs
+data
+

@@ -1,0 +1,18 @@
+FROM node:20-slim
+
+RUN groupadd -g 1000 appuser 2>/dev/null || true && \
+    useradd -m -u 1000 -g appuser appuser 2>/dev/null || true
+
+WORKDIR /app/shared
+COPY --chown=1000:1000 shared/package*.json ./
+RUN npm install
+COPY --chown=1000:1000 shared/ ./
+
+WORKDIR /app/backend
+COPY --chown=1000:1000 backend/package*.json ./
+RUN npm install
+COPY --chown=1000:1000 backend/ .
+
+USER 1000
+
+CMD sh -c "npm run migrate up && npm run dev"
