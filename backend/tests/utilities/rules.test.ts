@@ -1,16 +1,16 @@
-import { CommonDataset } from '../../../src/models/commonStructure';
-import { commonDatasetSchema } from '../../../src/models/commonStructure.zod.gen';
-import { RuleDbRecord } from '../../../src/store/dao/rulesDao';
-import { applyRuleToRecord } from '../../../src/utilities/rules';
-import { appendValue, getNestedValue, setNestedValue } from '../../../../shared/utils';
+import { CommonDataset } from '../../src/models/commonStructure';
+import { commonDatasetSchema } from '../../src/models/commonStructure.zod.gen';
+import { RuleDbRecord } from '../../src/store/dao/rulesDao';
+import { applyRuleToRecord } from '../../src/utilities/rules';
+import { appendValue, getNestedValue, setNestedValue } from '../../../shared/utils';
 
-jest.mock('../../../src/models/commonStructure.zod.gen', () => ({
+jest.mock('../../src/models/commonStructure.zod.gen', () => ({
   commonDatasetSchema: {
     safeParse: jest.fn(),
   },
 }));
 
-jest.mock('../../../src/services/serviceLogging', () => ({
+jest.mock('../../src/services/serviceLogging', () => ({
   log: jest.fn(),
 }));
 

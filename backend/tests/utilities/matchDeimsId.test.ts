@@ -6,10 +6,10 @@ import {
   getFieldSitesMatchedSites,
   getZenodoMatchedSites,
   getDataRegistryMatchedSites,
-} from '../../../src/utilities/matchDeimsId';
-import { CONFIG } from '../../../src/config/config';
+} from '../../src/utilities/matchDeimsId';
+import { CONFIG } from '../../src/config/config';
 
-jest.mock('../../../src/utilities/fetchJsonFromRemote');
+jest.mock('../../src/utilities/fetchJsonFromRemote');
 
 global.fetch = jest.fn();
 

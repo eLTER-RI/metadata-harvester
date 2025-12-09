@@ -1,13 +1,13 @@
-import { CommonDataset } from '../../../src/models/commonStructure';
+import { CommonDataset } from '../../src/models/commonStructure';
 import mockZenodoData from './apiResponses/zenodo.json';
 import mockZenodoOldData from './apiResponses/zenodo_versions_old.json';
 import mockZenodoVersions from './apiResponses/zenodo_versions.json';
-import * as fetcher from '../../../src/utilities/fetchJsonFromRemote';
-import { mapZenodoToCommonDatasetMetadata } from '../../../src/mappers/zenodoMapper';
+import * as fetcher from '../../src/utilities/fetchJsonFromRemote';
+import { mapZenodoToCommonDatasetMetadata } from '../../src/mappers/zenodoMapper';
 
-jest.mock('../../../src/utilities/fetchJsonFromRemote');
+jest.mock('../../src/utilities/fetchJsonFromRemote');
 
-jest.mock('../../../src/services/serviceLogging', () => ({
+jest.mock('../../src/services/serviceLogging', () => ({
   log: jest.fn(),
 }));
 

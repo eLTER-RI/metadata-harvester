@@ -1,13 +1,13 @@
-import { mapB2ShareToCommonDatasetMetadata } from '../../../src/mappers/b2shareMapper';
-import { CommonDataset } from '../../../src/models/commonStructure';
+import { mapB2ShareToCommonDatasetMetadata } from '../../src/mappers/b2shareMapper';
+import { CommonDataset } from '../../src/models/commonStructure';
 import mockB2ShareData from './apiResponses/b2share.json';
 import mockB2ShareOldData from './apiResponses/b2share_versions_old.json';
 import mockB2ShareVersions from './apiResponses/b2share_versions.json';
-import * as fetcher from '../../../src/utilities/fetchJsonFromRemote';
+import * as fetcher from '../../src/utilities/fetchJsonFromRemote';
 
-jest.mock('../../../src/utilities/fetchJsonFromRemote');
+jest.mock('../../src/utilities/fetchJsonFromRemote');
 
-jest.mock('../../../src/services/serviceLogging', () => ({
+jest.mock('../../src/services/serviceLogging', () => ({
   log: jest.fn(),
 }));
 

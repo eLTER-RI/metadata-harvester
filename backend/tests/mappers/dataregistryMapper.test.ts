@@ -1,10 +1,10 @@
-import { CommonDataset } from '../../../src/models/commonStructure';
+import { CommonDataset } from '../../src/models/commonStructure';
 import mockDataregistryData from './apiResponses/dataregistry.json';
-import { mapDataRegistryToCommonDatasetMetadata } from '../../../src/mappers/dataregistryMapper';
+import { mapDataRegistryToCommonDatasetMetadata } from '../../src/mappers/dataregistryMapper';
 
-jest.mock('../../../src/utilities/fetchJsonFromRemote');
+jest.mock('../../src/utilities/fetchJsonFromRemote');
 
-jest.mock('../../../src/services/serviceLogging', () => ({
+jest.mock('../../src/services/serviceLogging', () => ({
   log: jest.fn(),
 }));
 
