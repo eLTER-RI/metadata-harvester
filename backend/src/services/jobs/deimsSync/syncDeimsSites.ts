@@ -8,7 +8,6 @@ import { deimsLimiter } from '../../rateLimiterConcurrency';
 
 /**
  * Fetches deims sites from the source and upserts it into the local database.
- *
  * @param {Pool} pool The PostgreSQL connection pool.
  */
 export async function syncDeimsSites(pool: Pool): Promise<void> {

@@ -6,7 +6,7 @@ import { log } from '../services/serviceLogging';
 const MAX_RETRIES = 5;
 const INITIAL_RETRY_DELAY_MS = 20000;
 
-// Function to fetch JSON from a URL
+// Function to fetch JSON from a URL with retries and a linear back-off
 export async function fetchJson(url: string, retriesLeft = MAX_RETRIES, delay = INITIAL_RETRY_DELAY_MS): Promise<any> {
   try {
     await new Promise((resolve) => setTimeout(resolve, 500));

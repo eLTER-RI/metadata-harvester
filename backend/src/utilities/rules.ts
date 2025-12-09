@@ -13,7 +13,10 @@ const { isEqual } = _;
  */
 export function applyRuleToRecord(record: CommonDataset, rule: RuleDbRecord): boolean {
   if (rule.target_path.startsWith('metadata.externalSourceInformation')) {
-    log('info', `Rule for path '${rule.target_path}' not created: externalSourceInformation cannot be changed`);
+    log(
+      'info',
+      `Rule for path '${rule.target_path}' not created: externalSourceInformation cannot be manually changed`,
+    );
     return false;
   }
 

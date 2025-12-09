@@ -65,7 +65,7 @@ export async function dbRecordUpsert(
       await recordDao.createRecord(recordPayload);
       log('info', `Successfully created record: ${sourceUrl}`);
     } else {
-      log('info', `Updating record in database for record ${sourceUrl}, dar id ${darId}`);
+      log('info', `Updating record in database for record ${sourceUrl}, DAR ID ${darId}`);
       await recordDao.updateRecord(sourceUrl, recordPayload);
       log('info', `Successfully updated record: ${sourceUrl}`);
     }

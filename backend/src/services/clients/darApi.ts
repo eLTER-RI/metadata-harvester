@@ -228,9 +228,7 @@ export async function deleteDarRecordsByIds(ids: string[]) {
 
 /**
  * Constructs a search URL for the Data Registry (DAR) API to find a record by its external source URI.
- *
  * @param {string} externalSourceURI externalSourceURI used in the record's externalSourceInformation field in DAR.
- *
  * @returns {string} URL for querying for filtering based on externalSourceURI
  */
 function getUrlWithExternalSourceURIQuery(externalSourceURI: string): string {

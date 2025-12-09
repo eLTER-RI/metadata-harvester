@@ -8,13 +8,14 @@ import { deleteDarRecordsByIds, fetchDarRecordsByRepository } from '../../client
 /**
  * This function compares records in the local database versus DAR records, and logs these in arrays.
  * If the `darCleanup` flag is set to true, it also deletes extra remote records.
- *
+ * This functionality can be used for a manual checks. Due to the nature of `at-least-once` mechanism for
+ * DAR updates, it might happen that DAR includes more records than the local database.
  * @param {RepositoryType} repositoryType The type of the repository to synchronize.
  * @param {Pool} pool The PostgreSQL connection pool.
  * @param {boolean} darCleanup A flag that if set to true triggers a cleanup job of DAR ids that are extra in comparison to the database.
  */
 export async function syncWithDar(repositoryType: RepositoryType, pool: Pool, darCleanup: boolean): Promise<void> {
-  console.log(`Starting DAR sync for repository: ${repositoryType}.`);
+  log('info', `Starting DAR sync for repository: ${repositoryType}.`);
 
   let remoteDarIds: string[] = [];
   try {
