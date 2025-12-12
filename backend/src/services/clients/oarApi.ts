@@ -119,11 +119,10 @@ export async function deleteOnlineAsset(onlineAssetId: string): Promise<boolean>
   const url = `${CONFIG.API_URL}/oar/online-assets/${onlineAssetId}`;
   log('info', `Deleting online asset ${onlineAssetId} at ${url}`);
 
-  const authToken = process.env.OAR_TOKEN ? `Bearer ${process.env.OAR_TOKEN}` : CONFIG.AUTH_TOKEN;
   const apiResponse = await fetch(url, {
     method: 'DELETE',
     headers: {
-      Authorization: authToken,
+      Authorization: CONFIG.OAR_TOKEN,
     },
   });
 
