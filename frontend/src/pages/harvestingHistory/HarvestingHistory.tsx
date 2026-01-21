@@ -1,5 +1,17 @@
 import { useState } from 'react';
-import { Container, Header, Table, Button, Icon, Label, ButtonGroup, Segment, Dimmer, Loader } from 'semantic-ui-react';
+import {
+  Container,
+  Header,
+  Table,
+  Button,
+  Icon,
+  Label,
+  ButtonGroup,
+  Segment,
+  Dimmer,
+  Loader,
+  Popup,
+} from 'semantic-ui-react';
 import { useFetchRecords } from '../../hooks/recordQueries';
 import { useReHarvestRecord } from '../../hooks/recordMutations';
 import { getDarRecordUrl } from '../../utils/darUrl';
@@ -149,13 +161,26 @@ export const HarvestingHistory = () => {
                 <Table.Cell>{record.source_repository}</Table.Cell>
                 <Table.Cell
                   style={{
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
+                    maxWidth: 0,
                   }}
-                  title={record.title ?? 'No title'}
                 >
-                  {record.title ?? 'No title'}
+                  <Popup
+                    content={record.title ?? 'No title'}
+                    trigger={
+                      <span
+                        style={{
+                          display: 'block',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {record.title ?? 'No title'}
+                      </span>
+                    }
+                    position="top left"
+                    hoverable
+                  />
                 </Table.Cell>
                 <Table.Cell>
                   <Label color={getStatusColor(record.status)} size="small">
