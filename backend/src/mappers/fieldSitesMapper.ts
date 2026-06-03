@@ -303,7 +303,7 @@ export async function mapFieldSitesToCommonDatasetMetadata(
         },
       ],
       externalSourceInformation: {
-        externalSourceName: 'FieldSites',
+        externalSourceName: 'SITES (eLTER Sweden)',
         // CRITICAL: externalSourceURI is used as database primary key (source_url)
         // DO NOT MODIFY THIS LOGIC
         externalSourceURI: latestUrl,

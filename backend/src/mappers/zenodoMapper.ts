@@ -416,7 +416,7 @@ export async function mapZenodoToCommonDatasetMetadata(
         };
       }),
       externalSourceInformation: {
-        externalSourceName: 'Zenodo',
+        externalSourceName: 'ZENODO',
         // CRITICAL: externalSourceURI is used as database primary key (source_url)
         // DO NOT MODIFY THIS LOGIC
         externalSourceURI: url,

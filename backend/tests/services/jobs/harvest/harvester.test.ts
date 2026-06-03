@@ -486,7 +486,7 @@ describe('Test harvester file', () => {
           },
         ],
         externalSourceInformation: {
-          externalSourceName: 'Zenodo',
+          externalSourceName: 'ZENODO',
         },
       },
     };

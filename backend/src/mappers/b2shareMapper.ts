@@ -476,18 +476,6 @@ function extractTemporalCoverages(b2share: any): TemporalCoverage[] | undefined 
     return coverages.filter((tc: any) => tc.startDate).length > 0 ? coverages : undefined;
   }
 
-  if (b2share.metadata.publication_date) {
-    const pubDate = formatDateB2Share(b2share.metadata.publication_date);
-    if (pubDate) {
-      return [
-        {
-          startDate: pubDate,
-          endDate: pubDate,
-        },
-      ];
-    }
-  }
-
   return undefined;
 }
 
@@ -791,7 +779,7 @@ export async function mapB2ShareToCommonDatasetMetadata(
       licenses: licenses.length > 0 ? licenses : undefined,
       files: extractB2ShareFiles(b2share),
       externalSourceInformation: {
-        externalSourceName: repositoryType == 'B2SHARE_EUDAT' ? 'B2Share Eudat' : 'B2Share Juelich',
+        externalSourceName: repositoryType == 'B2SHARE_EUDAT' ? 'B2Share (Eudat)' : 'B2Share (Research Center Jülich)',
         // CRITICAL: externalSourceURI is used as database primary key (source_url)
         externalSourceURI: b2share.links?.self || latestUrl,
       },

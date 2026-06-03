@@ -200,7 +200,7 @@ describe('Rules Utility Functions', () => {
             },
           ],
           externalSourceInformation: {
-            externalSourceName: 'Zenodo',
+            externalSourceName: 'ZENODO',
           },
         },
       };
