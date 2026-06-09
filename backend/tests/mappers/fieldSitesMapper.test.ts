@@ -34,7 +34,7 @@ describe('SITES Mapper', () => {
     );
 
     expect(commonDataset.metadata.assetType).toBe('Dataset');
-    expect(commonDataset.metadata.externalSourceInformation.externalSourceName).toBe('FieldSites');
+    expect(commonDataset.metadata.externalSourceInformation.externalSourceName).toBe('SITES (eLTER Sweden)');
     expect(commonDataset.metadata.externalSourceInformation.externalSourceURI).toBe(sourceUrl);
     expect(commonDataset.metadata.geoLocations).toBeDefined();
     expect(commonDataset.metadata.geoLocations![0].point).toBeDefined();
