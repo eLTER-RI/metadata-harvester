@@ -133,7 +133,7 @@ describe('Zenodo Mapper', () => {
       [],
     );
 
-    expect(commonDataset.metadata.externalSourceInformation.externalSourceName).toBe('Zenodo');
+    expect(commonDataset.metadata.externalSourceInformation.externalSourceName).toBe('ZENODO');
     expect(commonDataset.metadata.externalSourceInformation.externalSourceURI).toBe(
       'https://zenodo.org/api/records/10630263',
     );

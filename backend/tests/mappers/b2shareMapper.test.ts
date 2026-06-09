@@ -123,7 +123,7 @@ describe('B2Share Mapper', () => {
     expect(commonDataset.metadata.assetType).toBe('Dataset');
     expect(commonDataset.metadata.titles).toBeDefined();
     expect(commonDataset.metadata.titles![0].titleText).toBe('LTER Zöbelboden (Austria) - meteorological data 1996');
-    expect(commonDataset.metadata.externalSourceInformation.externalSourceName).toBe('B2Share Eudat');
+    expect(commonDataset.metadata.externalSourceInformation.externalSourceName).toBe('B2Share (Eudat)');
     expect(commonDataset.metadata.externalSourceInformation.externalSourceURI).toBe(
       'https://b2share.eudat.eu/api/records/6b6sm-d1k39',
     );
@@ -158,7 +158,7 @@ describe('B2Share Mapper', () => {
       'B2SHARE_EUDAT',
     );
 
-    expect(commonDataset.metadata.externalSourceInformation.externalSourceName).toBe('B2Share Eudat');
+    expect(commonDataset.metadata.externalSourceInformation.externalSourceName).toBe('B2Share (Eudat)');
     expect(commonDataset.metadata.externalSourceInformation.externalSourceURI).toBe(
       'https://b2share.eudat.eu/api/records/6b6sm-d1k39',
     );

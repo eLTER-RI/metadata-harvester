@@ -87,7 +87,7 @@ describe('DataRegistry Mapper', () => {
     expect(commonDataset.metadata.files![0].sourceUrl).toBe(
       'https://dataregistry.lteritalia.it/documents/169/download',
     );
-    expect(commonDataset.metadata.externalSourceInformation.externalSourceName).toBe('DataRegistry');
+    expect(commonDataset.metadata.externalSourceInformation.externalSourceName).toBe('LTER Italy');
     expect(commonDataset.metadata.externalSourceInformation.externalSourceURI).toBe(sourceUrl);
   });
 });
